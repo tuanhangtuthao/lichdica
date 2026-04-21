@@ -109,21 +109,19 @@ thead tr:nth-child(2) th{height:var(--hdr2-h);top:var(--hdr1-h);z-index:105}
 tr.kh td{position:sticky;top:calc(var(--hdr1-h) + var(--hdr2-h));z-index:100;color:#fff;font-weight:700;text-align:left;padding:7px 10px}
 
 /* Left Columns Sticky */
-.c1{position:sticky;left:0;z-index:20;min-width:var(--col1-w);width:var(--col1-w);text-align:left;border-left:1px solid #e8e8e8}
-.c2{position:sticky;left:var(--col1-w);z-index:20;min-width:var(--col2-w);width:var(--col2-w)}
-.c3{position:sticky;left:calc(var(--col1-w) + var(--col2-w));z-index:20;min-width:var(--col3-w);width:var(--col3-w);text-align:left}
+.c1{position:sticky;left:0;z-index:120;min-width:var(--col1-w);width:var(--col1-w);text-align:left;border-left:1px solid #e8e8e8}
+.c2{min-width:var(--col2-w);width:var(--col2-w)}
+.c3{min-width:var(--col3-w);width:var(--col3-w);text-align:left}
 
-/* Corners (Intersection) */
-th.c1,th.c2,th.c3{z-index:130;background:#37474f}
-thead tr:nth-child(1) th.c1, thead tr:nth-child(1) th.c2, thead tr:nth-child(1) th.c3{z-index:150}
-thead tr:nth-child(2) th.c1, thead tr:nth-child(2) th.c2, thead tr:nth-child(2) th.c3{z-index:140}
+th.c1{z-index:150;background:#37474f}
+thead tr:nth-child(1) th.c1{z-index:160}
+thead tr:nth-child(2) th.c1{z-index:155}
 
-/* Backgrounds for sticky columns */
-td.c1,td.c2,td.c3{background:#fafafa;border-left:1px solid #e8e8e8}
-tr.kh td{background:#1a237e} /* ensure no transparency */
+td.c1{background:#fafafa;border-left:1px solid #e8e8e8}
+tr.kh td{background:#1a237e}
 
 /* Month & Kip labels sticky scroll */
-tr.kh td span, .month-label{position:sticky;left:calc(var(--col1-w) + var(--col2-w) + var(--col3-w) + 10px);display:inline-block;white-space:nowrap}
+tr.kh td span, .month-label{position:sticky;left:calc(var(--col1-w) + 10px);display:inline-block;white-space:nowrap}
 
 /* Fix borders */
 tr:first-child td, tr:first-child th{border-top:1px solid #e8e8e8}
