@@ -1465,21 +1465,25 @@ function renderAll(){
 
 // ── KHỞI ĐỘNG ──────────────────────────────
 (async () => {
-  initLabel();
-  // Đặt ngày mặc định cho các form = hôm nay
-  const t = new Date();
-  const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-  document.getElementById('qeFrom').value=ts;
-  document.getElementById('qeTo').value=ts;
-  document.getElementById('tcDate').value=ts;
-  
-  const currMonth = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
-  document.getElementById('otMonthFilter').value = currMonth;
-  document.getElementById('otBoardMonth').value = currMonth;
-  // Khởi tạo tab mặc định
-  await loadData();
-  document.getElementById('loadingOverlay').classList.add('hide');
-  goToday();
+  try {
+    initLabel();
+    const t = new Date();
+    const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+    const currMonth = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+    // Gán an toàn – bỏ qua nếu element không tồn tại
+    const set = (id, val) => { const el=document.getElementById(id); if(el) el.value=val; };
+    set('qeFrom', ts);
+    set('qeTo', ts);
+    set('tcDate', ts);
+    set('otMonthFilter', currMonth);
+    set('otBoardMonth', currMonth);
+    await loadData();
+  } catch(e) {
+    console.error('Init error:', e);
+  } finally {
+    document.getElementById('loadingOverlay').classList.add('hide');
+  }
+  try { goToday(); } catch(e) { console.warn(e); }
 })();
 </script>
 </body>
