@@ -576,14 +576,14 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 <div class="page" id="page-tanca">
 
   <!-- TC BOARD VIEW -->
-  <div id="tcBoardView" style="padding:12px;">
-    <div class="search-row" style="display:flex;gap:8px;margin-bottom:12px;">
-      <input type="month" id="otBoardMonth" class="form-input" style="width:140px;padding:8px 10px;" onchange="renderOtBoard()">
-      <input type="text" id="otBoardSearch" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." style="flex:1;padding:8px 10px" oninput="renderOtBoard()">
+  <div id="tcBoardView" style="padding:10px;">
+    <!-- Search/Filter bar -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <input type="month" id="otBoardMonth" class="form-input" style="flex:0 0 auto;padding:8px 10px;font-size:.9rem;" onchange="renderOtBoard()">
+      <input type="text" id="otBoardSearch" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." style="flex:1;min-width:120px;padding:8px 10px;font-size:.9rem" oninput="renderOtBoard()">
     </div>
-    <div style="overflow-x:auto; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);">
-      <table class="res-table" style="min-width:max-content;width:100%; border-radius:0; box-shadow:none;" id="otTable"></table>
-    </div>
+    <!-- Board content -->
+    <div id="otBoardContent"></div>
   </div>
 
 </div>
@@ -1259,67 +1259,101 @@ async function removeOvertime(id){
 function renderOtBoard(){
   const mVal = document.getElementById('otBoardMonth').value;
   const searchQ = document.getElementById('otBoardSearch').value.trim().toLowerCase();
-  if(!mVal) return;
+  const contentEl = document.getElementById('otBoardContent');
+  if(!mVal){ contentEl.innerHTML='<div style="text-align:center;padding:40px;color:#bbb">Chọn tháng để xem</div>'; return; }
+
   const [y, m] = mVal.split('-');
-  const daysInMonth = new Date(y, m, 0).getDate();
+  const daysInMonth = new Date(parseInt(y), parseInt(m), 0).getDate();
   const prefix = mVal + '-';
 
-  const validOT = OVERTIME.filter(o => o.date.startsWith(prefix));
+  const validOT = OVERTIME.filter(o => o.date && o.date.startsWith(prefix));
   const empMap = {};
   const allEM = [...(EMPS[1]||[]), ...(EMPS[2]||[]), ...(EMPS[3]||[]), ...(EMPS[4]||[])];
   allEM.forEach(e => { empMap[e.id] = { id: e.id, name: e.name, dates: {} }; });
   
   validOT.forEach(o => {
-     if(!empMap[o.emp_id]) empMap[o.emp_id] = { id: o.emp_id, name: o.emp_name, dates: {} };
-     if(!empMap[o.emp_id].dates[o.date]) empMap[o.emp_id].dates[o.date] = [];
-     empMap[o.emp_id].dates[o.date].push(o);
+     const eid = o.emp_id || '_';
+     if(!empMap[eid]) empMap[eid] = { id: eid, name: o.emp_name||'?', dates: {} };
+     if(!empMap[eid].dates[o.date]) empMap[eid].dates[o.date] = [];
+     empMap[eid].dates[o.date].push(o);
   });
 
-  let empsArr = Object.values(empMap);
+  let empsArr = Object.values(empMap).filter(e => Object.keys(e.dates).length > 0);
   if(searchQ) {
     empsArr = empsArr.filter(e => {
-        const nMatcher = String(e.name || '').toLowerCase();
-        const idMatcher = String(e.id || '').toLowerCase();
-        return nMatcher.includes(searchQ) || idMatcher.includes(searchQ);
+        return String(e.name||'').toLowerCase().includes(searchQ) || String(e.id||'').toLowerCase().includes(searchQ);
     });
   }
-  empsArr = empsArr.filter(e => Object.keys(e.dates).length > 0 || searchQ !== '');
   empsArr.sort((a,b) => String(a.name||'').localeCompare(String(b.name||'')));
 
-  let h = `<thead><tr>
-      <th style="min-width:140px;position:sticky;left:0;background:#f5f5f5;z-index:2;border-right:1px solid #ddd;padding:6px 12px;color:#333;text-align:left">Nhân viên</th>`;
-  for(let i=1; i<=daysInMonth; i++) h += `<th style="min-width:44px;padding:6px 0;text-align:center;font-size:.75rem;background:#f5f5f5">${i}</th>`;
-  h += `</tr></thead><tbody>`;
-
   if(!empsArr.length) {
-      h += `<tr><td colspan="${daysInMonth+1}" style="text-align:center;padding:30px;color:#aaa">Không có nhân viên thoả mãn / dữ liệu tăng ca trống.</td></tr>`;
-  } else {
-      empsArr.forEach(e => {
-         // calculate if this empsArr row should have an altering background
-         h += `<tr>
-           <td style="position:sticky;left:0;background:#fff;border-right:1px solid #f0f0f0;z-index:1;padding:6px 12px">
-             <div style="font-weight:700;font-size:.85rem;color:#222;white-space:nowrap">${e.name}</div>
-             <div style="font-size:.7rem;color:#888">${e.id}</div>
-           </td>`;
-         for(let i=1; i<=daysInMonth; i++){
-            const dk = `${mVal}-${String(i).padStart(2,'0')}`;
-            const ots = e.dates[dk];
-            let cellHtml = '';
-            if(ots && ots.length > 0){
-               cellHtml = ots.map(o => {
-                  const isFull = !o.ot_type || o.ot_type === 'full';
-                  const title = o.note ? ` title="📝 ${o.note}"` : '';
-                  if(isFull) return `<div class="chip ${o.shift}"${title} style="margin:2px 0;display:inline-block;">${o.shift}</div>`;
-                  return `<div style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80;font-size:.75rem;padding:3px;border-radius:4px;line-height:1.2;font-weight:700;display:inline-block;white-space:nowrap;margin:2px 0;min-width:36px;"${title}>${o.start_time}<br><span style="color:#ffa726;font-size:.55rem">▼</span><br>${o.end_time}</div>`;
-               }).join('');
-            }
-            h += `<td style="text-align:center;padding:4px;border-bottom:1px solid #f0f0f0;border-right:1px dotted #e0e0e0;vertical-align:middle;">${cellHtml}</td>`;
-         }
-         h += `</tr>`;
-      });
+    contentEl.innerHTML=`<div style="text-align:center;padding:50px 20px;color:#aaa;font-size:.9rem">📋 Không có dữ liệu tăng ca tháng này</div>`;
+    return;
   }
-  h += `</tbody>`;
-  document.getElementById('otTable').innerHTML = h;
+
+  // Render as cards, each employee = 1 card
+  const OT_COLORS = {
+    S: { bg:'#fffde7', fg:'#f57f17', bd:'#ffe082', label:'Sáng' },
+    C: { bg:'#e8eaf6', fg:'#3949ab', bd:'#9fa8da', label:'Chiều' },
+    C1:{ bg:'#e3f2fd', fg:'#1565c0', bd:'#90caf9', label:'Ca 1' },
+    C2:{ bg:'#f3e5f5', fg:'#6a1b9a', bd:'#ce93d8', label:'Ca 2' },
+    C3:{ bg:'#e8f5e9', fg:'#2e7d32', bd:'#a5d6a7', label:'Ca 3' },
+    TC:{ bg:'#fff3e0', fg:'#e65100', bd:'#ffcc80', label:'TC' },
+  };
+  const getOtColor = shift => OT_COLORS[shift] || { bg:'#f5f5f5', fg:'#555', bd:'#ccc', label:shift||'TC' };
+
+  let h = '';
+  empsArr.forEach((e, idx) => {
+    const sortedDates = Object.keys(e.dates).sort();
+    const totalDays = sortedDates.length;
+    const totalOTs = sortedDates.reduce((acc, d) => acc + e.dates[d].length, 0);
+    const rowBg = idx%2===0?'#fff':'#fafafa';
+    h += `
+    <div class="ot-board-card" style="background:${rowBg};border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#283593;color:#fff">
+        <div>
+          <div style="font-weight:700;font-size:.95rem">${e.name}</div>
+          <div style="font-size:.72rem;opacity:.8">${e.id}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.75rem;opacity:.9">${totalDays} ngày &bull; ${totalOTs} ca</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;">`;
+    
+    sortedDates.forEach(dk => {
+      const dayOts = e.dates[dk];
+      const d = new Date(dk + 'T00:00:00');
+      const dayNum = d.getDate();
+      const dayName = ['CN','T2','T3','T4','T5','T6','T7'][d.getDay()];
+      
+      dayOts.forEach(o => {
+        const isFull = !o.ot_type || o.ot_type === 'full';
+        const col = getOtColor(o.shift);
+        const note = o.note ? `<div style="font-size:.65rem;color:#888;font-style:italic;margin-top:2px">${o.note}</div>` : '';
+        
+        if(isFull){
+          h += `<div style="background:${col.bg};border:1px solid ${col.bd};border-radius:8px;padding:6px 10px;min-width:56px;text-align:center">
+            <div style="font-size:.72rem;color:#888;font-weight:600">${dayName} ${dayNum}</div>
+            <div style="font-weight:800;font-size:1rem;color:${col.fg};line-height:1.1">${col.label}</div>
+            ${note}
+          </div>`;
+        } else {
+          h += `<div style="background:#fff8f0;border:1.5px solid #ffb74d;border-radius:8px;padding:6px 10px;min-width:60px;text-align:center">
+            <div style="font-size:.72rem;color:#888;font-weight:600">${dayName} ${dayNum}</div>
+            <div style="font-weight:700;font-size:.82rem;color:#e65100;line-height:1.4">${o.start_time}</div>
+            <div style="color:#ffa726;font-size:.6rem">&#9660;</div>
+            <div style="font-weight:700;font-size:.82rem;color:#e65100;line-height:1">${o.end_time}</div>
+            ${note}
+          </div>`;
+        }
+      });
+    });
+    
+    h += `</div></div>`;
+  });
+  
+  contentEl.innerHTML = h;
 }
 
 // ── ĐIỀU HƯỚNG ─────────────────────────────
