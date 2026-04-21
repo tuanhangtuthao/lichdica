@@ -204,6 +204,7 @@ input.sc-note:focus{border-color:#4a148c}
 <div class="top-tabs">
   <div class="tab active" onclick="showTab('results')">📊 Kết Quả</div>
   <div class="tab"        onclick="showTab('scoring')">✏️ Chấm Điểm</div>
+  <div class="tab"        onclick="showTab('approval')">✅ Duyệt Đánh Giá</div>
   <div class="tab"        onclick="showTab('config')">⚙️ Cài Đặt Hạng</div>
 </div>
 
@@ -212,13 +213,11 @@ input.sc-note:focus{border-color:#4a148c}
   <div class="stats-bar" id="statsBar"></div>
   <div class="section" style="padding-top:0">
     <div class="card">
-      <div class="card-head">
-        🔍 Lọc theo khoảng thời gian
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <input type="date" class="form-input" id="rfFrom" style="flex:0 0 auto;min-width:130px" oninput="renderResults()">
-          <span style="padding:9px 2px;color:#999">→</span>
-          <input type="date" class="form-input" id="rfTo"   style="flex:0 0 auto;min-width:130px" oninput="renderResults()">
-          <button class="btn btn-sec btn-sm" onclick="clearFilter()">✕ Xóa</button>
+      <div class="card-head" style="background:#f8f9fa;">
+        🔍 Tra cứu kết quả
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" class="form-input" id="rfSearch" placeholder="Tên nhân viên..." style="width:160px;min-width:160px" oninput="renderResults()">
+          <input type="month" class="form-input" id="rfMonth" style="width:130px;min-width:130px" onchange="renderResults()">
         </div>
       </div>
     </div>
@@ -245,7 +244,24 @@ input.sc-note:focus{border-color:#4a148c}
   <div id="scoringWrap"></div>
 </div>
 
-<!-- PAGE 3: CÀI ĐẶT HẠNG -->
+<!-- PAGE 3: DUYỆT ĐÁNH GIÁ -->
+<div class="page" id="page-approval">
+  <div class="score-ctrl">
+    <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Tháng duyệt:</label>
+    <input type="month" class="form-input" id="apprMonth" style="flex:0 0 auto" onchange="renderApproval()">
+  </div>
+  <div class="kf-row" id="apprKipFilter">
+    <button class="kf" id="akf-0" onclick="setApprKip(0)">Tất cả</button>
+    <button class="kf k1 off" id="akf-1" onclick="setApprKip(1)">Kíp 1</button>
+    <button class="kf k2 off" id="akf-2" onclick="setApprKip(2)">Kíp 2</button>
+    <button class="kf k3 off" id="akf-3" onclick="setApprKip(3)">Kíp 3</button>
+    <button class="kf k4 off" id="akf-4" onclick="setApprKip(4)">HC / Ca Xoay</button>
+  </div>
+  <div class="score-progress" id="apprProgress"></div>
+  <div id="approvalWrap" style="padding:0 12px 16px;"></div>
+</div>
+
+<!-- PAGE 4: CÀI ĐẶT HẠNG -->
 <div class="page" id="page-config">
   <div class="section">
     <div class="card">
@@ -277,10 +293,28 @@ input.sc-note:focus{border-color:#4a148c}
   <button class="bnav" onclick="showTab('scoring')">
     <span class="bicon">✏️</span><span class="blabel">Chấm Điểm</span>
   </button>
+  <button class="bnav" onclick="showTab('approval')">
+    <span class="bicon">✅</span><span class="blabel">Duyệt</span>
+  </button>
   <button class="bnav" onclick="showTab('config')">
     <span class="bicon">⚙️</span><span class="blabel">Cài Đặt</span>
   </button>
 </nav>
+
+<!-- PASSWORD MODAL -->
+<div class="pw-overlay" id="pwOverlay">
+  <div class="pw-box">
+    <div class="pw-icon">🔒</div>
+    <h3>Yêu Cầu Mật Khẩu</h3>
+    <p>Thuộc thẩm quyền quản lý</p>
+    <input type="password" id="pwInput" class="pw-input" placeholder="••••••" maxlength="6" inputmode="numeric">
+    <div class="pw-err" id="pwErr"></div>
+    <div class="pw-actions">
+      <button class="btn btn-sec" onclick="closePwModal()" style="flex:1">Hủy</button>
+      <button class="btn btn-pri" onclick="checkPw()" style="flex:1">Xác Nhận</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -295,6 +329,7 @@ const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 // ── STATE ──────────────────────────────────
 let EMPS = {1:[],2:[],3:[],4:[]};
 let RATINGS = [];
+let MONTHLY_REVIEWS = []; // [{id, emp_id, month_key, note, approved}]
 let GRADE_CFG = [
   {grade:'A+',min_score:9.0,description:'Xuất sắc',sort_order:1},
   {grade:'A', min_score:8.0,description:'Giỏi',    sort_order:2},
@@ -304,7 +339,8 @@ let GRADE_CFG = [
 ];
 let activeTab = 'results';
 let scoreKip  = 0; // 0=all
-const TABS = ['results','scoring','config'];
+let apprKip = 0;
+const TABS = ['results','scoring','approval','config'];
 const GRP_LABEL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',4:'HC / Ca Xoay'};
 const DFUL = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
 const DN   = ['CN','T2','T3','T4','T5','T6','T7'];
@@ -364,49 +400,82 @@ function scoreColor(s){
   return '#b71c1c';
 }
 
+// ── MẬT KHẨU ──────────────────────────────
+const SETTINGS_PASS = '741852';
+let unlocked = false;
+let pendingTab = '';
+function openPw(target){
+  pendingTab = target;
+  document.getElementById('pwInput').value='';
+  document.getElementById('pwErr').textContent='';
+  document.getElementById('pwInput').classList.remove('error');
+  document.getElementById('pwOverlay').classList.add('show');
+  setTimeout(()=>document.getElementById('pwInput').focus(),100);
+}
+function closePwModal(){ document.getElementById('pwOverlay').classList.remove('show'); }
+function checkPw(){
+  const v=document.getElementById('pwInput').value.trim();
+  if(v===SETTINGS_PASS){
+    unlocked=true; closePwModal(); _doShowTab(pendingTab);
+  } else {
+    const inp=document.getElementById('pwInput');
+    inp.classList.add('error');
+    document.getElementById('pwErr').textContent='Mật khẩu không đúng.';
+    inp.value='';
+    setTimeout(()=>inp.classList.remove('error'),400);
+  }
+}
+
 // ── LOAD DATA ──────────────────────────────
 async function loadData(){
   if(!SB_OK){return;}
   try{
-    const [er,rr,gr]=await Promise.all([
+    const [er,rr,gr,mr]=await Promise.all([
       sb.from('employees').select('*').order('kip').order('sort_order'),
       sb.from('daily_ratings').select('*').order('date'),
       sb.from('rating_config').select('*').order('sort_order'),
+      sb.from('monthly_reviews').select('*')
     ]);
     EMPS={1:[],2:[],3:[],4:[]};
     (er.data||[]).forEach(e=>{
       if(EMPS[e.kip]) EMPS[e.kip].push({id:e.id,name:e.name,role:e.role||'',kip:e.kip});
     });
     RATINGS=rr.data||[];
+    MONTHLY_REVIEWS=mr.data||[];
     if((gr.data||[]).length>0) GRADE_CFG=gr.data;
   }catch(e){console.warn('Load error:',e);}
 }
 
 // ── TAB 1: KẾT QUẢ ────────────────────────
-function clearFilter(){
-  document.getElementById('rfFrom').value='';
-  document.getElementById('rfTo').value='';
-  renderResults();
-}
 
 function renderResults(){
-  const from=document.getElementById('rfFrom').value;
-  const to  =document.getElementById('rfTo').value;
-  const emps=allEmps(0); // kết quả luôn hiện tất cả kíp
+  const search = document.getElementById('rfSearch').value.trim().toLowerCase();
+  const mVal = document.getElementById('rfMonth').value; // YYYY-MM
+  if(!mVal) {
+    document.getElementById('resultsWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Vui lòng chọn tháng.</div>';
+    document.getElementById('statsBar').innerHTML='';
+    return;
+  }
+  const [yy_str, mm_str] = mVal.split('-');
+  const y = parseInt(yy_str), m = parseInt(mm_str);
+  const daysInMonth = new Date(y, m, 0).getDate();
 
-  const filtered=RATINGS.filter(r=>{
-    if(from&&r.date<from) return false;
-    if(to  &&r.date>to)   return false;
-    return true;
-  });
+  const emps = allEmps(0).filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
+  const filtered = RATINGS.filter(r=>r.date.startsWith(mVal));
 
   // Per-employee stats
   const statMap={};
   filtered.forEach(r=>{
-    if(!statMap[r.emp_id]) statMap[r.emp_id]={sum:0,cnt:0,days:[]};
+    if(!statMap[r.emp_id]) statMap[r.emp_id]={sum:0,cnt:0,dayScores:{}};
     statMap[r.emp_id].sum+=parseFloat(r.score);
     statMap[r.emp_id].cnt++;
-    statMap[r.emp_id].days.push(r);
+    statMap[r.emp_id].dayScores[r.date] = r.score;
+  });
+
+  // Monthly Reviews map
+  const reviewMap = {};
+  MONTHLY_REVIEWS.filter(r => r.month_key === mVal && r.approved).forEach(r => {
+    reviewMap[r.emp_id] = r.note;
   });
 
   // Grade counts
@@ -415,7 +484,6 @@ function renderResults(){
     const st=statMap[e.id];
     if(st&&st.cnt>0) gcnt[getGrade(st.sum/st.cnt)]++;
   });
-  const gradeDef={'A+':'Xuất sắc','A':'Giỏi','B':'Khá','C':'TB','D':'Yếu'};
   document.getElementById('statsBar').innerHTML=
     ['A+','A','B','C','D'].map(g=>`
       <div class="stat-chip">
@@ -424,14 +492,14 @@ function renderResults(){
       </div>`).join('');
 
   if(!emps.length){
-    document.getElementById('resultsWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Chưa có nhân viên.</div>';
+    document.getElementById('resultsWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Không tìm thấy nhân viên.</div>';
     return;
   }
 
   const sorted=emps.map(e=>{
     const st=statMap[e.id];
     const avg=st&&st.cnt>0?round1(st.sum/st.cnt):null;
-    return{...e,avg,cnt:st?st.cnt:0,days:st?st.days:[]};
+    return{...e,avg,cnt:st?st.cnt:0,dayScores:st?st.dayScores:{}};
   }).sort((a,b)=>{
     if(a.avg===null&&b.avg===null) return 0;
     if(a.avg===null) return 1;
@@ -439,62 +507,47 @@ function renderResults(){
     return b.avg-a.avg;
   });
 
-  let h=`<table class="res-table">
+  let h = `<div style="overflow-x:auto; width:100%; border-radius:var(--radius); box-shadow:var(--shadow);">
+    <table class="res-table" style="min-width: max-content; box-shadow:none; border-radius:0;">
     <thead><tr>
-      <th>#</th><th>Họ tên</th><th>Nhóm</th>
-      <th style="text-align:center">Ngày</th>
+      <th style="position:sticky;left:0;z-index:2;background:#4a148c;min-width:140px">Họ tên</th>
+      <th style="text-align:center">Kíp</th>
       <th style="text-align:center">Điểm TB</th>
-      <th style="text-align:center">Hạng</th>
-      <th></th>
-    </tr></thead><tbody>`;
+      <th style="text-align:center">Hạng</th>`;
+  for(let i=1; i<=daysInMonth; i++) h+= `<th style="text-align:center;min-width:32px;padding:6px 3px">${i}</th>`;
+  h+= `<th style="min-width:150px">Ghi chú Tháng (Q.Lý)</th></tr></thead><tbody>`;
 
-  sorted.forEach((e,i)=>{
+  sorted.forEach(e=>{
     const avgTxt=e.avg!==null
       ?`<b style="font-size:1rem;color:${scoreColor(e.avg)}">${e.avg}</b>`
       :`<span style="color:#ccc">–</span>`;
     const grHtml=e.avg!==null
       ?`<span class="gb ${gbClass(getGrade(e.avg))}">${getGrade(e.avg)}</span>`
       :`<span style="color:#ccc">–</span>`;
+    const mNote = reviewMap[e.id] || '';
+    
     h+=`<tr>
-      <td style="color:#aaa;font-size:.75rem">${i+1}</td>
-      <td>
-        <div style="font-weight:700;font-size:.85rem">${e.name}</div>
+      <td style="position:sticky;left:0;z-index:1;background:#fafafa;border-right:1px solid #eee;">
+        <div style="font-weight:700;font-size:.85rem;color:#1a237e">${e.name}</div>
         <div style="font-size:.7rem;color:#999">${e.id}</div>
       </td>
-      <td style="font-size:.75rem;color:#666">${GRP_LABEL[e.kip]||''}</td>
-      <td style="text-align:center;font-size:.82rem">${e.cnt}</td>
-      <td style="text-align:center">${avgTxt}</td>
-      <td style="text-align:center">${grHtml}</td>
-      <td><button class="expand-btn" onclick="toggleDet('det-${e.id}',this)">▼</button></td>
-    </tr>
-    <tr class="det-row" id="det-${e.id}" style="display:none">
-      <td colspan="7">
-        <div class="det-inner">
-          ${e.days.length===0
-            ?'<div style="color:#aaa;font-size:.78rem;padding:4px 0">Chưa có điểm nào.</div>'
-            :e.days.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(d=>{
-                const dd=new Date(d.date+'T00:00:00');
-                const sc=parseFloat(d.score);
-                return `<div class="det-item">
-                  <span class="det-date">${fmtD(dd)} ${DN[dd.getDay()]}</span>
-                  <span class="det-score" style="background:${sc>=9?'var(--ap-bg)':sc>=8?'var(--a-bg)':sc>=6.5?'var(--b-bg)':sc>=5?'var(--c-bg)':'var(--d-bg)'};color:${scoreColor(sc)}">${d.score}</span>
-                  <span class="det-note">${d.note||'<span style="color:#ccc">–</span>'}</span>
-                  <button onclick="deleteRating(${d.id})" style="background:none;border:none;cursor:pointer;color:#e57373;font-size:.85rem;padding:2px 4px">✕</button>
-                </div>`;
-              }).join('')}
-        </div>
-      </td>
-    </tr>`;
+      <td style="font-size:.75rem;color:#666;text-align:center">${GRP_LABEL[e.kip]||''}</td>
+      <td style="text-align:center;background:#fff8e1">${avgTxt}</td>
+      <td style="text-align:center;background:#fff8e1">${grHtml}</td>`;
+    
+    for(let i=1; i<=daysInMonth; i++){
+      const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+      const s = e.dayScores[dk];
+      if(s !== undefined){
+        h+= `<td style="text-align:center;font-weight:700;color:${scoreColor(s)};background:${s>=9?'var(--ap-bg)':s>=8?'var(--a-bg)':s>=6.5?'var(--b-bg)':s>=5?'var(--c-bg)':'var(--d-bg)'}">${s}</td>`;
+      } else {
+        h+= `<td style="text-align:center;color:#eee">-</td>`;
+      }
+    }
+    h+= `<td style="font-size:.75rem;color:#444;max-width:250px;white-space:normal;line-height:1.4">${mNote}</td></tr>`;
   });
-  h+='</tbody></table>';
+  h+='</tbody></table></div>';
   document.getElementById('resultsWrap').innerHTML=h;
-}
-
-function toggleDet(id,btn){
-  const el=document.getElementById(id);
-  const vis=el.style.display==='none';
-  el.style.display=vis?'':'none';
-  btn.textContent=vis?'▲':'▼';
 }
 
 // ── TAB 2: CHẤM ĐIỂM ──────────────────────
@@ -609,7 +662,160 @@ async function deleteRating(id,fromScoring=false){
   if(fromScoring) renderScoring(); else renderResults();
 }
 
-// ── TAB 3: CÀI ĐẶT ────────────────────────
+// ── TAB 3: DUYỆT ĐÁNH GIÁ ──────────────────────
+function setApprKip(k){
+  apprKip=k;
+  [0,1,2,3,4].forEach(i=>{
+    const el=document.getElementById('akf-'+i);
+    if(!el) return;
+    if(i===0) el.className='kf'+(k===0?'':' off');
+    else el.className='kf k'+i+(k===i?'':' off');
+  });
+  renderApproval();
+}
+
+function renderApproval(){
+  const mVal = document.getElementById('apprMonth').value; // YYYY-MM
+  if(!mVal){
+    document.getElementById('approvalWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Chọn tháng duyệt.</div>';
+    return;
+  }
+  const emps = allEmps(apprKip);
+  const [y, m] = mVal.split('-');
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const monthPrefix = mVal + '-';
+  
+  // Calculate avg for the month
+  const statMap = {};
+  RATINGS.filter(r => r.date.startsWith(monthPrefix)).forEach(r => {
+    if(!statMap[r.emp_id]) statMap[r.emp_id] = {sum:0, cnt:0, scores:{}};
+    statMap[r.emp_id].sum += parseFloat(r.score);
+    statMap[r.emp_id].cnt++;
+    statMap[r.emp_id].scores[r.date] = parseFloat(r.score);
+  });
+
+  const reviewMap={};
+  MONTHLY_REVIEWS.filter(r => r.month_key === mVal).forEach(r => reviewMap[r.emp_id] = r);
+
+  document.getElementById('apprProgress').innerHTML=
+    `Đang xem: <b style="color:#4a148c">${emps.length}</b> nhân viên`;
+
+  let html='<div style="display:flex;flex-direction:column;gap:12px">';
+  emps.forEach(e => {
+    const st = statMap[e.id] || {sum:0, cnt:0, scores:{}};
+    const avg = st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
+    let gHtml = '<span style="color:#ccc">–</span>';
+    if(avg !== '-'){
+      const grade = getGrade(avg);
+      gHtml = `<span class="gb ${gbClass(grade)}">${grade}</span>`;
+    }
+
+    const rev = reviewMap[e.id] || {note:'', approved:false};
+    
+    html+= `<div class="card" style="border:1px solid ${rev.approved?'#4caf50':'#e0e0e0'}">
+      <div class="card-head" style="background:${rev.approved?'#e8f5e9':'#fafafa'}; cursor:pointer" onclick="toggleDet('appr-det-${e.id}', this.querySelector('.expand-btn'))">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;color:#1a237e">${e.name}</div>
+          <div style="font-size:.7rem;color:#777">${e.id} - ${GRP_LABEL[e.kip]}</div>
+        </div>
+        <div style="text-align:right">
+          <div><b style="font-size:1.1rem;color:${avg!=='-'?scoreColor(avg):'#ccc'}">${avg}</b> ${gHtml}</div>
+          <div style="font-size:.65rem;color:${rev.approved?'#2e7d32':'#f57f17'}">${rev.approved?'Đã duyệt':'Chưa duyệt'}</div>
+        </div>
+        <button class="expand-btn">▼</button>
+      </div>
+      <div id="appr-det-${e.id}" style="display:none; padding:12px; border-top:1px solid #f0f0f0;">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;background:#fafafa;padding:8px;border-radius:8px">`;
+    
+    for(let i=1; i<=daysInMonth; i++) {
+       const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+       const sVal = st.scores[dk] !== undefined ? st.scores[dk] : '';
+       html += `<div style="display:inline-flex;flex-direction:column;align-items:center;background:#fff;border-radius:6px;padding:3px;border:1px solid #ddd;min-width:38px;">
+         <span style="font-size:.65rem;font-weight:600;color:#888">${i}</span>
+         <input type="number" min="0" max="10" step="0.1" title="${dk}" id="appr-sc-${e.id}-${i}" value="${sVal}" style="width:100%;text-align:center;border:none;background:none;font-size:.85rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none" onchange="this.style.color=scoreColor(this.value)">
+       </div>`;
+    }
+
+    html+= `</div>
+        <textarea id="appr-note-${e.id}" placeholder="Ghi chú tháng của Quản lý..." style="width:100%;height:60px;padding:8px;border:1px solid #ccc;border-radius:8px;font-family:inherit;font-size:.85rem;resize:vertical;outline:none">${rev.note}</textarea>
+        <div style="text-align:right;margin-top:10px">
+          <button class="btn btn-pri" onclick="saveApproval('${e.id}', '${mVal}', ${daysInMonth}, this)">💾 Lưu & Cập Nhật</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('approvalWrap').innerHTML=html;
+}
+
+async function saveApproval(emp_id, month_key, daysInMonth, btn) {
+  const note = document.getElementById(`appr-note-${emp_id}`).value.trim();
+  const emp = allEmpsNoFilter().find(e => e.id === emp_id) || {name: 'NV'};
+  
+  const [y, m] = month_key.split('-');
+  const dailyRows = [];
+  let errorFound = false;
+
+  for(let i=1; i<=daysInMonth; i++){
+    const val = document.getElementById(`appr-sc-${emp_id}-${i}`).value;
+    const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    if(val.trim() !== '') {
+       let score = parseFloat(val);
+       if(isNaN(score) || score < 0 || score > 10){
+          errorFound = true;
+       } else {
+          dailyRows.push({
+             emp_id: emp_id,
+             emp_name: emp.name,
+             date: dk,
+             score: score,
+             note: '' 
+          });
+       }
+    }
+  }
+
+  if(errorFound){
+    alert('Có điểm không hợp lệ (phải từ 0-10). Vui lòng kiểm tra lại!');
+    return;
+  }
+
+  btn.textContent = 'Đang lưu...';
+  btn.disabled = true;
+
+  if (SB_OK) {
+    if(dailyRows.length > 0){
+        const {error: drErr} = await sb.from('daily_ratings').upsert(dailyRows, {onConflict: 'emp_id,date'});
+        if(drErr) console.warn('Lỗi lưu daily ratings:', drErr);
+    }
+    
+    // Yêu cầu đề cập `approved: true` khi duyệt.
+    const reviewRecord = {emp_id: emp_id, month_key: month_key, note: note, approved: true};
+    const {data, error} = await sb.from('monthly_reviews').upsert(reviewRecord, {onConflict: 'emp_id,month_key'}).select();
+    
+    if(error){
+      alert('Lỗi lưu ghi chú tháng: ' + error.message);
+    } else {
+       MONTHLY_REVIEWS = MONTHLY_REVIEWS.filter(r => !(r.emp_id === emp_id && r.month_key === month_key));
+       MONTHLY_REVIEWS.push(data[0]);
+
+       const {data:rr} = await sb.from('daily_ratings').select('*').eq('emp_id', emp_id).like('date', `${month_key}-%`);
+       if(rr){
+          RATINGS = RATINGS.filter(r => !(r.emp_id === emp_id && r.date.startsWith(month_key)));
+          RATINGS = RATINGS.concat(rr);
+       }
+       
+       alert('Đã lưu & duyệt thành công!');
+       renderApproval();
+    }
+  } else {
+    alert('Lưu cục bộ không được hỗ trợ cho chức năng này (Cần DB).');
+  }
+  btn.disabled = false;
+  btn.textContent = '💾 Lưu & Cập Nhật';
+}
+
+// ── TAB 4: CÀI ĐẶT ────────────────────────
 function renderConfig(){
   const GRADES=['A+','A','B','C','D'];
   let h=`<thead><tr>
@@ -670,6 +876,10 @@ function resetConfig(){
 
 // ── NAVIGATION ─────────────────────────────
 function showTab(tab){
+  if(tab==='approval'&&!unlocked){ openPw(tab); return; }
+  _doShowTab(tab);
+}
+function _doShowTab(tab){
   activeTab=tab;
   document.querySelectorAll('.top-tabs .tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===tab));
   document.querySelectorAll('.bot-nav .bnav').forEach((b,i)=>b.classList.toggle('active',TABS[i]===tab));
@@ -677,6 +887,7 @@ function showTab(tab){
   document.getElementById('page-'+tab).classList.add('active');
   if(tab==='results') renderResults();
   if(tab==='scoring') renderScoring();
+  if(tab==='approval') renderApproval();
   if(tab==='config')  renderConfig();
 }
 
@@ -687,6 +898,10 @@ function showTab(tab){
     `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
   const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
   document.getElementById('scoreDate').value=ts;
+  const currMonth = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('rfMonth').value = currMonth;
+  document.getElementById('apprMonth').value = currMonth;
+  
   await loadData();
   document.getElementById('loadingOverlay').classList.add('hide');
   renderResults();
