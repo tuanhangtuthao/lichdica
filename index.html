@@ -178,6 +178,9 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   display:flex;justify-content:space-between;align-items:center}
 .sum-head.k1{background:var(--k1)}.sum-head.k2{background:var(--k2)}.sum-head.k3{background:var(--k3)}.sum-head.k4{background:var(--k4)}
 .sum-shift-badge{font-size:1rem;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.25)}
+.sum-kip-label{display:flex;flex-direction:column;gap:3px}
+.sum-kip-name{font-size:.9rem;font-weight:700;line-height:1}
+.sum-day-status{font-size:.7rem;font-weight:600;opacity:.9;letter-spacing:.2px}
 .sum-row{display:flex;justify-content:space-between;align-items:center;
   padding:7px 14px;border-bottom:1px solid #f0f0f0;font-size:.82rem}
 .sum-row:last-child{border-bottom:none}
@@ -623,6 +626,16 @@ function getShift(k, d) {
   const n = Math.round((d - REF) / 864e5);
   return CYCLE[((n + PHASE[k]) % len + len) % len];
 }
+// Trả về {type:'work'|'rest', day:X, total:4|2}
+// CYCLE: [S,S,S,S,N,N,C,C,C,C,N,N] → pos 0-3=S(1-4), 4-5=N(1-2), 6-9=C(1-4), 10-11=N(1-2)
+function getBlockStatus(k, d) {
+  const n = Math.round((d - REF) / 864e5);
+  const pos = ((n + PHASE[k]) % 12 + 12) % 12;
+  if (pos <= 3)  return { type:'work', day:pos+1,   total:4 };
+  if (pos <= 5)  return { type:'rest', day:pos-3,   total:2 };
+  if (pos <= 9)  return { type:'work', day:pos-5,   total:4 };
+               return { type:'rest', day:pos-9,   total:2 };
+}
 
 // ── DỮ LIỆU MẶC ĐỊNH ─────────────────────
 const DEF_EMPS = {
@@ -828,7 +841,11 @@ function renderSummary(){
   let sg = '';
   for(let k=1;k<=3;k++){
     const s = dShift(k,today);
-    sg += `<div class="sum-card"><div class="sum-head k${k}">Kíp ${k}<span class="sum-shift-badge">${SICON[s]} ${SLBL(s)}</span></div><div class="sum-body">`;
+    const bs = getBlockStatus(k,today);
+    const bsLbl = bs.type==='work'
+      ? `📅 Ngày làm ${bs.day}/${bs.total}`
+      : `💤 Ngày nghỉ ${bs.day}/${bs.total}`;
+    sg += `<div class="sum-card"><div class="sum-head k${k}"><div class="sum-kip-label"><span class="sum-kip-name">Kíp ${k}</span><span class="sum-day-status">${bsLbl}</span></div><span class="sum-shift-badge">${SICON[s]} ${SLBL(s)}</span></div><div class="sum-body">`;
     (EMPS[k]||[]).forEach((e,i) => {
       sg += `<div class="sum-row${i===0?' leader':''}"><span class="name">${i===0?'👑 ':''}${e.name}</span><span class="role-tag">${e.role}</span></div>`;
     });
