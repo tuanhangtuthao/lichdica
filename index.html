@@ -613,8 +613,8 @@ const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 
 // ── TÍNH CA ────────────────────────────────
 const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
-const REF   = new Date(2026, 3, 12); // 12/04/2026 (lùi 1 ngày theo thực tế)
-const PHASE = {1:2, 2:10, 3:6};
+const REF   = new Date(2026, 3, 12); // 12/04/2026
+const PHASE = {1:3, 2:7, 3:11};
 function getShift(k, d) {
   const n = Math.round((d - REF) / 864e5);
   return CYCLE[((n + PHASE[k]) % 12 + 12) % 12];
