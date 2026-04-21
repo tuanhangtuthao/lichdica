@@ -623,13 +623,15 @@ const REF   = new Date(2026, 3, 12); // 12/04/2026 – mốc tham chiếu
 const PHASE = {1:3, 2:11, 3:7}; // 12/04: Kíp1=S, Kíp2=N, Kíp3=C – theo lịch thực tế
 function getShift(k, d) {
   const len = CYCLE.length;
-  const n = Math.round((d - REF) / 864e5);
+  const d0 = new Date(d); d0.setHours(0,0,0,0);
+  const n = Math.round((d0 - REF) / 864e5);
   return CYCLE[((n + PHASE[k]) % len + len) % len];
 }
 // Trả về {type:'work'|'rest', day:X, total:4|2}
 // CYCLE: [S,S,S,S,N,N,C,C,C,C,N,N] → pos 0-3=S(1-4), 4-5=N(1-2), 6-9=C(1-4), 10-11=N(1-2)
 function getBlockStatus(k, d) {
-  const n = Math.round((d - REF) / 864e5);
+  const d0 = new Date(d); d0.setHours(0,0,0,0);
+  const n = Math.round((d0 - REF) / 864e5);
   const pos = ((n + PHASE[k]) % 12 + 12) % 12;
   if (pos <= 3)  return { type:'work', day:pos+1,   total:4 };
   if (pos <= 5)  return { type:'rest', day:pos-3,   total:2 };
@@ -1341,7 +1343,8 @@ function renderOtBoard(){
 // ── ĐIỀU HƯỚNG ─────────────────────────────
 function nav(w){ startDate=addD(startDate,w*7); renderTable(); }
 function goToday(){
-  const t=new Date(), dow=t.getDay(), toMon=dow===0?-6:-(dow-1);
+  const t=new Date(); t.setHours(0,0,0,0);
+  const dow=t.getDay(), toMon=dow===0?-6:-(dow-1);
   startDate=addD(t,toMon-7); renderTable();
 }
 function setSearch(v){ searchQ=v; renderTable(); }
