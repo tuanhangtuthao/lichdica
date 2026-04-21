@@ -940,7 +940,7 @@ function resetConfig(){
 
 // ── NAVIGATION ─────────────────────────────
 function showTab(tab){
-  if(tab==='approval'&&!unlocked){ openPw(tab); return; }
+  if(tab !== 'results' && !unlocked){ openPw(tab); return; }
   _doShowTab(tab);
 }
 function _doShowTab(tab){
