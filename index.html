@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Lịch Làm Việc Phân Xưởng 1</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --s-bg:#c8e6c9;--s-fg:#1b5e20;
+  --c-bg:#ffe0b2;--c-fg:#bf360c;
+  --n-bg:#ffcdd2;--n-fg:#b71c1c;
+  --h-bg:#e1bee7;--h-fg:#6a1b9a;
+  --k1:#1565c0;--k1l:#e3f2fd;
+  --k2:#6a1b9a;--k2l:#f3e5f5;
+  --k3:#2e7d32;--k3l:#e8f5e9;
+  --k4:#00695c;--k4l:#e0f2f1;
+  --hc-bg:#fff9c4;--hc-fg:#e65100;
+  --nav-h:58px;
+  --hdr-h:52px;
+  --radius:10px;
+  --shadow:0 2px 10px rgba(0,0,0,.09);
+  --col1-w:120px; --col2-w:46px; --col3-w:90px;
+  --hdr1-h:28px; --hdr2-h:28px;
+}
+@media(min-width:768px){
+  :root{ --col1-w:140px; --col2-w:52px; --col3-w:110px; }
+}
+html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#1a237e,#283593);color:#fff;height:var(--hdr-h);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hdr-left h1{font-size:1.05rem;font-weight:700;line-height:1.2}
+.hdr-left .sub{font-size:.7rem;opacity:.8;margin-top:1px}
+.hdr-right{font-size:.7rem;opacity:.8;text-align:right;display:none}
+.btn-rating{background:rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:6px 9px;
+  font-size:1.1rem;text-decoration:none;transition:.15s;flex-shrink:0;line-height:1}
+.btn-rating:hover{background:rgba(255,255,255,.3)}
+.tab-rating{text-decoration:none;color:#6a1b9a!important}
+.tab-rating:hover{color:#4a148c!important;border-bottom-color:#6a1b9a!important}
+
+/* TOP TABS – desktop only */
+.top-tabs{display:none;background:#fff;border-bottom:2px solid #e0e0e0;
+  position:sticky;top:var(--hdr-h);z-index:190;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.top-tabs .tab{display:inline-block;padding:12px 20px;cursor:pointer;font-size:.88rem;
+  font-weight:600;color:#666;border-bottom:3px solid transparent;margin-bottom:-2px;
+  transition:.15s;white-space:nowrap}
+.top-tabs .tab:hover{color:#1a237e}
+.top-tabs .tab.active{color:#1a237e;border-bottom-color:#1a237e}
+
+/* BOTTOM NAV – mobile */
+.bot-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:var(--nav-h);
+  background:#fff;border-top:1px solid #e0e0e0;display:flex;
+  box-shadow:0 -2px 10px rgba(0,0,0,.08)}
+.bot-nav .bnav{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;cursor:pointer;padding:6px 4px;border:none;
+  background:none;color:#888;transition:.15s;font-family:inherit}
+.bot-nav .bnav .bicon{font-size:1.3rem;line-height:1}
+.bot-nav .bnav .blabel{font-size:.63rem;font-weight:600;white-space:nowrap}
+.bot-nav .bnav.active{color:var(--k1)}
+.bot-nav .bnav.active .bicon{transform:scale(1.1)}
+
+/* PAGES */
+.page{display:none;padding-bottom:calc(var(--nav-h) + 8px);height:100%;overflow-y:auto}
+.page.active{display:block}
+#page-schedule.active{display:flex;flex-direction:column;height:calc(100vh - var(--hdr-h) - var(--nav-h));padding-bottom:0;overflow:hidden}
+#page-schedule .tbl-wrap{flex:1;overflow:auto;padding-bottom:8px}
+
+/* CONTROLS */
+.ctrl{padding:10px 12px 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn{padding:8px 14px;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;
+  font-weight:600;transition:.15s;min-height:38px;display:inline-flex;align-items:center;gap:4px}
+.btn-pri{background:#1a237e;color:#fff}.btn-pri:active{background:#283593}
+.btn-sec{background:#fff;border:1px solid #ccc;color:#333}.btn-sec:active{background:#f0f0f0}
+.btn-sm{padding:6px 11px;font-size:.78rem;min-height:32px}
+.nav-row{display:flex;gap:6px;align-items:center;flex:1;min-width:0}
+.search-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:0 12px 8px}
+.search{padding:8px 12px;border:1px solid #ccc;border-radius:8px;font-size:.85rem;
+  flex:1;min-width:0;outline:none;min-height:38px}
+.search:focus{border-color:#1a237e}
+.kip-row{display:flex;gap:5px;flex-wrap:wrap;padding:0 12px 8px}
+.kb{padding:6px 14px;border:2px solid transparent;border-radius:20px;cursor:pointer;
+  font-size:.78rem;font-weight:700;transition:.15s;min-height:34px}
+.kb.all{background:#e8eaf6;color:#1a237e;border-color:#1a237e}
+.kb.k1{background:var(--k1l);color:var(--k1);border-color:var(--k1)}
+.kb.k2{background:var(--k2l);color:var(--k2);border-color:var(--k2)}
+.kb.k3{background:var(--k3l);color:var(--k3);border-color:var(--k3)}
+.kb.k4{background:var(--k4l);color:var(--k4);border-color:var(--k4)}
+.kb.off{opacity:.35}
+
+/* LEGEND */
+.legend{padding:0 12px 8px;display:flex;gap:10px;align-items:center;font-size:.75rem;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:4px}
+.leg-box{width:18px;height:13px;border-radius:3px;flex-shrink:0}
+
+/* TABLE */
+.tbl-wrap{overflow:auto;padding:0;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow)}
+table{border-collapse:separate;border-spacing:0;font-size:11px;width:100%;table-layout:fixed}
+th,td{padding:5px;border:1px solid #e8e8e8;text-align:center;white-space:nowrap;border-top:none;border-left:none}
+th{background:#1a237e;color:#fff;font-weight:500;height:var(--hdr1-h);position:sticky;top:0;z-index:90}
+
+/* Header Rows Sticky */
+thead tr:nth-child(1) th{top:0;z-index:110}
+thead tr:nth-child(2) th{top:var(--hdr1-h);z-index:105}
+tr.kh td{position:sticky;top:calc(var(--hdr1-h) + var(--hdr2-h));z-index:100;color:#fff;font-weight:700;text-align:left;padding:7px 10px}
+
+/* Left Columns Sticky */
+.c1{position:sticky;left:0;z-index:20;min-width:var(--col1-w);width:var(--col1-w);text-align:left;border-left:1px solid #e8e8e8}
+.c2{position:sticky;left:var(--col1-w);z-index:20;min-width:var(--col2-w);width:var(--col2-w)}
+.c3{position:sticky;left:calc(var(--col1-w) + var(--col2-w));z-index:20;min-width:var(--col3-w);width:var(--col3-w);text-align:left}
+
+/* Corners (Intersection) */
+th.c1,th.c2,th.c3{z-index:130;background:#37474f}
+thead tr:nth-child(1) th.c1, thead tr:nth-child(1) th.c2, thead tr:nth-child(1) th.c3{z-index:150}
+thead tr:nth-child(2) th.c1, thead tr:nth-child(2) th.c2, thead tr:nth-child(2) th.c3{z-index:140}
+
+/* Backgrounds for sticky columns */
+td.c1,td.c2,td.c3{background:#fafafa;border-left:1px solid #e8e8e8}
+tr.kh td{background:#1a237e} /* ensure no transparency */
+
+/* Month & Kip labels sticky scroll */
+tr.kh td span, .month-label{position:sticky;left:calc(var(--col1-w) + var(--col2-w) + var(--col3-w) + 10px);display:inline-block;white-space:nowrap}
+
+/* Fix borders */
+tr:first-child td, tr:first-child th{border-top:1px solid #e8e8e8}
+td:first-child, th:first-child{border-left:1px solid #e8e8e8}
+
+td.shS{background:var(--s-bg);color:var(--s-fg);font-weight:700}
+td.shC{background:var(--c-bg);color:var(--c-fg);font-weight:700}
+td.shN{background:var(--n-bg);color:var(--n-fg);font-weight:700}
+td.shL{background:var(--h-bg);color:var(--h-fg);font-weight:700}
+td.today-c{outline:2px solid #f9a825;outline-offset:-2px}
+tr.kh td{position:sticky;top:56px;z-index:100;color:#fff;font-weight:700;text-align:left;padding:7px 10px;font-size:11.5px}
+tr.kh.k1 td{background:var(--k1)}
+tr.kh.k2 td{background:var(--k2)}
+tr.kh.k3 td{background:var(--k3)}
+tr.kh.k4 td{background:var(--k4)}
+td.shHC{background:var(--hc-bg);color:var(--hc-fg);font-weight:700}
+td.shC1{background:#b2dfdb;color:#00695c;font-weight:700}
+td.shC2{background:#ffe082;color:#e65100;font-weight:700}
+td.shC3{background:#ce93d8;color:#4a148c;font-weight:700}
+td.shUN{background:#f5f5f5;color:#ccc;font-style:italic}
+tbody tr:nth-child(even) td{background-color:#f1f3f5}
+tbody tr:nth-child(even) td.c1,
+tbody tr:nth-child(even) td.c2,
+tbody tr:nth-child(even) td.c3{background-color:#f1f3f5}
+/* Đảm bảo màu ca làm việc đè lên màu xen kẽ */
+tbody tr td.shS{background-color:var(--s-bg)!important}
+tbody tr td.shC{background-color:var(--c-bg)!important}
+tbody tr td.shN{background-color:var(--n-bg)!important}
+tbody tr td.shL{background-color:var(--h-bg)!important}
+tbody tr td.shHC{background-color:var(--hc-bg)!important}
+tbody tr td.shC1{background-color:#b2dfdb!important}
+tbody tr td.shC2{background-color:#ffe082!important}
+tbody tr td.shC3{background-color:#ce93d8!important}
+tbody tr td.today-c{outline:2px solid #f9a825!important}
+
+/* QUICK EDIT MODAL */
+.name-edit{color:#1a237e;text-decoration:underline dotted;cursor:pointer;font-weight:700;transition:.15s}
+.name-edit:hover{color:#d32f2f;background:rgba(26,35,126,.1);text-decoration:underline solid}
+
+.qmodal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.qmodal-overlay.show{display:flex}
+.qmodal-box{background:#fff;border-radius:16px;width:100%;max-width:380px;box-shadow:0 15px 50px rgba(0,0,0,.3);overflow:hidden;animation:pop .3s cubic-bezier(0.18, 0.89, 0.32, 1.28)}
+@keyframes pop{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+.qmodal-head{padding:16px 20px;background:#1a237e;color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.qmodal-body{padding:20px}
+.qmodal-footer{padding:12px 20px;background:#f8f9fa;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #eee}
+
+/* TAB 2 – HÔM NAY */
+.summary-section{padding:12px 12px 0}
+.hol-banner{background:var(--h-bg);color:var(--h-fg);padding:10px 14px;border-radius:8px;
+  font-weight:700;font-size:.88rem;margin-bottom:10px}
+.sum-grid{display:flex;flex-direction:column;gap:10px}
+.sum-card{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.sum-head{padding:10px 14px;color:#fff;font-weight:700;font-size:.9rem;
+  display:flex;justify-content:space-between;align-items:center}
+.sum-head.k1{background:var(--k1)}.sum-head.k2{background:var(--k2)}.sum-head.k3{background:var(--k3)}.sum-head.k4{background:var(--k4)}
+.sum-shift-badge{font-size:1rem;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.25)}
+.sum-row{display:flex;justify-content:space-between;align-items:center;
+  padding:7px 14px;border-bottom:1px solid #f0f0f0;font-size:.82rem}
+.sum-row:last-child{border-bottom:none}
+.sum-row .name{font-weight:600;color:#333}
+.sum-row.leader .name{color:#1a237e}
+.role-tag{font-size:.7rem;color:#888;background:#f5f5f5;padding:2px 7px;border-radius:10px}
+.upcoming-wrap{padding:12px 12px 0}
+.upcoming-title{font-size:.88rem;font-weight:700;color:#333;margin-bottom:8px}
+.up-scroll{overflow-x:auto}
+.up-table{border-collapse:collapse;width:100%;background:#fff;border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow);font-size:11.5px}
+.up-table th{background:#283593;color:#fff;padding:6px 8px;font-weight:600;text-align:center}
+.up-table td{padding:6px 8px;border-bottom:1px solid #f0f0f0;text-align:center}
+.up-table td.kip-name{text-align:left;font-weight:700;white-space:nowrap}
+.up-table td.kip-name.k1{color:var(--k1)}.up-table td.kip-name.k2{color:var(--k2)}.up-table td.kip-name.k3{color:var(--k3)}.up-table td.kip-name.k4{color:var(--k4)}
+.chip{display:inline-block;padding:2px 7px;border-radius:10px;font-weight:700;font-size:10.5px}
+.chip.S{background:var(--s-bg);color:var(--s-fg)}
+.chip.C{background:var(--c-bg);color:var(--c-fg)}
+.chip.N{background:var(--n-bg);color:var(--n-fg)}
+.chip.L{background:var(--h-bg);color:var(--h-fg)}
+.chip.HC{background:var(--hc-bg);color:var(--hc-fg)}
+.chip.C1{background:#b2dfdb;color:#00695c}
+.chip.C2{background:#ffe082;color:#e65100}
+.chip.C3{background:#ce93d8;color:#4a148c}
+
+/* TAB 5 – TĂNG CA */
+.tanca-add{padding:10px 12px 0}
+.ot-type-toggle{display:flex;border:1px solid #ccc;border-radius:8px;overflow:hidden;flex-shrink:0}
+.ot-type-btn{padding:7px 14px;border:none;background:#fff;cursor:pointer;font-size:.8rem;
+  font-weight:700;color:#666;transition:.15s;white-space:nowrap}
+.ot-type-btn.active{background:#1a237e;color:#fff}
+.ot-wrap{padding:10px 12px 16px}
+.ot-group{background:#fff;border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.ot-group.ot-past{opacity:.6}
+.ot-date-head{padding:8px 14px;background:#37474f;color:#fff;font-weight:700;font-size:.85rem;display:flex;justify-content:space-between;align-items:center}
+.ot-date-head.ot-today{background:#f9a825;color:#222}
+.ot-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #f0f0f0}
+.ot-item:last-child{border-bottom:none}
+.ot-info{flex:1;min-width:0}
+.ot-name{font-weight:600;font-size:.84rem;color:#222}
+.ot-note{font-size:.72rem;color:#888;margin-top:2px}
+.ot-empty{text-align:center;padding:50px 20px;color:#aaa;font-size:.9rem}
+
+/* TAB 3 – DANH SÁCH KÍP */
+.lookup-search{padding:10px 12px 6px}
+.lookup-wrap{padding:0 12px 16px}
+.kip-section{background:#fff;border-radius:var(--radius);margin-bottom:12px;
+  overflow:hidden;box-shadow:var(--shadow)}
+.kip-section-head{padding:10px 14px;color:#fff;font-weight:700;
+  display:flex;justify-content:space-between;align-items:center;font-size:.88rem}
+.kip-section-head.k1{background:var(--k1)}.kip-section-head.k2{background:var(--k2)}.kip-section-head.k3{background:var(--k3)}.kip-section-head.k4{background:var(--k4)}
+.emp-card{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #f0f0f0}
+.emp-card:last-child{border-bottom:none}
+.emp-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:.82rem;color:#fff;flex-shrink:0}
+.av-k1{background:var(--k1)}.av-k2{background:var(--k2)}.av-k3{background:var(--k3)}.av-k4{background:var(--k4)}
+.emp-info{flex:1;min-width:0}
+.emp-name{font-weight:600;font-size:.84rem;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emp-meta{font-size:.71rem;color:#888;margin-top:1px}
+.emp-shift-now{flex-shrink:0}
+
+/* TAB 4 – CÀI ĐẶT */
+.settings-wrap{padding:10px 12px 16px;display:flex;flex-direction:column;gap:12px}
+.settings-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow)}
+.settings-head{padding:11px 14px;font-weight:700;font-size:.88rem;color:#333;
+  border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;
+  align-items:center;flex-wrap:wrap;gap:6px}
+.settings-body{padding:12px 14px}
+.form-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.form-input{padding:9px 11px;border:1px solid #ccc;border-radius:8px;font-size:.85rem;
+  outline:none;min-height:38px;flex:1;min-width:90px}
+.form-input:focus{border-color:#1a237e}
+.form-select{padding:9px 11px;border:1px solid #ccc;border-radius:8px;font-size:.85rem;
+  background:#fff;outline:none;min-height:38px}
+.form-input[type=date]{cursor:pointer;min-width:130px}
+.holiday-list{list-style:none;max-height:220px;overflow-y:auto}
+.holiday-item{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 0;border-bottom:1px solid #f5f5f5;font-size:.82rem}
+.holiday-item:last-child{border-bottom:none}
+.holiday-date{font-weight:600;color:var(--k2);min-width:82px}
+.holiday-name{flex:1;color:#444;margin:0 8px}
+.del-btn{background:none;border:none;cursor:pointer;color:#e57373;font-size:1.1rem;
+  padding:4px 6px;min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center}
+.del-btn:active{color:#c62828}
+.emp-list-manage{list-style:none;max-height:260px;overflow-y:auto}
+.emp-manage-item{display:flex;align-items:center;gap:8px;padding:7px 0;
+  border-bottom:1px solid #f5f5f5;font-size:.82rem;flex-wrap:wrap}
+.emp-manage-item:last-child{border-bottom:none}
+.emp-manage-name{font-weight:600;flex:1;min-width:100px}
+.emp-manage-meta{font-size:.7rem;color:#888}
+.emp-manage-kip{font-size:.7rem;padding:2px 8px;border-radius:10px;color:#fff;font-weight:700;white-space:nowrap}
+.emp-manage-kip.k1{background:var(--k1)}.emp-manage-kip.k2{background:var(--k2)}.emp-manage-kip.k3{background:var(--k3)}.emp-manage-kip.k4{background:var(--k4)}
+
+/* PASSWORD MODAL */
+.pw-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;
+  align-items:center;justify-content:center;padding:16px}
+.pw-overlay.show{display:flex}
+.pw-box{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:320px;
+  box-shadow:0 10px 40px rgba(0,0,0,.25);text-align:center}
+.pw-icon{font-size:2.2rem;margin-bottom:10px}
+.pw-box h3{font-size:1.05rem;color:#1a237e;margin-bottom:5px}
+.pw-box p{font-size:.8rem;color:#888;margin-bottom:18px}
+.pw-input{width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:10px;
+  font-size:1.3rem;letter-spacing:6px;text-align:center;outline:none;transition:.15s}
+.pw-input:focus{border-color:#1a237e}
+.pw-input.error{border-color:#e53935;animation:shake .3s}
+.pw-err{color:#e53935;font-size:.78rem;margin-top:7px;min-height:18px}
+.pw-actions{display:flex;gap:8px;margin-top:14px;justify-content:center}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:#1a237e;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff}
+.loading-overlay.hide{display:none}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-size:.95rem;opacity:.85}
+
+/* DESKTOP ≥768px */
+@media(min-width:768px){
+  :root{--nav-h:0px}
+  .bot-nav{display:none}
+  .page{padding-bottom:24px}
+  .top-tabs{display:block;padding:0 24px}
+  .hdr{padding:0 24px}
+  .hdr-left h1{font-size:1.2rem}
+  .hdr-left .sub{font-size:.78rem}
+  .hdr-right{display:block}
+  .ctrl{padding:12px 24px 8px;gap:8px}
+  .search-row{padding:0 24px 10px}
+  .kip-row{padding:0 24px 10px}
+  .legend{padding:0 24px 10px}
+  .c1{min-width:var(--col1-w)}.c2{left:var(--col1-w)}.c3{left:calc(var(--col1-w) + var(--col2-w))}
+  thead tr:nth-child(1) th{top:0}
+  thead tr:nth-child(2) th{top:var(--hdr1-h)}
+  tr.kh td{top:calc(var(--hdr1-h) + var(--hdr2-h))}
+  .summary-section{padding:16px 24px 0}
+  .sum-grid{flex-direction:row}
+  .sum-card{flex:1}
+  .upcoming-wrap{padding:14px 24px 0}
+  .lookup-search{padding:14px 24px 6px}
+  .lookup-wrap{padding:0 24px 24px}
+  .emp-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  .settings-wrap{padding:16px 24px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .settings-card.full{grid-column:1/-1}
+}
+
+@media print{
+  .ctrl,.legend,.top-tabs,.bot-nav,.hdr-right,.search-row,.kip-row{display:none!important}
+  .page{padding-bottom:0!important}
+  .tbl-wrap{padding:0!important}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="load-text">Đang tải dữ liệu...</div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="pw-overlay" id="pwOverlay">
+  <div class="pw-box">
+    <div class="pw-icon">🔒</div>
+    <h3>Khu vực bảo mật</h3>
+    <p>Nhập mật khẩu để vào Cài Đặt</p>
+    <input class="pw-input" type="password" id="pwInput" maxlength="10"
+      placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    <div class="pw-err" id="pwErr"></div>
+    <div class="pw-actions">
+      <button class="btn btn-sec" onclick="closePwModal()">Hủy</button>
+      <button class="btn btn-pri" onclick="checkPw()">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <h1>🏭 Lịch Làm Việc Phân Xưởng 1</h1>
+    <div class="sub" id="todayLabel"></div>
+  </div>
+  <div class="hdr-right" style="display:flex!important;align-items:center;gap:8px">
+    <span style="font-size:.7rem;opacity:.8;text-align:right">Làm 4 ngày · Nghỉ 2 ngày<br>Sáng / Chiều luân phiên</span>
+    <a href="rating.html" class="btn-rating" title="Đánh giá nhân viên">🏆</a>
+  </div>
+</div>
+
+<!-- TOP TABS (desktop) -->
+<div class="top-tabs">
+  <div class="tab active" onclick="showTab('schedule')">📅 Lịch Ca</div>
+  <div class="tab"        onclick="showTab('summary')">📊 Hôm Nay</div>
+  <div class="tab"        onclick="showTab('lookup')">👥 Danh Sách Kíp</div>
+  <div class="tab"        onclick="showTab('tanca')">⏰ Tăng Ca</div>
+  <div class="tab"        onclick="showTab('settings')">⚙️ Cài Đặt</div>
+  <a href="rating.html" class="tab tab-rating" title="Đánh giá nhân viên">🏆 Đánh Giá</a>
+</div>
+
+<!-- TAB 1: LỊCH CA -->
+<div class="page active" id="page-schedule">
+  <div class="ctrl">
+    <div class="nav-row">
+      <button class="btn btn-sec" onclick="nav(-1)">◀</button>
+      <button class="btn btn-pri" onclick="goToday()" style="flex:1;justify-content:center">📅 Hôm nay</button>
+      <button class="btn btn-sec" onclick="nav(1)">▶</button>
+      <button class="btn btn-sec" onclick="window.print()" title="In">🖨️</button>
+    </div>
+  </div>
+  <div class="search-row">
+    <input class="search" type="text" placeholder="🔍 Tìm nhân viên, MSNV..." oninput="setSearch(this.value)">
+  </div>
+  <div class="kip-row" id="kipBtns">
+    <button class="kb all" onclick="setKip(0)">Tất cả</button>
+    <button class="kb k1"  onclick="setKip(1)">Kíp 1</button>
+    <button class="kb k2"  onclick="setKip(2)">Kíp 2</button>
+    <button class="kb k3"  onclick="setKip(3)">Kíp 3</button>
+    <button class="kb k4"  onclick="setKip(4)">HC / Cố Định</button>
+  </div>
+  <div class="legend">
+    <span style="font-weight:700;color:#555">Chú thích:</span>
+    <div class="leg-item"><span class="leg-box" style="background:var(--s-bg)"></span>S – Sáng</div>
+    <div class="leg-item"><span class="leg-box" style="background:var(--c-bg)"></span>C – Chiều</div>
+    <div class="leg-item"><span class="leg-box" style="background:var(--n-bg)"></span>N – Nghỉ</div>
+    <div class="leg-item"><span class="leg-box" style="background:var(--h-bg)"></span>L – Nghỉ Lễ</div>
+    <div class="leg-item"><span class="leg-box" style="background:var(--hc-bg)"></span>HC – Hành Chính</div>
+  </div>
+  <div class="tbl-wrap"><table id="tbl"></table></div>
+</div>
+
+<!-- TAB 2: HÔM NAY -->
+<div class="page" id="page-summary">
+  <div class="summary-section">
+    <div id="holBanner"></div>
+    <div class="sum-grid" id="sumGrid"></div>
+  </div>
+  <div class="upcoming-wrap">
+    <div class="upcoming-title">📆 14 ngày tới</div>
+    <div class="up-scroll"><table class="up-table" id="upTable"></table></div>
+  </div>
+</div>
+
+<!-- TAB 3: DANH SÁCH KÍP -->
+<div class="page" id="page-lookup">
+  <div class="lookup-search">
+    <input class="search" style="max-width:300px" type="text"
+      placeholder="🔍 Tìm tên / MSNV..." oninput="setLookupQ(this.value)">
+  </div>
+  <div class="lookup-wrap" id="lookupWrap"></div>
+</div>
+
+<!-- TAB 4: CÀI ĐẶT -->
+<div class="page" id="page-settings">
+  <div class="settings-wrap">
+
+    <div class="settings-card">
+      <div class="settings-head">
+        🗓️ Ngày Nghỉ Lễ
+        <span style="font-size:.72rem;color:#999;font-weight:400">hiện "L" thay S/C/N</span>
+      </div>
+      <div class="settings-body">
+        <div class="form-row">
+          <input type="date" class="form-input" id="hDate" style="flex:0 0 auto">
+          <input type="text" class="form-input" placeholder="Tên ngày lễ..." id="hName">
+          <button class="btn btn-pri btn-sm" onclick="addHoliday()">+ Thêm</button>
+        </div>
+        <ul class="holiday-list" id="holidayList"></ul>
+        <div style="margin-top:8px;font-size:.72rem;color:#aaa">30/4, 1/5, 2/9, 1/1 đã có sẵn.</div>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-head">👤 Thêm Nhân Viên</div>
+      <div class="settings-body">
+        <div class="form-row">
+          <input type="text" class="form-input" placeholder="Họ tên" id="eNm">
+          <input type="text" class="form-input" placeholder="MSNV" id="eId" style="flex:0 0 76px">
+        </div>
+        <div class="form-row">
+          <input type="text" class="form-input" placeholder="Máy vận hành" id="eRl">
+          <select class="form-select" id="eKp">
+            <option value="1|">Kíp 1 (xoay)</option>
+            <option value="2|">Kíp 2 (xoay)</option>
+            <option value="3|">Kíp 3 (xoay)</option>
+            <option value="4|HC">Hành Chính (T2–T7)</option>
+            <option value="4|">Ca Xoay (phân ca thủ công)</option>
+          </select>
+          <button class="btn btn-pri btn-sm" onclick="addEmp()">+ Thêm</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-card full">
+      <div class="settings-head">🔄 Phân Ca Xoay
+        <span style="font-size:.72rem;color:#999;font-weight:400">chỉ định ca cho từng NV theo ngày</span>
+      </div>
+      <div class="settings-body">
+        <div class="form-row">
+          <select class="form-select" id="psEmp" style="flex:1;min-width:0">
+            <option value="">-- Chọn nhân viên Ca Xoay --</option>
+          </select>
+        </div>
+        <div class="form-row" style="flex-wrap:wrap">
+          <input type="date" class="form-input" id="psFrom" style="flex:1">
+          <span style="padding:8px 4px;color:#999;font-weight:700">→</span>
+          <input type="date" class="form-input" id="psTo" style="flex:1">
+          <select class="form-select" id="psShift" style="flex:0 0 auto">
+            <option value="C1">Ca 1</option>
+            <option value="C2">Ca 2</option>
+            <option value="C3">Ca 3</option>
+            <option value="N">Nghỉ</option>
+          </select>
+          <button class="btn btn-pri btn-sm" onclick="addEmpSched()">+ Thêm</button>
+        </div>
+        <div style="font-size:.72rem;color:#aaa;margin:4px 0 8px">Ví dụ: NV A làm Ca 1 từ 21/4 đến 27/4, tuần sau đổi Ca 2.</div>
+        <ul class="holiday-list" id="empSchedList" style="max-height:300px"></ul>
+      </div>
+    </div>
+
+    <div class="settings-card full">
+      <div class="settings-head">
+        📋 Danh Sách Nhân Viên
+        <button class="btn btn-sec btn-sm" onclick="resetEmps()">↺ Mặc định</button>
+      </div>
+      <div class="settings-body" style="padding:0 0 4px">
+        <ul class="emp-list-manage" id="empMgList"></ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TAB 5: TĂNG CA -->
+<div class="page" id="page-tanca">
+  <div class="tanca-add">
+    <div class="settings-card">
+      <div class="settings-head">⏰ Thêm Lịch Tăng Ca</div>
+      <div class="settings-body">
+
+        <!-- Chọn nhân viên -->
+        <div class="form-row">
+          <select class="form-select" id="tcEmpSel" onchange="onTcEmpChange()" style="flex:1;min-width:0">
+            <option value="">-- Chọn nhân viên --</option>
+          </select>
+        </div>
+        <!-- Nhập tay (hiện khi chọn "Khác") -->
+        <div class="form-row" id="tcManualRow" style="display:none">
+          <input type="text" class="form-input" placeholder="Họ tên nhân viên" id="tcName">
+          <input type="text" class="form-input" placeholder="MSNV" id="tcId" style="flex:0 0 76px">
+        </div>
+
+        <!-- Ngày + loại tăng ca -->
+        <div class="form-row" style="align-items:center">
+          <input type="date" class="form-input" id="tcDate" style="flex:0 0 auto">
+          <div class="ot-type-toggle">
+            <button class="ot-type-btn active" id="btnFullCa" onclick="setOtType('full')">Full Ca</button>
+            <button class="ot-type-btn"         id="btnByHour" onclick="setOtType('hour')">Theo Giờ</button>
+          </div>
+        </div>
+
+        <!-- Full ca: chọn ca -->
+        <div id="tcFullRow" class="form-row">
+          <select class="form-select" id="tcShift" style="flex:1">
+            <option value="S">☀️ Ca Sáng (S)</option>
+            <option value="C">🌙 Ca Chiều (C)</option>
+            <option value="C1">① Ca 1</option>
+            <option value="C2">② Ca 2</option>
+            <option value="C3">③ Ca 3</option>
+          </select>
+        </div>
+
+        <!-- Theo giờ: nhập giờ -->
+        <div id="tcHourRow" class="form-row" style="display:none;align-items:center">
+          <input type="time" class="form-input" id="tcStart" style="flex:1" oninput="calcHours()">
+          <span style="padding:0 6px;color:#999;font-weight:700">–</span>
+          <input type="time" class="form-input" id="tcEnd" style="flex:1" oninput="calcHours()">
+          <span style="font-size:.75rem;color:#888;margin-left:4px" id="tcHourCount"></span>
+        </div>
+
+        <!-- Ghi chú + nút thêm -->
+        <div class="form-row">
+          <input type="text" class="form-input" placeholder="Ghi chú (không bắt buộc)" id="tcNote">
+          <button class="btn btn-pri btn-sm" onclick="addOvertime()">+ Thêm</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <div class="ot-wrap" id="overtimeList"></div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bot-nav">
+  <button class="bnav active" onclick="showTab('schedule')">
+    <span class="bicon">📅</span><span class="blabel">Lịch</span>
+  </button>
+  <button class="bnav" onclick="showTab('summary')">
+    <span class="bicon">📊</span><span class="blabel">Hôm Nay</span>
+  </button>
+  <button class="bnav" onclick="showTab('lookup')">
+    <span class="bicon">👥</span><span class="blabel">DS Kíp</span>
+  </button>
+  <button class="bnav" onclick="showTab('tanca')">
+    <span class="bicon">⏰</span><span class="blabel">Tăng Ca</span>
+  </button>
+  <button class="bnav" onclick="showTab('settings')">
+    <span class="bicon">⚙️</span><span class="blabel">Cài Đặt</span>
+  </button>
+</nav>
+
+<!-- QUICK EDIT MODAL -->
+<div class="qmodal-overlay" id="qEditModal" onclick="if(event.target===this)closeQuickEdit()">
+  <div class="qmodal-box">
+    <div class="qmodal-head">
+      <span>📝 Phân ca nhanh</span>
+      <button onclick="closeQuickEdit()" style="background:none;border:none;color:#fff;font-size:1.4rem;line-height:1;cursor:pointer">✕</button>
+    </div>
+    <div class="qmodal-body">
+      <div style="margin-bottom:15px">
+        <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Nhận viên</label>
+        <div id="qeName" style="font-weight:700;font-size:1.1rem;color:#1a237e"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:15px">
+        <div style="flex:1">
+          <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Từ ngày</label>
+          <input type="date" class="form-input" id="qeFrom" style="width:100%">
+        </div>
+        <div style="flex:1">
+          <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Đến ngày</label>
+          <input type="date" class="form-input" id="qeTo" style="width:100%">
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Chọn ca làm việc</label>
+        <select class="form-select" id="qeShift" style="width:100%;font-size:1rem;font-weight:700">
+          <option value="C1">① Ca 1</option>
+          <option value="C2">② Ca 2</option>
+          <option value="C3">③ Ca 3</option>
+          <option value="N">🏠 Nghỉ</option>
+        </select>
+      </div>
+    </div>
+    <div class="qmodal-footer">
+      <button class="btn btn-sec" onclick="closeQuickEdit()">Hủy</button>
+      <button class="btn btn-pri" id="btnSaveQE" onclick="saveQuickEdit()">💾 Lưu lịch</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ══════════════════════════════════════════
+// ⚙️  DÁN THÔNG TIN SUPABASE CỦA BẠN VÀO ĐÂY
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+// ══════════════════════════════════════════
+const SB_OK = SB_URL.startsWith('https://') && !SB_URL.includes('PASTE');
+const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
+
+// ── TÍNH CA ────────────────────────────────
+const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
+const REF   = new Date(2026, 3, 11); // 11/04/2026
+const PHASE = {1:2, 2:10, 3:6};
+function getShift(k, d) {
+  const n = Math.round((d - REF) / 864e5);
+  return CYCLE[((n + PHASE[k]) % 12 + 12) % 12];
+}
+
+// ── DỮ LIỆU MẶC ĐỊNH ─────────────────────
+const DEF_EMPS = {
+  1:[
+    {id:'1049',name:'Trần Đan Hữu',role:'Trưởng ca'},
+    {id:'2555',name:'Nguyễn Hồng Sơn',role:'Tiện 2'},
+    {id:'2601',name:'Nguyễn Văn Bắc',role:'Tiện 2'},
+    {id:'2731',name:'Võ Trường Thịnh',role:'Tiện 2'},
+    {id:'2718',name:'Trương Thanh Tuấn',role:'Tiện Mâm Cặp'},
+    {id:'2397',name:'Đào Lê Phú Khang',role:'Mài Chống Tâm'},
+    {id:'2754',name:'Lương Hữu Thuận',role:'Mài Chống Tâm'},
+    {id:'2725',name:'Trần Văn Kỳ',role:'Mài Chống Tâm'},
+    {id:'2732',name:'Lương Hữu Anh',role:'Bavia'},
+  ],
+  2:[
+    {id:'2019',name:'Dương Thanh Sang',role:'Trưởng ca'},
+    {id:'2663',name:'Lê Đức Khải',role:'Tiện 2'},
+    {id:'2692',name:'Phạm Triệu Vỹ',role:'Tiện 2'},
+    {id:'2483',name:'Huỳnh Ngọc Tuấn',role:'Tiện 2'},
+    {id:'2724',name:'Hoàng Trương Minh Đức',role:'Tiện Mâm Cặp'},
+    {id:'2489',name:'Nguyễn Hữu Chung',role:'Mài Chống Tâm'},
+    {id:'2751',name:'Phan Tấn Đạt',role:'Mài Chống Tâm'},
+    {id:'2750',name:'Nguyễn Chánh Huy',role:'Mài Chống Tâm'},
+    {id:'2761',name:'Phan Thanh Hoài',role:'Bavia'},
+  ],
+  3:[
+    {id:'1058',name:'Trần Xuân Nguyên',role:'Trưởng ca'},
+    {id:'2536',name:'Trương Hoàng Sang',role:'Tiện 2'},
+    {id:'2529',name:'Trần Bình Đan',role:'Tiện 2'},
+    {id:'2739',name:'Nguyễn Việt Khải',role:'Tiện 2'},
+    {id:'2655',name:'Phạm Xuân Trường',role:'Tiện Mâm Cặp'},
+    {id:'1324',name:'Trương Minh Tân',role:'Mài Chống Tâm'},
+    {id:'2752',name:'Nguyễn Đức Phát',role:'Mài Chống Tâm'},
+    {id:'1370',name:'Lâm Trần Khải Duy',role:'Mài Chống Tâm'},
+    {id:'2709',name:'Phan Hoàng Phi',role:'Bavia'},
+  ]
+};
+const DEF_HOLS = [
+  {date:'2026-04-30',name:'Giải phóng miền Nam'},
+  {date:'2026-05-01',name:'Quốc tế Lao động'},
+  {date:'2026-09-02',name:'Quốc khánh'},
+  {date:'2026-01-01',name:'Tết Dương lịch'},
+  {date:'2027-01-01',name:'Tết Dương lịch'},
+];
+
+// ── SUPABASE DATA ──────────────────────────
+const cp = o => JSON.parse(JSON.stringify(o));
+let EMPS = {1:[],2:[],3:[],4:[]};
+let HOLS = [];
+
+async function loadData() {
+  if (!SB_OK) {
+    console.warn('Supabase chưa cấu hình, dùng dữ liệu mặc định');
+    const d=cp(DEF_EMPS);
+    [1,2,3,4].forEach(k=>(d[k]||[]).forEach(e=>e.kip=k));
+    EMPS=d; HOLS=cp(DEF_HOLS); return;
+  }
+  try {
+    const [er, hr] = await Promise.all([
+      sb.from('employees').select('*').order('kip').order('sort_order'),
+      sb.from('holidays').select('*').order('date')
+    ]);
+    if (er.error || hr.error) throw new Error((er.error||hr.error).message);
+    EMPS = {1:[],2:[],3:[],4:[]};
+    (er.data||[]).forEach(e => { if(EMPS[e.kip]) EMPS[e.kip].push({id:e.id,name:e.name,role:e.role,fixed_shift:e.fixed_shift||null,kip:e.kip}); });
+    HOLS = hr.data || [];
+    const {data:otData} = await sb.from('overtime').select('*').order('date').order('created_at');
+    OVERTIME = otData || [];
+    const {data:esData} = await sb.from('emp_schedule').select('*').order('start_date');
+    EMP_SCHED = esData || [];
+  } catch(e) {
+    console.warn('Lỗi Supabase:', e.message, '– dùng dữ liệu mặc định');
+    const d=cp(DEF_EMPS);
+    [1,2,3,4].forEach(k=>(d[k]||[]).forEach(e=>e.kip=k));
+    EMPS=d; HOLS=cp(DEF_HOLS); OVERTIME=[];
+  }
+}
+
+// ── HELPERS ────────────────────────────────
+const DN    = ['CN','T2','T3','T4','T5','T6','T7'];
+const DFUL  = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+const MN    = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const SNAME = {S:'Ca Sáng (6:00–14:00)',C:'Ca Chiều (14:00–22:00)',N:'Nghỉ',L:'Nghỉ Lễ',
+               HC:'Hành Chính (7:30–16:30)',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',UN:'Chưa phân ca'};
+const SICON = {S:'☀️',C:'🌙',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③'};
+const SLBL  = s => ({S:'Sáng',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3'}[s]||'Nghỉ');
+// Tính ca cho từng nhân viên (hỗ trợ ca cố định)
+function empShift(e, d) {
+  if (isHol(d)) return 'L';
+  const isSun = d.getDay() === 0;
+  if (e.fixed_shift === 'HC') return isSun ? 'N' : 'HC';
+  if (e.fixed_shift === 'S')  return isSun ? 'N' : 'S';
+  if (e.fixed_shift === 'C')  return isSun ? 'N' : 'C';
+  if (e.kip === 4) {
+    const dk = dKey(d);
+    const entry = EMP_SCHED.find(s => s.emp_id === e.id && s.start_date <= dk && dk <= s.end_date);
+    if (entry) return entry.shift;
+    return isSun ? 'N' : 'UN';
+  }
+  return getShift(e.kip, d);
+}
+const GRP_LABEL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',4:'Hành Chính / Cố Định'};
+
+function addD(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function sameD(a,b){ return a.toDateString()===b.toDateString(); }
+function dKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function fmtD(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+function isHol(d){ return HOLS.find(h=>h.date===dKey(d))||null; }
+function dShift(k,d){ return isHol(d)?'L':getShift(k,d); }
+function allEmps(){ const a=[]; [1,2,3,4].forEach(k=>(EMPS[k]||[]).forEach(e=>a.push({...e,kip:k}))); return a; }
+
+// ── STATE ──────────────────────────────────
+let startDate, searchQ='', kipF=0, lookQ='', activeTab='schedule';
+let OVERTIME = [];
+let EMP_SCHED = []; // [{id,emp_id,emp_name,start_date,end_date,shift}]
+let otType = 'full';
+const NDAYS = 28;
+
+// ── HEADER ─────────────────────────────────
+function initLabel(){
+  const t = new Date();
+  document.getElementById('todayLabel').textContent =
+    `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
+}
+
+// ── TAB 1: BẢNG LỊCH ──────────────────────
+function renderTable(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dates = Array.from({length:NDAYS}, (_,i) => addD(startDate,i));
+  const mg=[]; let pm=-1,sp=0;
+  dates.forEach(d=>{ if(d.getMonth()!==pm){if(pm!==-1)mg.push({m:pm,s:sp});pm=d.getMonth();sp=1;}else sp++; });
+  mg.push({m:pm,s:sp});
+
+  let h = '<thead><tr>';
+  h += '<th class="stky c1" rowspan="2">Họ tên</th><th class="stky c2" rowspan="2">MSNV</th><th class="stky c3" rowspan="2">Máy vận hành</th>';
+  mg.forEach(g => h+=`<th colspan="${g.s}" style="background:#1a237e;text-align:left"><span class="month-label">${MN[g.m]}</span></th>`);
+  h += '</tr><tr>';
+  dates.forEach(d => {
+    const iT=sameD(d,today), iW=d.getDay()===0||d.getDay()===6, iH=!!isHol(d);
+    const cls = iT?'today-h':(iH||iW?'wk':'');
+    const tip = isHol(d)?isHol(d).name:'';
+    h += `<th class="${cls}" title="${tip||d.toLocaleDateString('vi-VN')}">${d.getDate()}<br>${DN[d.getDay()]}</th>`;
+  });
+  h += '</tr></thead><tbody>';
+
+  const q = searchQ.trim().toLowerCase();
+  for(let k=1;k<=3;k++){
+    if(kipF!==0&&kipF!==k) continue;
+    const ts = dShift(k,today);
+    h += `<tr class="kh k${k}"><td colspan="${3+NDAYS}"><span>▣ KÍP ${k} · Hôm nay: ${SICON[ts]} ${SLBL(ts)}</span></td></tr>`;
+    (EMPS[k]||[]).forEach(e => {
+      if(q&&!e.name.toLowerCase().includes(q)&&!e.id.includes(q)) return;
+      const isRot = e.kip === 4 && e.fixed_shift !== 'HC';
+      const nameHtml = isRot ? `<span class="name-edit" onclick="openQuickEdit('${e.id}','${e.name}')" title="Phân ca nhanh">${e.name}</span>` : e.name;
+      h += `<tr><td class="c1">${nameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
+      dates.forEach(d => {
+        const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
+        h += `<td class="sh${s}${tc}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+      });
+      h += '</tr>';
+    });
+  }
+  if(kipF===0||kipF===4){
+    const kip4Emps = (EMPS[4]||[]).filter(e=>!q||e.name.toLowerCase().includes(q)||e.id.includes(q));
+    const hcEmps = kip4Emps.filter(e => e.fixed_shift === 'HC');
+    const rotEmps = kip4Emps.filter(e => e.fixed_shift !== 'HC');
+
+    if(hcEmps.length>0){
+      h += `<tr class="kh k4"><td colspan="${3+NDAYS}">▣ HÀNH CHÍNH · ${hcEmps.length} NV</td></tr>`;
+      hcEmps.forEach(e => {
+        h += `<tr><td class="c1">${e.name}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
+        dates.forEach(d => {
+          const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
+          h += `<td class="sh${s}${tc}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+        });
+        h += '</tr>';
+      });
+    }
+    if(rotEmps.length>0){
+      h += `<tr class="kh k3" style="background:#00695c"><td colspan="${3+NDAYS}">▣ CỐ ĐỊNH VÀ CA XOAY · ${rotEmps.length} NV</td></tr>`;
+      rotEmps.forEach(e => {
+        const isRot = e.kip === 4 && e.fixed_shift !== 'HC';
+        const nameHtml = isRot ? `<span class="name-edit" onclick="openQuickEdit('${e.id}','${e.name}')" title="Phân ca nhanh">${e.name}</span>` : e.name;
+        h += `<tr><td class="c1">${nameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
+        dates.forEach(d => {
+          const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
+          h += `<td class="sh${s}${tc}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+        });
+        h += '</tr>';
+      });
+    }
+  }
+  document.getElementById('tbl').innerHTML = h + '</tbody>';
+}
+
+// ── TAB 2: HÔM NAY ────────────────────────
+function renderSummary(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const hl = isHol(today);
+  document.getElementById('holBanner').innerHTML = hl
+    ? `<div class="hol-banner">🎌 Hôm nay nghỉ lễ: ${hl.name}</div>` : '';
+
+  let sg = '';
+  for(let k=1;k<=3;k++){
+    const s = dShift(k,today);
+    sg += `<div class="sum-card"><div class="sum-head k${k}">Kíp ${k}<span class="sum-shift-badge">${SICON[s]} ${SLBL(s)}</span></div><div class="sum-body">`;
+    (EMPS[k]||[]).forEach((e,i) => {
+      sg += `<div class="sum-row${i===0?' leader':''}"><span class="name">${i===0?'👑 ':''}${e.name}</span><span class="role-tag">${e.role}</span></div>`;
+    });
+    sg += '</div></div>';
+  }
+  if((EMPS[4]||[]).length>0){
+    const hcE = (EMPS[4]||[]).filter(e=>e.fixed_shift==='HC');
+    const cdE = (EMPS[4]||[]).filter(e=>e.fixed_shift!=='HC');
+    if(hcE.length>0){
+      sg += `<div class="sum-card"><div class="sum-head k4">🏢 Hành Chính<span class="sum-shift-badge">${hcE.length} NV</span></div><div class="sum-body">`;
+      hcE.forEach(e => {
+        const s=empShift(e,today);
+        sg += `<div class="sum-row"><span class="name">${e.name}</span><span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></div>`;
+      });
+      sg += '</div></div>';
+    }
+    if(cdE.length>0){
+      sg += `<div class="sum-card"><div class="sum-head" style="background:#00695c">🔄 Cố Định / Ca Xoay<span class="sum-shift-badge">${cdE.length} NV</span></div><div class="sum-body">`;
+      cdE.forEach(e => {
+        const s=empShift(e,today);
+        sg += `<div class="sum-row"><span class="name">${e.name}</span><span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></div>`;
+      });
+      sg += '</div></div>';
+    }
+  }
+  document.getElementById('sumGrid').innerHTML = sg;
+
+  let ut = '<thead><tr><th>Kíp</th>';
+  for(let i=0;i<14;i++){
+    const d=addD(today,i), iW=d.getDay()===0||d.getDay()===6;
+    const sty=i===0?'background:#f9a825;color:#222':(iW?'background:#37474f':'');
+    ut += `<th style="${sty}">${d.getDate()}/${d.getMonth()+1}<br>${DN[d.getDay()]}</th>`;
+  }
+  ut += '</tr></thead><tbody>';
+  for(let k=1;k<=3;k++){
+    ut += `<tr><td class="kip-name k${k}">Kíp ${k}</td>`;
+    for(let i=0;i<14;i++){
+      const d=addD(today,i), s=dShift(k,d), hl=isHol(d);
+      ut += `<td title="${hl?hl.name:SNAME[s]}"><span class="chip ${s}">${s}</span></td>`;
+    }
+    ut += '</tr>';
+  }
+  document.getElementById('upTable').innerHTML = ut + '</tbody>';
+}
+
+// ── TAB 3: DANH SÁCH KÍP ──────────────────
+function renderLookup(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const q = lookQ.trim().toLowerCase();
+  let html = '';
+  for(let k=1;k<=3;k++){
+    const emps = (EMPS[k]||[]).filter(e=>!q||e.name.toLowerCase().includes(q)||e.id.includes(q));
+    if(emps.length===0&&q) continue;
+    const ts = dShift(k,today);
+    html += `<div class="kip-section"><div class="kip-section-head k${k}">
+      <span>▣ Kíp ${k}</span>
+      <span style="font-size:.78rem;opacity:.9">${emps.length} NV · Hôm nay: ${SICON[ts]} ${SLBL(ts)}</span>
+    </div><div class="emp-cards-grid">`;
+    emps.forEach((e,i) => {
+      const ini = e.name.split(' ').slice(-2).map(w=>w[0]).join('').toUpperCase();
+      html += `<div class="emp-card">
+        <div class="emp-avatar av-k${k}">${ini}</div>
+        <div class="emp-info">
+          <div class="emp-name">${i===0?'👑 ':''}${e.name}</div>
+          <div class="emp-meta">${e.id} · ${e.role}</div>
+        </div>
+        <div class="emp-shift-now"><span class="chip ${ts}">${ts}</span></div>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+  const kip4All = (EMPS[4]||[]).filter(e=>!q||e.name.toLowerCase().includes(q)||e.id.includes(q));
+  const hcL = kip4All.filter(e=>e.fixed_shift==='HC');
+  const cdL = kip4All.filter(e=>e.fixed_shift!=='HC');
+  
+  if(hcL.length>0){
+    html += `<div class="kip-section"><div class="kip-section-head k4"><span>🏢 Hành Chính</span><span style="font-size:.78rem;opacity:.9">${hcL.length} NV</span></div><div class="emp-cards-grid">`;
+    hcL.forEach(e => {
+      const ini = e.name.split(' ').slice(-2).map(w=>w[0]).join('').toUpperCase();
+      const ts = empShift(e,today);
+      html += `<div class="emp-card"><div class="emp-avatar av-k4">${ini}</div><div class="emp-info"><div class="emp-name">${e.name}</div><div class="emp-meta">${e.id} · ${e.role}</div></div><div class="emp-shift-now"><span class="chip ${ts}">${ts}</span></div></div>`;
+    });
+    html += '</div></div>';
+  }
+  if(cdL.length>0){
+    html += `<div class="kip-section"><div class="kip-section-head" style="background:#00695c"><span>🔄 Cố Định / Ca Xoay</span><span style="font-size:.78rem;opacity:.9">${cdL.length} NV</span></div><div class="emp-cards-grid">`;
+    cdL.forEach(e => {
+      const ini = e.name.split(' ').slice(-2).map(w=>w[0]).join('').toUpperCase();
+      const ts = empShift(e,today);
+      const subLbl = e.fixed_shift==='S'?'Cố định Sáng':e.fixed_shift==='C'?'Cố định Chiều':'Ca Xoay';
+      html += `<div class="emp-card"><div class="emp-avatar" style="background:#00695c">${ini}</div><div class="emp-info"><div class="emp-name">${e.name}</div><div class="emp-meta">${e.id} · ${e.role} · ${subLbl}</div></div><div class="emp-shift-now"><span class="chip ${ts}">${ts}</span></div></div>`;
+    });
+    html += '</div></div>';
+  }
+  document.getElementById('lookupWrap').innerHTML = html;
+}
+
+// ── TAB 4: CÀI ĐẶT ────────────────────────
+function renderHolList(){
+  const sorted = [...HOLS].sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('holidayList').innerHTML = sorted.length
+    ? sorted.map(h=>{
+        const d=new Date(h.date+'T00:00:00');
+        return `<li class="holiday-item"><span class="holiday-date">${fmtD(d)}</span><span class="holiday-name">${h.name}</span><button class="del-btn" onclick="removeHol('${h.date}')">✕</button></li>`;
+      }).join('')
+    : '<li style="color:#aaa;padding:8px 0;font-size:.82rem">Chưa có ngày lễ.</li>';
+}
+function renderEmpMg(){
+  const grpLabel = e => e.kip===4
+    ? ({HC:'HC',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',S:'Sáng',C:'Chiều'}[e.fixed_shift]||'HC')
+    : `Kíp ${e.kip}`;
+  document.getElementById('empMgList').innerHTML = allEmps().map(e=>`
+    <li class="emp-manage-item" style="padding:7px 14px">
+      <span class="emp-manage-kip k${e.kip}">${grpLabel(e)}</span>
+      <span class="emp-manage-name">${e.name}</span>
+      <span class="emp-manage-meta">${e.id} · ${e.role}</span>
+      <button class="del-btn" onclick="removeEmp(${e.kip},'${e.id}')">✕</button>
+    </li>`).join('') || '<li style="color:#aaa;padding:10px 14px;font-size:.82rem">Chưa có nhân viên.</li>';
+}
+
+// ── PHÂN CA XOAY ──────────────────────────
+function buildPsEmpSelect(){
+  const sel=document.getElementById('psEmp');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">-- Chọn nhân viên Ca Xoay --</option>';
+  (EMPS[4]||[]).filter(e=>e.fixed_shift!=='HC').forEach(e=>{
+    const opt=document.createElement('option');
+    opt.value=e.id; opt.textContent=`${e.id} – ${e.name}`;
+    sel.appendChild(opt);
+  });
+  sel.value=cur||'';
+}
+function renderEmpSched(){
+  const CLBL={C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',N:'Nghỉ'};
+  // Build a lookup map: id → name
+  const nameMap={};
+  allEmps().forEach(e=>nameMap[e.id]=e.name);
+  const sorted=[...EMP_SCHED].sort((a,b)=>a.start_date.localeCompare(b.start_date));
+  document.getElementById('empSchedList').innerHTML=sorted.length
+    ? sorted.map(s=>{
+        const df=new Date(s.start_date+'T00:00:00'), dt=new Date(s.end_date+'T00:00:00');
+        const sameDay=s.start_date===s.end_date;
+        const rangeStr=sameDay?fmtD(df):`${fmtD(df)} → ${fmtD(dt)}`;
+        return `<li class="holiday-item">
+          <span class="holiday-date" style="min-width:130px">${rangeStr}</span>
+          <span class="holiday-name"><b>${nameMap[s.emp_id]||s.emp_id}</b></span>
+          <span class="chip ${s.shift}" style="flex-shrink:0">${CLBL[s.shift]||s.shift}</span>
+          <button class="del-btn" onclick="removeEmpSched(${s.id})">✕</button>
+        </li>`;
+      }).join('')
+    : '<li style="color:#aaa;padding:8px 0;font-size:.82rem">Chưa có phân ca nào.</li>';
+}
+async function addEmpSched(){
+  const emp_id=document.getElementById('psEmp').value;
+  const start_date=document.getElementById('psFrom').value;
+  const end_date=document.getElementById('psTo').value||start_date;
+  const shift=document.getElementById('psShift').value;
+  if(!emp_id||!start_date){alert('Chọn nhân viên và ngày bắt đầu!');return;}
+  if(end_date<start_date){alert('Ngày kết thúc phải sau ngày bắt đầu!');return;}
+  const emp_name=(allEmps().find(e=>e.id===emp_id)||{}).name||emp_id;
+  const row={emp_id,emp_name,start_date,end_date,shift};
+  if(SB_OK){
+    const {data,error}=await sb.from('emp_schedule').insert(row).select();
+    if(error){alert('Lỗi: '+error.message);return;}
+    EMP_SCHED.push(data[0]);
+  } else {
+    EMP_SCHED.push({...row,id:Date.now()});
+  }
+  renderEmpSched(); renderAll();
+}
+async function removeEmpSched(id){
+  if(!confirm('Xóa phân ca này?'))return;
+  if(SB_OK){
+    const {error}=await sb.from('emp_schedule').delete().eq('id',id);
+    if(error){alert('Lỗi: '+error.message);return;}
+  }
+  EMP_SCHED=EMP_SCHED.filter(s=>s.id!==id);
+  renderEmpSched(); renderAll();
+}
+
+async function addHoliday(){
+  const date=document.getElementById('hDate').value;
+  const name=document.getElementById('hName').value.trim();
+  if(!date||!name){ alert('Nhập đầy đủ ngày và tên!'); return; }
+  if(HOLS.find(h=>h.date===date)){ alert('Ngày đã có!'); return; }
+  const {error} = await sb.from('holidays').insert({date,name});
+  if(error){ alert('Lỗi: '+error.message); return; }
+  HOLS.push({date,name});
+  document.getElementById('hDate').value='';
+  document.getElementById('hName').value='';
+  renderHolList(); renderAll();
+}
+async function removeHol(date){
+  const {error} = await sb.from('holidays').delete().eq('date',date);
+  if(error){ alert('Lỗi: '+error.message); return; }
+  HOLS = HOLS.filter(h=>h.date!==date);
+  renderHolList(); renderAll();
+}
+async function addEmp(){
+  const name=document.getElementById('eNm').value.trim();
+  const id=document.getElementById('eId').value.trim();
+  const role=document.getElementById('eRl').value.trim();
+  const [kipStr, fixedShift] = document.getElementById('eKp').value.split('|');
+  const kip=parseInt(kipStr);
+  const fixed_shift = fixedShift || null;
+  if(!name||!id){ alert('Nhập họ tên và MSNV!'); return; }
+  if(allEmps().find(e=>e.id===id)){ alert('MSNV đã tồn tại!'); return; }
+  const sort_order=(EMPS[kip]||[]).length;
+  const row = {id,name,role:role||'Chưa phân công',kip,sort_order};
+  if(fixed_shift) row.fixed_shift = fixed_shift;
+  const {error} = await sb.from('employees').insert(row);
+  if(error){ alert('Lỗi: '+error.message); return; }
+  if(!EMPS[kip]) EMPS[kip]=[];
+  EMPS[kip].push({id,name,role:role||'Chưa phân công',fixed_shift});
+  document.getElementById('eNm').value='';
+  document.getElementById('eId').value='';
+  document.getElementById('eRl').value='';
+  renderEmpMg(); renderAll();
+}
+async function removeEmp(kip,id){
+  if(!confirm('Xóa nhân viên này?')) return;
+  const {error} = await sb.from('employees').delete().eq('id',id);
+  if(error){ alert('Lỗi: '+error.message); return; }
+  EMPS[kip]=(EMPS[kip]||[]).filter(e=>e.id!==id);
+  renderEmpMg(); renderAll();
+}
+async function resetEmps(){
+  if(!confirm('Khôi phục mặc định? Toàn bộ nhân viên hiện tại sẽ bị xóa.')) return;
+  await sb.from('employees').delete().neq('id','__none__');
+  const rows=[];
+  [1,2,3].forEach(k=>DEF_EMPS[k].forEach((e,i)=>rows.push({...e,kip:k,sort_order:i})));
+  const {error} = await sb.from('employees').insert(rows);
+  if(error){ alert('Lỗi: '+error.message); return; }
+  EMPS=cp(DEF_EMPS);
+  renderEmpMg(); renderAll();
+}
+
+// ── TĂNG CA ────────────────────────────────
+function buildEmpSelect(){
+  const sel=document.getElementById('tcEmpSel');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">-- Chọn nhân viên --</option>';
+  [1,2,3,4].forEach(k=>{
+    const emps=EMPS[k]||[];
+    if(!emps.length) return;
+    const grp=document.createElement('optgroup');
+    grp.label=GRP_LABEL[k]||`Kíp ${k}`;
+    emps.forEach(e=>{
+      const opt=document.createElement('option');
+      opt.value=`${e.name}|${e.id}`;
+      opt.textContent=`${e.id} – ${e.name}`;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
+  const other=document.createElement('option');
+  other.value='__other__'; other.textContent='✏️ Nhập tay...';
+  sel.appendChild(other);
+  sel.value=cur||'';
+}
+function onTcEmpChange(){
+  const val=document.getElementById('tcEmpSel').value;
+  const mr=document.getElementById('tcManualRow');
+  if(val==='__other__'){
+    mr.style.display='';
+    document.getElementById('tcName').value='';
+    document.getElementById('tcId').value='';
+  } else if(val){
+    mr.style.display='none';
+    const [name,id]=val.split('|');
+    document.getElementById('tcName').value=name;
+    document.getElementById('tcId').value=id;
+  } else {
+    mr.style.display='none';
+    document.getElementById('tcName').value='';
+    document.getElementById('tcId').value='';
+  }
+}
+function setOtType(type){
+  otType=type;
+  document.getElementById('btnFullCa').classList.toggle('active',type==='full');
+  document.getElementById('btnByHour').classList.toggle('active',type==='hour');
+  document.getElementById('tcFullRow').style.display=type==='full'?'':'none';
+  document.getElementById('tcHourRow').style.display=type==='hour'?'':'none';
+}
+function calcHours(){
+  const s=document.getElementById('tcStart').value;
+  const e=document.getElementById('tcEnd').value;
+  const el=document.getElementById('tcHourCount');
+  if(s&&e){
+    const diff=(parseInt(e.replace(':',''))-parseInt(s.replace(':','')))/100;
+    el.textContent=diff>0?`(${diff}h)`:'';
+  } else el.textContent='';
+}
+function renderOvertime(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  if(!OVERTIME.length){
+    document.getElementById('overtimeList').innerHTML='<div class="ot-empty">📋 Chưa có lịch tăng ca nào.<br><span style="font-size:.8rem">Dùng form bên trên để thêm.</span></div>';
+    return;
+  }
+  const grp={};
+  [...OVERTIME].sort((a,b)=>a.date.localeCompare(b.date)).forEach(o=>{ (grp[o.date]=grp[o.date]||[]).push(o); });
+  let html='';
+  Object.keys(grp).forEach(date=>{
+    const d=new Date(date+'T00:00:00');
+    const isT=sameD(d,today), isPast=d<today&&!isT;
+    html+=`<div class="ot-group${isPast?' ot-past':''}">
+      <div class="ot-date-head${isT?' ot-today':''}">${fmtD(d)} · ${DN[d.getDay()]}${isT?' ⭐ Hôm nay':''}
+        <span style="font-size:.75rem;opacity:.8">${grp[date].length} người</span></div>`;
+    grp[date].forEach(o=>{
+      const isFull=!o.ot_type||o.ot_type==='full';
+      const badge=isFull
+        ? `<span class="chip ${o.shift}">${o.shift}</span>`
+        : `<span class="chip" style="background:#e3f2fd;color:#1565c0">⏱ ${o.start_time}–${o.end_time}</span>`;
+      html+=`<div class="ot-item">
+        ${badge}
+        <div class="ot-info">
+          <div class="ot-name">${o.emp_name}${o.emp_id?` <span style="color:#999;font-weight:400">(${o.emp_id})</span>`:''}</div>
+          ${o.note?`<div class="ot-note">📝 ${o.note}</div>`:''}
+        </div>
+        <button class="del-btn" onclick="removeOvertime(${o.id})">✕</button>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('overtimeList').innerHTML=html;
+}
+async function addOvertime(){
+  const date=document.getElementById('tcDate').value;
+  const emp_name=document.getElementById('tcName').value.trim();
+  const emp_id=document.getElementById('tcId').value.trim();
+  const note=document.getElementById('tcNote').value.trim();
+  if(!date||!emp_name){alert('Chọn nhân viên và ngày tăng ca!');return;}
+  let shift=null, start_time=null, end_time=null;
+  if(otType==='full'){
+    shift=document.getElementById('tcShift').value;
+  } else {
+    start_time=document.getElementById('tcStart').value;
+    end_time=document.getElementById('tcEnd').value;
+    if(!start_time||!end_time){alert('Nhập giờ bắt đầu và kết thúc!');return;}
+  }
+  const row={date,emp_name,emp_id,note,ot_type:otType,shift,start_time,end_time};
+  if(SB_OK){
+    const {data,error}=await sb.from('overtime').insert(row).select();
+    if(error){alert('Lỗi: '+error.message);return;}
+    OVERTIME.push(data[0]);
+  } else {
+    OVERTIME.push({...row,id:Date.now()});
+  }
+  document.getElementById('tcEmpSel').value='';
+  document.getElementById('tcManualRow').style.display='none';
+  document.getElementById('tcName').value='';
+  document.getElementById('tcId').value='';
+  document.getElementById('tcNote').value='';
+  renderOvertime();
+}
+async function removeOvertime(id){
+  if(!confirm('Xóa mục tăng ca này?'))return;
+  if(SB_OK){
+    const {error}=await sb.from('overtime').delete().eq('id',id);
+    if(error){alert('Lỗi: '+error.message);return;}
+  }
+  OVERTIME=OVERTIME.filter(o=>o.id!==id);
+  renderOvertime();
+}
+
+// ── ĐIỀU HƯỚNG ─────────────────────────────
+function nav(w){ startDate=addD(startDate,w*7); renderTable(); }
+function goToday(){
+  const t=new Date(), dow=t.getDay(), toMon=dow===0?-6:-(dow-1);
+  startDate=addD(t,toMon-7); renderTable();
+}
+function setSearch(v){ searchQ=v; renderTable(); }
+function setLookupQ(v){ lookQ=v; renderLookup(); }
+function setKip(k){
+  kipF=k;
+  document.querySelectorAll('.kb').forEach(b=>b.classList.remove('off'));
+  if(k!==0){
+    const cls = k===1?'k1':k===2?'k2':k===3?'k3':'k4';
+    document.querySelectorAll('.kb').forEach(b=>{
+      if(!b.classList.contains(cls)&&!b.classList.contains('all')) b.classList.add('off');
+    });
+  }
+  renderTable();
+}
+
+// ── TABS ───────────────────────────────────
+const TABS = ['schedule','summary','lookup','tanca','settings'];
+const SETTINGS_PASS = '741852';
+let unlocked = false;
+
+function showTab(tab){
+  if(tab==='settings'&&!unlocked){ openPw(); return; }
+  _goTab(tab);
+}
+function _goTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.top-tabs .tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===tab));
+  document.querySelectorAll('.bot-nav .bnav').forEach((b,i)=>b.classList.toggle('active',TABS[i]===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  if(tab==='summary')  renderSummary();
+  if(tab==='lookup')   renderLookup();
+  if(tab==='tanca')    { buildEmpSelect(); renderOvertime(); }
+  if(tab==='settings'){ renderHolList(); buildPsEmpSelect(); renderEmpSched(); renderEmpMg(); }
+}
+
+// ── QUICK EDIT LOGIC ────────────────────
+let curQeEmpId = '';
+function openQuickEdit(id, name) {
+  curQeEmpId = id;
+  document.getElementById('qeName').innerText = name;
+  const todayStr = dKey(new Date());
+  document.getElementById('qeFrom').value = todayStr;
+  document.getElementById('qeTo').value = todayStr;
+  document.getElementById('qEditModal').classList.add('show');
+}
+function closeQuickEdit() { document.getElementById('qEditModal').classList.remove('show'); }
+
+async function saveQuickEdit() {
+  const from = document.getElementById('qeFrom').value;
+  const to = document.getElementById('qeTo').value;
+  const shift = document.getElementById('qeShift').value;
+  if(!from || !to) { alert('Vui lòng chọn ngày!'); return; }
+  if(to < from) { alert('Ngày kết thúc không hợp lệ!'); return; }
+  
+  const btn = document.getElementById('btnSaveQE');
+  btn.disabled = true; btn.innerText = '⌛ Đang lưu...';
+  
+  try {
+    // 1. Dọn dẹp chồng lấn
+    const ov = EMP_SCHED.filter(x => x.emp_id === curQeEmpId && x.start_date <= to && x.end_date >= from);
+    for(const r of ov) {
+      if(r.start_date < from && r.end_date > to) {
+        const r1={...r, end_date:dKey(addD(new Date(from),-1))}, r2={...r, start_date:dKey(addD(new Date(to),1))};
+        await sb.from('emp_schedule').delete().eq('id', r.id);
+        delete r1.id; delete r2.id;
+        await sb.from('emp_schedule').insert([r1, r2]);
+      } else if(r.start_date < from) {
+        await sb.from('emp_schedule').update({end_date:dKey(addD(new Date(from),-1))}).eq('id', r.id);
+      } else if(r.end_date > to) {
+        await sb.from('emp_schedule').update({start_date:dKey(addD(new Date(to),1))}).eq('id', r.id);
+      } else {
+        await sb.from('emp_schedule').delete().eq('id', r.id);
+      }
+    }
+    // 2. Lưu mới
+    const eNm = allEmps().find(x=>x.id===curQeEmpId)?.name || 'Unknown';
+    await sb.from('emp_schedule').insert([{emp_id:curQeEmpId, emp_name:eNm, start_date:from, end_date:to, shift}]);
+    
+    // 3. Làm mới
+    const {data:esData} = await sb.from('emp_schedule').select('*').order('start_date');
+    EMP_SCHED = esData || [];
+    renderAll();
+    closeQuickEdit();
+  } catch(err) { alert('Lỗi: ' + err.message); }
+  finally { btn.disabled = false; btn.innerText = '💾 Lưu lịch'; }
+}
+
+// ── MẬT KHẨU ──────────────────────────────
+function openPw(){
+  document.getElementById('pwInput').value='';
+  document.getElementById('pwErr').textContent='';
+  document.getElementById('pwInput').classList.remove('error');
+  document.getElementById('pwOverlay').classList.add('show');
+  setTimeout(()=>document.getElementById('pwInput').focus(),100);
+}
+function closePwModal(){ document.getElementById('pwOverlay').classList.remove('show'); }
+function checkPw(){
+  const v=document.getElementById('pwInput').value.trim();
+  if(v===SETTINGS_PASS){
+    unlocked=true; closePwModal(); _goTab('settings');
+  } else {
+    const inp=document.getElementById('pwInput');
+    inp.classList.add('error');
+    document.getElementById('pwErr').textContent='Mật khẩu không đúng.';
+    inp.value='';
+    setTimeout(()=>inp.classList.remove('error'),400);
+  }
+}
+
+// ── RENDER ALL ─────────────────────────────
+function renderAll(){
+  renderTable();
+  if(activeTab==='summary') renderSummary();
+  if(activeTab==='lookup')  renderLookup();
+}
+
+// ── KHỞI ĐỘNG ──────────────────────────────
+(async () => {
+  initLabel();
+  // Đặt ngày mặc định cho các form = hôm nay
+  const td = new Date();
+  const todayStr = `${td.getFullYear()}-${String(td.getMonth()+1).padStart(2,'0')}-${String(td.getDate()).padStart(2,'0')}`;
+  document.getElementById('tcDate').value = todayStr;
+  document.getElementById('psFrom').value = todayStr;
+  document.getElementById('psTo').value = todayStr;
+  await loadData();
+  document.getElementById('loadingOverlay').classList.add('hide');
+  goToday();
+})();
+</script>
+</body>
+</html>

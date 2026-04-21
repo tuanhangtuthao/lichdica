@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Đánh Giá Nhân Viên</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --nav-h:58px;--hdr-h:52px;--radius:10px;--shadow:0 2px 10px rgba(0,0,0,.09);
+  --ap-bg:#e8f5e9;--ap-fg:#1b5e20;
+  --a-bg:#c8e6c9; --a-fg:#2e7d32;
+  --b-bg:#bbdefb; --b-fg:#1565c0;
+  --c-bg:#fff9c4; --c-fg:#e65100;
+  --d-bg:#ffcdd2; --d-fg:#b71c1c;
+  --k1:#1565c0;--k1l:#e3f2fd;
+  --k2:#6a1b9a;--k2l:#f3e5f5;
+  --k3:#2e7d32;--k3l:#e8f5e9;
+  --k4:#00695c;--k4l:#e0f2f1;
+}
+html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:#1a237e;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff}
+.loading-overlay.hide{display:none}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-size:.95rem;opacity:.85}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#4a148c,#6a1b9a);color:#fff;height:var(--hdr-h);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hdr-left h1{font-size:1.05rem;font-weight:700;line-height:1.2}
+.hdr-left .sub{font-size:.7rem;opacity:.8;margin-top:1px}
+.btn-back{color:#fff;opacity:.85;font-size:.8rem;text-decoration:none;
+  border:1px solid rgba(255,255,255,.45);padding:6px 12px;border-radius:8px;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:4px;transition:.15s}
+.btn-back:hover{opacity:1;background:rgba(255,255,255,.2)}
+
+/* TOP TABS – desktop */
+.top-tabs{display:none;background:#fff;border-bottom:2px solid #e0e0e0;
+  position:sticky;top:var(--hdr-h);z-index:190;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.top-tabs .tab{display:inline-block;padding:12px 20px;cursor:pointer;font-size:.88rem;
+  font-weight:600;color:#666;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s}
+.top-tabs .tab:hover{color:#4a148c}
+.top-tabs .tab.active{color:#4a148c;border-bottom-color:#4a148c}
+
+/* BOTTOM NAV – mobile */
+.bot-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:var(--nav-h);
+  background:#fff;border-top:1px solid #e0e0e0;display:flex;
+  box-shadow:0 -2px 10px rgba(0,0,0,.08)}
+.bot-nav .bnav{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;cursor:pointer;padding:6px 4px;border:none;
+  background:none;color:#888;transition:.15s;font-family:inherit}
+.bot-nav .bnav .bicon{font-size:1.3rem;line-height:1}
+.bot-nav .bnav .blabel{font-size:.63rem;font-weight:600;white-space:nowrap}
+.bot-nav .bnav.active{color:#4a148c}
+.bot-nav .bnav.active .bicon{transform:scale(1.1)}
+
+/* PAGES */
+.page{display:none;padding-bottom:calc(var(--nav-h)+8px)}
+.page.active{display:block}
+
+/* CARD */
+.section{padding:10px 12px}
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.card-head{padding:10px 14px;font-weight:700;font-size:.88rem;color:#333;
+  border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.card-body{padding:12px 14px}
+
+/* BUTTONS / FORM */
+.btn{padding:8px 14px;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;
+  font-weight:600;transition:.15s;min-height:38px;display:inline-flex;align-items:center;gap:4px}
+.btn-pri{background:#4a148c;color:#fff}.btn-pri:active{opacity:.85}
+.btn-sec{background:#fff;border:1px solid #ccc;color:#333}
+.btn-sm{padding:6px 11px;font-size:.78rem;min-height:32px}
+.form-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+.form-input{padding:9px 11px;border:1px solid #ccc;border-radius:8px;font-size:.85rem;
+  outline:none;min-height:38px;flex:1;min-width:80px}
+.form-input:focus{border-color:#4a148c}
+.form-select{padding:9px 11px;border:1px solid #ccc;border-radius:8px;font-size:.85rem;
+  background:#fff;outline:none;min-height:38px}
+
+/* GRADE BADGES */
+.gb{display:inline-flex;align-items:center;justify-content:center;
+  padding:3px 10px;border-radius:12px;font-weight:800;font-size:.85rem;white-space:nowrap}
+.gb-Ap{background:var(--ap-bg);color:var(--ap-fg)}
+.gb-A {background:var(--a-bg); color:var(--a-fg)}
+.gb-B {background:var(--b-bg); color:var(--b-fg)}
+.gb-C {background:var(--c-bg); color:var(--c-fg)}
+.gb-D {background:var(--d-bg); color:var(--d-fg)}
+
+/* STATS BAR */
+.stats-bar{display:flex;gap:8px;padding:10px 12px;overflow-x:auto}
+.stat-chip{flex:1;min-width:56px;text-align:center;padding:10px 6px;border-radius:var(--radius);
+  box-shadow:var(--shadow);background:#fff}
+.stat-num{font-size:1.5rem;font-weight:800;line-height:1}
+.stat-lbl{font-size:.65rem;font-weight:700;margin-top:3px;opacity:.8}
+
+/* RESULTS */
+.res-wrap{padding:0 12px 16px}
+.res-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow);font-size:.82rem}
+.res-table th{background:#4a148c;color:#fff;padding:8px 10px;text-align:left;
+  font-weight:600;white-space:nowrap}
+.res-table td{padding:8px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.res-table tr:last-child>td{border-bottom:none}
+.res-table tr.det-row td{padding:0;background:#fafafa}
+.expand-btn{background:none;border:none;cursor:pointer;color:#666;padding:2px 6px;font-size:.85rem;transition:.15s}
+.det-inner{padding:8px 12px}
+.det-item{display:flex;gap:8px;align-items:center;padding:5px 0;
+  border-bottom:1px solid #eee;font-size:.78rem}
+.det-item:last-child{border-bottom:none}
+.det-date{color:#888;min-width:76px}
+.det-score{font-weight:800;min-width:34px;text-align:center;border-radius:8px;padding:2px 6px}
+.det-note{color:#555;flex:1}
+
+/* SCORING PAGE */
+.score-ctrl{padding:10px 12px 6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.score-progress{padding:0 12px 8px;font-size:.78rem;color:#666}
+.kip-group-wrap{margin-bottom:10px}
+.kip-head{padding:7px 14px;color:#fff;font-weight:700;font-size:.85rem;
+  margin:0 12px 6px;border-radius:8px}
+.kh-k1{background:var(--k1)}.kh-k2{background:var(--k2)}
+.kh-k3{background:var(--k3)}.kh-k4{background:var(--k4)}
+.sc-row{display:flex;align-items:center;gap:7px;padding:8px 14px;
+  border-bottom:1px solid #f0f0f0;background:#fff;flex-wrap:nowrap}
+.sc-row:last-child{border-bottom:none}
+.sc-row.scored{background:#f1f8e9}
+.sc-info{flex:1;min-width:0}
+.sc-name{font-weight:600;font-size:.84rem;color:#222;
+  display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-sub{font-size:.68rem;color:#888}
+input.sc-num{width:62px;padding:6px 6px;border:1.5px solid #ccc;border-radius:8px;
+  font-size:.9rem;text-align:center;outline:none;font-weight:700;min-height:34px;flex-shrink:0}
+input.sc-num:focus{border-color:#4a148c}
+input.sc-note{flex:1;min-width:70px;padding:6px 8px;border:1px solid #ccc;border-radius:8px;
+  font-size:.78rem;outline:none;min-height:34px}
+input.sc-note:focus{border-color:#4a148c}
+.sc-save{padding:5px 10px;border:none;border-radius:8px;cursor:pointer;font-size:.75rem;
+  font-weight:700;min-height:34px;white-space:nowrap;flex-shrink:0}
+.sc-save.new{background:#4a148c;color:#fff}
+.sc-save.edit{background:#f57f17;color:#fff}
+.sc-del{background:none;border:none;cursor:pointer;color:#e57373;
+  font-size:1rem;padding:4px 5px;min-height:32px;flex-shrink:0}
+
+/* KÍP FILTER CHIPS */
+.kf-row{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 8px}
+.kf{padding:6px 14px;border:2px solid transparent;border-radius:20px;cursor:pointer;
+  font-size:.78rem;font-weight:700;transition:.15s;min-height:34px;background:#e8eaf6;color:#4a148c;border-color:#4a148c}
+.kf.off{opacity:.35;background:#f0f0f0;color:#888;border-color:#ccc}
+.kf.k1{background:var(--k1l);color:var(--k1);border-color:var(--k1)}
+.kf.k2{background:var(--k2l);color:var(--k2);border-color:var(--k2)}
+.kf.k3{background:var(--k3l);color:var(--k3);border-color:var(--k3)}
+.kf.k4{background:var(--k4l);color:var(--k4);border-color:var(--k4)}
+.excl-note{font-size:.7rem;color:#999;padding:0 12px 6px;font-style:italic}
+
+/* CONFIG */
+.cfg-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.cfg-table th{text-align:left;padding:8px 10px;color:#888;font-weight:600;
+  border-bottom:2px solid #eee;font-size:.78rem}
+.cfg-table td{padding:8px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.cfg-table tr:last-child td{border-bottom:none}
+
+/* DESKTOP */
+@media(min-width:768px){
+  :root{--nav-h:0px}
+  .bot-nav{display:none}
+  .page{padding-bottom:24px}
+  .top-tabs{display:block;padding:0 24px}
+  .hdr{padding:0 24px}
+  .section{padding:16px 24px}
+  .stats-bar{padding:10px 24px}
+  .score-ctrl{padding:12px 24px 6px}
+  .score-progress{padding:0 24px 8px}
+  .kf-row{padding:0 24px 8px}
+  .excl-note{padding:0 24px 6px}
+  .kip-head{margin:0 24px 6px}
+  .res-wrap{padding:0 24px 24px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="load-text">Đang tải dữ liệu...</div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <h1>🏆 Đánh Giá Nhân Viên</h1>
+    <div class="sub" id="todayLabel"></div>
+  </div>
+  <a href="index.html" class="btn-back">← Lịch Ca</a>
+</div>
+
+<!-- TOP TABS (desktop) -->
+<div class="top-tabs">
+  <div class="tab active" onclick="showTab('results')">📊 Kết Quả</div>
+  <div class="tab"        onclick="showTab('scoring')">✏️ Chấm Điểm</div>
+  <div class="tab"        onclick="showTab('config')">⚙️ Cài Đặt Hạng</div>
+</div>
+
+<!-- PAGE 1: KẾT QUẢ -->
+<div class="page active" id="page-results">
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="section" style="padding-top:0">
+    <div class="card">
+      <div class="card-head">
+        🔍 Lọc theo khoảng thời gian
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <input type="date" class="form-input" id="rfFrom" style="flex:0 0 auto;min-width:130px" oninput="renderResults()">
+          <span style="padding:9px 2px;color:#999">→</span>
+          <input type="date" class="form-input" id="rfTo"   style="flex:0 0 auto;min-width:130px" oninput="renderResults()">
+          <button class="btn btn-sec btn-sm" onclick="clearFilter()">✕ Xóa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="res-wrap" id="resultsWrap"></div>
+</div>
+
+<!-- PAGE 2: CHẤM ĐIỂM -->
+<div class="page" id="page-scoring">
+  <div class="score-ctrl">
+    <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Ngày chấm:</label>
+    <input type="date" class="form-input" id="scoreDate" style="flex:0 0 auto" oninput="renderScoring()">
+    <button class="btn btn-sm" style="background:#4a148c;color:#fff" onclick="scoreAll()">💾 Lưu tất cả</button>
+  </div>
+  <div class="kf-row" id="kipFilterRow">
+    <button class="kf" id="kf-0" onclick="setScoreKip(0)">Tất cả</button>
+    <button class="kf k1 off" id="kf-1" onclick="setScoreKip(1)">Kíp 1</button>
+    <button class="kf k2 off" id="kf-2" onclick="setScoreKip(2)">Kíp 2</button>
+    <button class="kf k3 off" id="kf-3" onclick="setScoreKip(3)">Kíp 3</button>
+    <button class="kf k4 off" id="kf-4" onclick="setScoreKip(4)">HC / Ca Xoay</button>
+  </div>
+  <div class="excl-note" id="exclNote"></div>
+  <div class="score-progress" id="scoreProgress"></div>
+  <div id="scoringWrap"></div>
+</div>
+
+<!-- PAGE 3: CÀI ĐẶT HẠNG -->
+<div class="page" id="page-config">
+  <div class="section">
+    <div class="card">
+      <div class="card-head">⚙️ Thang Điểm & Xếp Hạng
+        <span style="font-size:.72rem;color:#999;font-weight:400">thang điểm 0 – 10</span>
+      </div>
+      <div class="card-body">
+        <div style="overflow-x:auto">
+          <table class="cfg-table" id="configTable"></table>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-pri" onclick="saveConfig()">💾 Lưu cấu hình</button>
+          <button class="btn btn-sec" onclick="resetConfig()">↺ Mặc định</button>
+        </div>
+        <div style="margin-top:10px;font-size:.72rem;color:#aaa;line-height:1.6">
+          Điểm tối thiểu: điểm từ ngưỡng này trở lên được xếp hạng đó.<br>
+          Ví dụ mặc định: A+ ≥ 9.0 · A ≥ 8.0 · B ≥ 6.5 · C ≥ 5.0 · D &lt; 5.0
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bot-nav">
+  <button class="bnav active" onclick="showTab('results')">
+    <span class="bicon">📊</span><span class="blabel">Kết Quả</span>
+  </button>
+  <button class="bnav" onclick="showTab('scoring')">
+    <span class="bicon">✏️</span><span class="blabel">Chấm Điểm</span>
+  </button>
+  <button class="bnav" onclick="showTab('config')">
+    <span class="bicon">⚙️</span><span class="blabel">Cài Đặt</span>
+  </button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ══════════════════════════════════════════
+// ⚙️  SUPABASE (giống index.html)
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+// ══════════════════════════════════════════
+const SB_OK = SB_URL.startsWith('https://') && !SB_URL.includes('PASTE');
+const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
+
+// ── STATE ──────────────────────────────────
+let EMPS = {1:[],2:[],3:[],4:[]};
+let RATINGS = [];
+let GRADE_CFG = [
+  {grade:'A+',min_score:9.0,description:'Xuất sắc',sort_order:1},
+  {grade:'A', min_score:8.0,description:'Giỏi',    sort_order:2},
+  {grade:'B', min_score:6.5,description:'Khá',     sort_order:3},
+  {grade:'C', min_score:5.0,description:'Trung bình',sort_order:4},
+  {grade:'D', min_score:0.0,description:'Cần cải thiện',sort_order:5},
+];
+let activeTab = 'results';
+let scoreKip  = 0; // 0=all
+const TABS = ['results','scoring','config'];
+const GRP_LABEL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',4:'HC / Ca Xoay'};
+const DFUL = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+const DN   = ['CN','T2','T3','T4','T5','T6','T7'];
+
+// ── HELPERS ────────────────────────────────
+function fmtD(d){return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;}
+function dKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function round1(v){return Math.round(parseFloat(v)*10)/10;}
+
+// Loại bỏ trưởng ca / tổ trưởng / trưởng phòng khỏi đánh giá
+function normVN(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+const SKIP_ROLES=['truong ca','to truong','truong phong','truong bp','truong bo phan'];
+function isRatable(e){
+  if(!e.role) return true;
+  const r=normVN(e.role);
+  return !SKIP_ROLES.some(x=>r.includes(x));
+}
+
+function allEmps(kip=0){
+  const a=[];
+  [1,2,3,4].forEach(k=>{
+    if(kip&&k!==kip) return;
+    (EMPS[k]||[]).forEach(e=>{if(isRatable(e)) a.push({...e,kip:k});});
+  });
+  return a;
+}
+function allEmpsNoFilter(){// for internal counts including excluded
+  const a=[];[1,2,3,4].forEach(k=>(EMPS[k]||[]).forEach(e=>a.push({...e,kip:k})));return a;
+}
+
+function setScoreKip(k){
+  scoreKip=k;
+  [0,1,2,3,4].forEach(i=>{
+    const el=document.getElementById('kf-'+i);
+    if(!el) return;
+    if(i===0){
+      el.className='kf'+(k===0?'':' off');
+    } else {
+      el.className='kf k'+i+(k===i?'':' off');
+    }
+  });
+  renderScoring();
+}
+
+function getGrade(score){
+  const s=[...GRADE_CFG].sort((a,b)=>b.min_score-a.min_score);
+  for(const g of s){if(score>=g.min_score) return g.grade;}
+  return 'D';
+}
+function gbClass(g){return 'gb-'+(g==='A+'?'Ap':g);}
+function scoreColor(s){
+  const v=parseFloat(s);
+  if(v>=9)  return '#1b5e20';
+  if(v>=8)  return '#2e7d32';
+  if(v>=6.5)return '#1565c0';
+  if(v>=5)  return '#e65100';
+  return '#b71c1c';
+}
+
+// ── LOAD DATA ──────────────────────────────
+async function loadData(){
+  if(!SB_OK){return;}
+  try{
+    const [er,rr,gr]=await Promise.all([
+      sb.from('employees').select('*').order('kip').order('sort_order'),
+      sb.from('daily_ratings').select('*').order('date'),
+      sb.from('rating_config').select('*').order('sort_order'),
+    ]);
+    EMPS={1:[],2:[],3:[],4:[]};
+    (er.data||[]).forEach(e=>{
+      if(EMPS[e.kip]) EMPS[e.kip].push({id:e.id,name:e.name,role:e.role||'',kip:e.kip});
+    });
+    RATINGS=rr.data||[];
+    if((gr.data||[]).length>0) GRADE_CFG=gr.data;
+  }catch(e){console.warn('Load error:',e);}
+}
+
+// ── TAB 1: KẾT QUẢ ────────────────────────
+function clearFilter(){
+  document.getElementById('rfFrom').value='';
+  document.getElementById('rfTo').value='';
+  renderResults();
+}
+
+function renderResults(){
+  const from=document.getElementById('rfFrom').value;
+  const to  =document.getElementById('rfTo').value;
+  const emps=allEmps(0); // kết quả luôn hiện tất cả kíp
+
+  const filtered=RATINGS.filter(r=>{
+    if(from&&r.date<from) return false;
+    if(to  &&r.date>to)   return false;
+    return true;
+  });
+
+  // Per-employee stats
+  const statMap={};
+  filtered.forEach(r=>{
+    if(!statMap[r.emp_id]) statMap[r.emp_id]={sum:0,cnt:0,days:[]};
+    statMap[r.emp_id].sum+=parseFloat(r.score);
+    statMap[r.emp_id].cnt++;
+    statMap[r.emp_id].days.push(r);
+  });
+
+  // Grade counts
+  const gcnt={'A+':0,'A':0,'B':0,'C':0,'D':0};
+  emps.forEach(e=>{
+    const st=statMap[e.id];
+    if(st&&st.cnt>0) gcnt[getGrade(st.sum/st.cnt)]++;
+  });
+  const gradeDef={'A+':'Xuất sắc','A':'Giỏi','B':'Khá','C':'TB','D':'Yếu'};
+  document.getElementById('statsBar').innerHTML=
+    ['A+','A','B','C','D'].map(g=>`
+      <div class="stat-chip">
+        <div class="stat-num gb ${gbClass(g)}" style="border-radius:8px;padding:6px 4px;font-size:1.3rem">${gcnt[g]}</div>
+        <div class="stat-lbl">Hạng ${g}</div>
+      </div>`).join('');
+
+  if(!emps.length){
+    document.getElementById('resultsWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Chưa có nhân viên.</div>';
+    return;
+  }
+
+  const sorted=emps.map(e=>{
+    const st=statMap[e.id];
+    const avg=st&&st.cnt>0?round1(st.sum/st.cnt):null;
+    return{...e,avg,cnt:st?st.cnt:0,days:st?st.days:[]};
+  }).sort((a,b)=>{
+    if(a.avg===null&&b.avg===null) return 0;
+    if(a.avg===null) return 1;
+    if(b.avg===null) return -1;
+    return b.avg-a.avg;
+  });
+
+  let h=`<table class="res-table">
+    <thead><tr>
+      <th>#</th><th>Họ tên</th><th>Nhóm</th>
+      <th style="text-align:center">Ngày</th>
+      <th style="text-align:center">Điểm TB</th>
+      <th style="text-align:center">Hạng</th>
+      <th></th>
+    </tr></thead><tbody>`;
+
+  sorted.forEach((e,i)=>{
+    const avgTxt=e.avg!==null
+      ?`<b style="font-size:1rem;color:${scoreColor(e.avg)}">${e.avg}</b>`
+      :`<span style="color:#ccc">–</span>`;
+    const grHtml=e.avg!==null
+      ?`<span class="gb ${gbClass(getGrade(e.avg))}">${getGrade(e.avg)}</span>`
+      :`<span style="color:#ccc">–</span>`;
+    h+=`<tr>
+      <td style="color:#aaa;font-size:.75rem">${i+1}</td>
+      <td>
+        <div style="font-weight:700;font-size:.85rem">${e.name}</div>
+        <div style="font-size:.7rem;color:#999">${e.id}</div>
+      </td>
+      <td style="font-size:.75rem;color:#666">${GRP_LABEL[e.kip]||''}</td>
+      <td style="text-align:center;font-size:.82rem">${e.cnt}</td>
+      <td style="text-align:center">${avgTxt}</td>
+      <td style="text-align:center">${grHtml}</td>
+      <td><button class="expand-btn" onclick="toggleDet('det-${e.id}',this)">▼</button></td>
+    </tr>
+    <tr class="det-row" id="det-${e.id}" style="display:none">
+      <td colspan="7">
+        <div class="det-inner">
+          ${e.days.length===0
+            ?'<div style="color:#aaa;font-size:.78rem;padding:4px 0">Chưa có điểm nào.</div>'
+            :e.days.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(d=>{
+                const dd=new Date(d.date+'T00:00:00');
+                const sc=parseFloat(d.score);
+                return `<div class="det-item">
+                  <span class="det-date">${fmtD(dd)} ${DN[dd.getDay()]}</span>
+                  <span class="det-score" style="background:${sc>=9?'var(--ap-bg)':sc>=8?'var(--a-bg)':sc>=6.5?'var(--b-bg)':sc>=5?'var(--c-bg)':'var(--d-bg)'};color:${scoreColor(sc)}">${d.score}</span>
+                  <span class="det-note">${d.note||'<span style="color:#ccc">–</span>'}</span>
+                  <button onclick="deleteRating(${d.id})" style="background:none;border:none;cursor:pointer;color:#e57373;font-size:.85rem;padding:2px 4px">✕</button>
+                </div>`;
+              }).join('')}
+        </div>
+      </td>
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById('resultsWrap').innerHTML=h;
+}
+
+function toggleDet(id,btn){
+  const el=document.getElementById(id);
+  const vis=el.style.display==='none';
+  el.style.display=vis?'':'none';
+  btn.textContent=vis?'▲':'▼';
+}
+
+// ── TAB 2: CHẤM ĐIỂM ──────────────────────
+function renderScoring(){
+  const date=document.getElementById('scoreDate').value;
+  if(!date){
+    document.getElementById('scoringWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Chọn ngày để chấm điểm.</div>';
+    document.getElementById('scoreProgress').innerHTML='';
+    document.getElementById('exclNote').innerHTML='';
+    return;
+  }
+  const dayMap={};
+  RATINGS.filter(r=>r.date===date).forEach(r=>dayMap[r.emp_id]=r);
+
+  // Tất cả NV được đánh giá (theo kip filter)
+  const emps=allEmps(scoreKip);
+  const done=emps.filter(e=>dayMap[e.id]).length;
+  document.getElementById('scoreProgress').innerHTML=
+    `Đã chấm: <b style="color:#4a148c">${done}</b> / ${emps.length} nhân viên — còn lại <b>${emps.length-done}</b>`;
+
+  // Hiển thị số NV bị loại trừ
+  const totalAll=allEmpsNoFilter().filter(e=>scoreKip===0||e.kip===scoreKip).length;
+  const exclCount=totalAll-emps.length;
+  document.getElementById('exclNote').innerHTML=
+    exclCount>0?`⚠️ ${exclCount} trưởng ca/tổ trưởng/trưởng phòng không được đánh giá`:'';
+
+  const kipsToShow=scoreKip===0?[1,2,3,4]:[scoreKip];
+  let html='';
+  kipsToShow.forEach(k=>{
+    const kEmps=(EMPS[k]||[]).filter(isRatable);
+    if(!kEmps.length) return;
+    html+=`<div class="kip-group-wrap">
+      <div class="kip-head kh-k${k}">${GRP_LABEL[k]||'Kíp '+k} <span style="font-weight:400;font-size:.75rem;opacity:.85">(${kEmps.length} người)</span></div>
+      <div class="card" style="margin:0 12px;border-radius:var(--radius)">`;
+    kEmps.forEach(e=>{
+      const ex=dayMap[e.id];
+      html+=`<div class="sc-row${ex?' scored':''}" id="scrow-${e.id}">
+        <div class="sc-info">
+          <span class="sc-name">${e.name}</span>
+          <span class="sc-sub">${e.id}${e.role?' · '+e.role:''}</span>
+        </div>
+        <input class="sc-num" type="number" min="0" max="10" step="0.1"
+          placeholder="0–10" id="sc-${e.id}" value="${ex?ex.score:''}"
+          style="${ex?'border-color:'+scoreColor(ex.score)+';color:'+scoreColor(ex.score):''}">
+        <input class="sc-note" type="text" placeholder="Ghi chú..."
+          id="nt-${e.id}" value="${ex?ex.note||'':''}">
+        <button class="sc-save ${ex?'edit':'new'}" onclick="saveScore('${e.id}','${e.name}','${date}')">
+          ${ex?'✏️':'✓'}
+        </button>
+        ${ex?`<button class="sc-del" onclick="deleteRating(${ex.id},true)">✕</button>`:''}
+      </div>`;
+    });
+    html+='</div></div>';
+  });
+  if(!html) html='<div style="text-align:center;padding:40px;color:#aaa">Không có nhân viên.</div>';
+  document.getElementById('scoringWrap').innerHTML=html;
+}
+
+async function saveScore(emp_id,emp_name,date){
+  const scEl=document.getElementById('sc-'+emp_id);
+  const ntEl=document.getElementById('nt-'+emp_id);
+  const score=parseFloat(scEl.value);
+  if(isNaN(score)||score<0||score>10){alert('Điểm phải từ 0 đến 10!');scEl.focus();return;}
+  const note=ntEl.value.trim();
+  const row={emp_id,emp_name,date,score,note};
+  if(SB_OK){
+    const {data,error}=await sb.from('daily_ratings').upsert(row,{onConflict:'emp_id,date'}).select();
+    if(error){alert('Lỗi: '+error.message);return;}
+    RATINGS=RATINGS.filter(r=>!(r.emp_id===emp_id&&r.date===date));
+    RATINGS.push(data[0]);
+  } else {
+    RATINGS=RATINGS.filter(r=>!(r.emp_id===emp_id&&r.date===date));
+    RATINGS.push({...row,id:Date.now()});
+  }
+  renderScoring();
+}
+
+async function scoreAll(){
+  const date=document.getElementById('scoreDate').value;
+  if(!date){alert('Chọn ngày!');return;}
+  const emps=allEmps(scoreKip);
+  let saved=0;
+  for(const e of emps){
+    const scEl=document.getElementById('sc-'+e.id);
+    if(!scEl||scEl.value.trim()==='') continue;
+    const score=parseFloat(scEl.value);
+    if(isNaN(score)||score<0||score>10) continue;
+    const note=(document.getElementById('nt-'+e.id)||{}).value||'';
+    const row={emp_id:e.id,emp_name:e.name,date,score,note:note.trim()};
+    if(SB_OK){
+      const {data,error}=await sb.from('daily_ratings').upsert(row,{onConflict:'emp_id,date'}).select();
+      if(error){console.warn(error);continue;}
+      RATINGS=RATINGS.filter(r=>!(r.emp_id===e.id&&r.date===date));
+      RATINGS.push(data[0]);
+    } else {
+      RATINGS=RATINGS.filter(r=>!(r.emp_id===e.id&&r.date===date));
+      RATINGS.push({...row,id:Date.now()});
+    }
+    saved++;
+  }
+  if(!saved){alert('Chưa nhập điểm cho nhân viên nào!');return;}
+  renderScoring();
+}
+
+async function deleteRating(id,fromScoring=false){
+  if(!confirm('Xóa điểm này?')) return;
+  if(SB_OK){
+    const {error}=await sb.from('daily_ratings').delete().eq('id',id);
+    if(error){alert('Lỗi: '+error.message);return;}
+  }
+  RATINGS=RATINGS.filter(r=>r.id!==id);
+  if(fromScoring) renderScoring(); else renderResults();
+}
+
+// ── TAB 3: CÀI ĐẶT ────────────────────────
+function renderConfig(){
+  const GRADES=['A+','A','B','C','D'];
+  let h=`<thead><tr>
+    <th>Hạng</th><th>Điểm tối thiểu</th><th>Mô tả</th>
+  </tr></thead><tbody>`;
+  GRADES.forEach(g=>{
+    const cfg=GRADE_CFG.find(c=>c.grade===g)||{grade:g,min_score:0,description:''};
+    const key=g.replace('+','p');
+    h+=`<tr>
+      <td><span class="gb ${gbClass(g)}" style="font-size:1rem;font-weight:900;min-width:44px">${g}</span></td>
+      <td><input type="number" min="0" max="10" step="0.1" class="form-input"
+        id="cfg-${key}" value="${cfg.min_score}" style="width:80px;flex:none;text-align:center"></td>
+      <td><input type="text" class="form-input"
+        id="cfgd-${key}" placeholder="Mô tả..." value="${cfg.description||''}"></td>
+    </tr>`;
+  });
+  h+='</tbody>';
+  document.getElementById('configTable').innerHTML=h;
+}
+
+async function saveConfig(){
+  const GRADES=['A+','A','B','C','D'];
+  const rows=GRADES.map((g,i)=>{
+    const key=g.replace('+','p');
+    return{
+      grade:g,
+      min_score:parseFloat(document.getElementById('cfg-'+key).value)||0,
+      description:document.getElementById('cfgd-'+key).value.trim(),
+      sort_order:i+1
+    };
+  });
+  // Validate descending order
+  for(let i=0;i<rows.length-1;i++){
+    if(rows[i].min_score<=rows[i+1].min_score){
+      alert(`Điểm ${rows[i].grade} phải lớn hơn điểm ${rows[i+1].grade}!`);return;
+    }
+  }
+  if(SB_OK){
+    const {error}=await sb.from('rating_config').upsert(rows,{onConflict:'grade'});
+    if(error){alert('Lỗi: '+error.message);return;}
+  }
+  GRADE_CFG=rows;
+  alert('✅ Đã lưu cấu hình xếp hạng!');
+  renderResults();
+}
+
+function resetConfig(){
+  if(!confirm('Khôi phục cấu hình mặc định?')) return;
+  GRADE_CFG=[
+    {grade:'A+',min_score:9.0,description:'Xuất sắc',   sort_order:1},
+    {grade:'A', min_score:8.0,description:'Giỏi',       sort_order:2},
+    {grade:'B', min_score:6.5,description:'Khá',        sort_order:3},
+    {grade:'C', min_score:5.0,description:'Trung bình', sort_order:4},
+    {grade:'D', min_score:0.0,description:'Cần cải thiện',sort_order:5},
+  ];
+  renderConfig();
+}
+
+// ── NAVIGATION ─────────────────────────────
+function showTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.top-tabs .tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===tab));
+  document.querySelectorAll('.bot-nav .bnav').forEach((b,i)=>b.classList.toggle('active',TABS[i]===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  if(tab==='results') renderResults();
+  if(tab==='scoring') renderScoring();
+  if(tab==='config')  renderConfig();
+}
+
+// ── INIT ───────────────────────────────────
+(async()=>{
+  const t=new Date();
+  document.getElementById('todayLabel').textContent=
+    `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
+  const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  document.getElementById('scoreDate').value=ts;
+  await loadData();
+  document.getElementById('loadingOverlay').classList.add('hide');
+  renderResults();
+  renderConfig();
+})();
+</script>
+</body>
+</html>
