@@ -277,14 +277,13 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 .emp-manage-kip.k1{background:var(--k1)}.emp-manage-kip.k2{background:var(--k2)}.emp-manage-kip.k3{background:var(--k3)}.emp-manage-kip.k4{background:var(--k4)}
 
 /* Settings Tab Nav */
-.s-nav{display:grid;grid-template-columns:repeat(2,1fr);gap:0;margin:0;background:#fff;
+.s-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:0;background:#fff;
   border-bottom:2px solid #e8eaf6;position:sticky;top:var(--nav-h);z-index:10}
 .s-nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:5px;padding:13px 8px;border:none;cursor:pointer;background:#fff;color:#999;
   font-family:inherit;font-size:.8rem;font-weight:700;transition:.15s;
   border-right:1px solid #eee;border-bottom:3px solid transparent;line-height:1.2}
-.s-nav-btn:nth-child(2n){border-right:none}
-.s-nav-btn:nth-child(n+3){border-top:1px solid #eee}
+.s-nav-btn:nth-child(3n){border-right:none}
 .s-nav-btn .s-nav-icon{font-size:1.5rem;line-height:1}
 .s-nav-btn:hover{background:#f5f7ff;color:#1a237e}
 .s-nav-btn.active{background:#e8eaf6;color:#1a237e;border-bottom-color:#1a237e;font-weight:800}
@@ -355,21 +354,21 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   /* Settings accordion groups: always full width */
   #page-settings { padding:0!important; }
   #page-settings > div:first-child { width:100%; }
-  .s-nav{grid-template-columns:repeat(4,1fr);top:calc(var(--hdr-h) + 44px)}
+  .s-nav{grid-template-columns:repeat(3,1fr);top:calc(var(--hdr-h) + 44px)}
   .s-nav-btn:nth-child(2n){border-right:1px solid #eee}
-  .s-nav-btn:nth-child(4n){border-right:none}
+  .s-nav-btn:nth-child(3n){border-right:none}
   .s-nav-btn:nth-child(n+3){border-top:none}
-  #sGroupOT, #sGroupEmp, #sGroupSched, #sGroupHol {
+  #sGroupEmp, #sGroupSched, #sGroupHol {
     padding:0!important;display:block!important;width:100%!important;
     grid-column:1/-1!important;
   }
-  #sGroupOT .settings-card, #sGroupEmp .settings-card,
+  #sGroupEmp .settings-card,
   #sGroupSched .settings-card, #sGroupHol .settings-card,
   #sGroupEmp .settings-card.full, #sGroupSched .settings-card.full {
     border-radius:0!important;margin:0!important;box-shadow:none!important;
     width:100%!important;max-width:100%!important;
   }
-  #sGroupOT .settings-body, #sGroupEmp .settings-body,
+  #sGroupEmp .settings-body,
   #sGroupSched .settings-body, #sGroupHol .settings-body {
     padding:16px 24px;
   }
@@ -483,10 +482,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 <!-- TAB 4: CÀI ĐẶT -->
 <div class="page" id="page-settings">
   <div class="s-nav">
-    <button id="sAccOT"    class="s-nav-btn active" onclick="showSettingsGroup('ot')">
-      <span class="s-nav-icon">⏰</span>Tăng Ca
-    </button>
-    <button id="sAccEmp"   class="s-nav-btn" onclick="showSettingsGroup('emp')">
+    <button id="sAccEmp"   class="s-nav-btn active" onclick="showSettingsGroup('emp')">
       <span class="s-nav-icon">👤</span>Nhân Viên
     </button>
     <button id="sAccSched" class="s-nav-btn" onclick="showSettingsGroup('sched')">
@@ -496,77 +492,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
       <span class="s-nav-icon">📅</span>Ngày Lễ
     </button>
   </div>
-  <div id="sGroupOT" class="settings-wrap" style="margin:0;border-radius:0">
-    <div class="settings-card" style="border-radius:0;margin:0;box-shadow:none;border-bottom:1px solid #e8eaf6">
-      <div class="s-section-head s-head-gradient-ot">⏰ Tạo Lịch Tăng Ca</div>
-      <div class="settings-body">
-        <div class="form-group">
-          <label class="form-label">Nhân viên</label>
-          <input type="text" class="form-input" list="tcEmpDatalist" id="tcEmpSearch" onchange="onTcEmpChange()" placeholder="🔍 Gõ tên hoặc MSNV để chọn nhanh...">
-          <datalist id="tcEmpDatalist"></datalist>
-        </div>
-        <div class="form-row" id="tcManualRow" style="display:none">
-          <input type="text" class="form-input" placeholder="Họ tên nhân viên" id="tcName">
-          <input type="text" class="form-input" placeholder="MSNV" id="tcId" style="flex:0 0 90px">
-        </div>
-        <div class="form-group">
-          <div class="form-row" style="align-items:flex-end;gap:10px">
-            <div style="flex:1;min-width:120px">
-              <label class="form-label">Từ ngày</label>
-              <input type="date" class="form-input" id="tcDate" style="width:100%">
-            </div>
-            <div style="flex:1;min-width:120px">
-              <label class="form-label">Đến ngày (tuỳ chọn)</label>
-              <input type="date" class="form-input" id="tcDateTo" style="width:100%">
-            </div>
-            <div>
-              <label class="form-label">Loại tăng ca</label>
-              <div class="ot-type-toggle">
-                <button class="ot-type-btn active" id="btnFullCa" onclick="setOtType('full')">Full Ca</button>
-                <button class="ot-type-btn" id="btnByHour" onclick="setOtType('hour')">Theo Giờ</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="tcFullRow" class="form-group">
-          <label class="form-label">Ca làm việc</label>
-          <select class="form-select" id="tcShift" style="width:100%">
-            <option value="S">☀️ Ca Sáng (S)</option>
-            <option value="C">🌙 Ca Chiều (C)</option>
-            <option value="C1">① Ca 1</option>
-            <option value="C2">② Ca 2</option>
-            <option value="C3">③ Ca 3</option>
-          </select>
-        </div>
-        <div id="tcHourRow" class="form-group" style="display:none">
-          <div class="form-row" style="align-items:flex-end;gap:10px">
-            <div style="flex:1">
-              <label class="form-label">Giờ bắt đầu</label>
-              <input type="time" class="form-input" id="tcStart" style="width:100%" oninput="calcHours()">
-            </div>
-            <span style="padding-bottom:10px;color:#bbb;font-size:1.2rem">→</span>
-            <div style="flex:1">
-              <label class="form-label">Giờ kết thúc <span id="tcHourCount" style="color:#388e3c;font-weight:700;text-transform:none"></span></label>
-              <input type="time" class="form-input" id="tcEnd" style="width:100%" oninput="calcHours()">
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Ghi chú</label>
-          <div class="form-row" style="margin-bottom:0">
-            <input type="text" class="form-input" placeholder="Nhập ghi chú..." id="tcNote">
-            <button class="btn btn-pri" style="white-space:nowrap;align-self:flex-end" onclick="addOvertime()">+ Thêm</button>
-          </div>
-        </div>
-      </div>
-      <div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:#e8eaf6;border-top:1px solid #c5cae9;gap:10px">
-        <span style="font-weight:700;font-size:.82rem;color:#1a237e;white-space:nowrap">📋 Đã lên lịch – tháng:</span>
-        <input type="month" id="otMonthFilter" class="form-input" style="width:150px;padding:7px 10px;min-height:36px" onchange="renderOvertime()">
-      </div>
-      <div class="ot-wrap" id="overtimeList" style="max-height:280px;overflow-y:auto"></div>
-    </div>
-  </div>
-  <div id="sGroupEmp" class="settings-wrap" style="display:none;margin:0;border-radius:0">
+  <div id="sGroupEmp" class="settings-wrap" style="margin:0;border-radius:0">
     <div class="settings-card" style="border-radius:0;margin:0;box-shadow:none;border-bottom:1px solid #e8eaf6">
       <div class="s-section-head s-head-gradient-emp">👤 Thêm Nhân Viên</div>
       <div class="settings-body">
@@ -1467,7 +1393,7 @@ let unlocked = false;
 
 // Settings group switcher (accordion-style)
 function showSettingsGroup(g){
-  const MAP = {ot:'OT', emp:'Emp', sched:'Sched', hol:'Hol'};
+  const MAP = {emp:'Emp', sched:'Sched', hol:'Hol'};
   Object.entries(MAP).forEach(([k, suffix])=>{
     const isActive = k===g;
     const grp = document.getElementById('sGroup'+suffix);
