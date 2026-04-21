@@ -426,8 +426,8 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   </div>
   <div class="legend">
     <span style="font-weight:700;color:#555">Chú thích:</span>
-    <div class="leg-item"><span class="leg-box" style="background:var(--s-bg)"></span>S – Sáng</div>
-    <div class="leg-item"><span class="leg-box" style="background:var(--c-bg)"></span>C – Chiều</div>
+    <div class="leg-item"><span class="leg-box" style="background:var(--s-bg)"></span>S - Sáng (6h-18h)</div>
+    <div class="leg-item"><span class="leg-box" style="background:var(--c-bg)"></span>C - Chiều (18h-6h hôm sau)</div>
     <div class="leg-item"><span class="leg-box" style="background:var(--n-bg)"></span>N – Nghỉ</div>
     <div class="leg-item"><span class="leg-box" style="background:var(--h-bg)"></span>L – Nghỉ Lễ</div>
     <div class="leg-item"><span class="leg-box" style="background:var(--hc-bg)"></span>HC – Hành Chính</div>
@@ -720,7 +720,7 @@ async function loadData() {
 const DN    = ['CN','T2','T3','T4','T5','T6','T7'];
 const DFUL  = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
 const MN    = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
-const SNAME = {S:'Ca Sáng (6:00–14:00)',C:'Ca Chiều (14:00–22:00)',N:'Nghỉ',L:'Nghỉ Lễ',
+const SNAME = {S:'Ca Sáng (6h-18h)',C:'Ca Chiều (18h-6h hôm sau)',N:'Nghỉ',L:'Nghỉ Lễ',
                HC:'Hành Chính (7:30–16:30)',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',UN:'Chưa phân ca'};
 const SICON = {S:'☀️',C:'🌙',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③'};
 const SLBL  = s => ({S:'Sáng',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3'}[s]||'Nghỉ');
