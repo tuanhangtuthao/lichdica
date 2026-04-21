@@ -245,9 +245,9 @@ input.sc-note:focus{border-color:#4a148c}
 <!-- PAGE 2: CHẤM ĐIỂM -->
 <div class="page" id="page-scoring">
   <div class="score-ctrl">
-    <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Ngày chấm:</label>
-    <input type="date" class="form-input" id="scoreDate" style="flex:0 0 auto" oninput="renderScoring()">
-    <button class="btn btn-sm" style="background:#4a148c;color:#fff" onclick="scoreAll()">💾 Lưu tất cả</button>
+    <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Tháng chấm:</label>
+    <input type="month" class="form-input" id="scoreMonth" style="flex:0 0 auto" onchange="renderScoring()">
+    <button class="btn btn-sm" style="background:#4a148c;color:#fff" onclick="scoreAllMonth(this)">💾 Lưu điểm Tháng</button>
   </div>
   <div class="kf-row" id="kipFilterRow">
     <button class="kf" id="kf-0" onclick="setScoreKip(0)">Tất cả</button>
@@ -568,72 +568,87 @@ function renderResults(){
 }
 
 // ── TAB 2: CHẤM ĐIỂM ──────────────────────
+function editDailyNote(el){
+    const oldNote = el.dataset.note || '';
+    const newNote = prompt("📝 Nhập ghi chú cho ngày này (hiển thị khi di chuột):", oldNote);
+    if(newNote !== null){
+        el.dataset.note = newNote;
+        el.title = newNote;
+        el.dataset.changed = "1";
+        el.style.borderBottom = newNote ? '2px solid red' : 'none';
+    }
+}
+
+function handleScoreChange(el) {
+    el.style.color = scoreColor(el.value);
+    el.dataset.changed = "1";
+}
+
 function renderScoring(){
-  const date=document.getElementById('scoreDate').value;
-  if(!date){
-    document.getElementById('scoringWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Chọn ngày để chấm điểm.</div>';
+  const mVal=document.getElementById('scoreMonth').value; // YYYY-MM
+  if(!mVal){
+    document.getElementById('scoringWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Chọn tháng chấm điểm.</div>';
     document.getElementById('scoreProgress').innerHTML='';
     document.getElementById('exclNote').innerHTML='';
     return;
   }
-  const dayMap={};
-  RATINGS.filter(r=>r.date===date).forEach(r=>dayMap[r.emp_id]=r);
+  
+  const [y, m] = mVal.split('-');
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const monthPrefix = mVal + '-';
 
-  // Tất cả NV được đánh giá (theo kip filter)
-  const emps=allEmps(scoreKip);
-  const done=emps.filter(e=>dayMap[e.id]).length;
-  document.getElementById('scoreProgress').innerHTML=
-    `Đã chấm: <b style="color:#4a148c">${done}</b> / ${emps.length} nhân viên — còn lại <b>${emps.length-done}</b>`;
+  const statMap = {};
+  RATINGS.filter(r => r.date.startsWith(monthPrefix)).forEach(r => {
+    if(!statMap[r.emp_id]) statMap[r.emp_id] = {scores:{}, notes:{}};
+    statMap[r.emp_id].scores[r.date] = parseFloat(r.score);
+    if(r.note) statMap[r.emp_id].notes[r.date] = r.note;
+  });
 
-  // Hiển thị số NV bị loại trừ
-  const totalAll=allEmpsNoFilter().filter(e=>scoreKip===0||e.kip===scoreKip).length;
-  const exclCount=totalAll-emps.length;
-  document.getElementById('exclNote').innerHTML=
-    exclCount>0?`⚠️ ${exclCount} trưởng ca/tổ trưởng/trưởng phòng không được đánh giá`:'';
+  const emps = allEmps(scoreKip);
+  const doneCount = emps.filter(e => statMap[e.id] && Object.keys(statMap[e.id].scores).length > 0).length;
+  document.getElementById('scoreProgress').innerHTML = `Đã chấm (ít nhất 1 ngày): <b style="color:#4a148c">${doneCount}</b> / ${emps.length} nhân viên <span style="font-style:italic;color:#888;font-size:.7rem;margin-left:5px">(Mẹo: Kích đúp vào ô điểm để viết ghi chú)</span>`;
 
-  const kipsToShow=scoreKip===0?[1,2,3,4]:[scoreKip];
+  const kipsToShow = scoreKip === 0 ? [1,2,3,4] : [scoreKip];
   let html='';
-  kipsToShow.forEach(k=>{
-    const kEmps=(EMPS[k]||[]).filter(isRatable);
+  kipsToShow.forEach(k => {
+    const kEmps = emps.filter(e => e.kip === k);
     if(!kEmps.length) return;
     html+=`<div class="kip-group-wrap">
       <div class="kip-head kh-k${k}">${GRP_LABEL[k]||'Kíp '+k} <span style="font-weight:400;font-size:.75rem;opacity:.85">(${kEmps.length} người)</span></div>
       <div style="overflow-x:auto; margin: 0 12px; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);">
-        <table class="res-table" style="width:100%; min-width:400px; box-shadow:none; border-radius:0;">
+        <table class="res-table" style="width:100%; min-width: max-content; box-shadow:none; border-radius:0;">
           <thead>
             <tr>
-              <th style="min-width:120px;position:sticky;left:0;z-index:1;background:#f5f5f5;color:#333;border-right:1px solid #f0f0f0">Họ tên / MSNV</th>
-              <th style="width:75px;text-align:center">Điểm</th>
-              <th>Ghi chú ngày (nếu có)</th>
-              <th style="width:65px;text-align:center">Lưu</th>
-            </tr>
+              <th style="min-width:140px;position:sticky;left:0;z-index:2;background:#f5f5f5;color:#333;border-right:1px solid #f0f0f0">Họ tên / MSNV</th>`;
+    for(let i=1; i<=daysInMonth; i++) html+= `<th style="text-align:center;min-width:40px;padding:6px 0;font-size:.75rem">${i}</th>`;
+    html+= `</tr>
           </thead>
           <tbody>`;
+          
     kEmps.forEach(e=>{
-      const ex=dayMap[e.id];
-      html+=`<tr class="${ex?'scored':''}" style="${ex?'background:#f1f8e9':''}">
-        <td style="position:sticky;left:0;background:${ex?'#f1f8e9':'#fff'};border-right:1px solid #f0f0f0;">
+      const st = statMap[e.id] || {scores:{}, notes:{}};
+      html+=`<tr>
+        <td style="position:sticky;left:0;z-index:1;background:#fff;border-right:1px solid #f0f0f0;padding:6px 12px">
           <div style="font-weight:700;font-size:.85rem;color:#222">${e.name}</div>
           <div style="font-size:.68rem;color:#888">${e.id}${e.role?' · '+e.role:''}</div>
-        </td>
-        <td style="text-align:center">
-          <input type="number" min="0" max="10" step="0.1" placeholder="-" id="sc-${e.id}" value="${ex?ex.score:''}" 
-                 style="width:56px;padding:6px;border:1.5px solid ${ex?scoreColor(ex.score):'#ccc'};border-radius:6px;font-size:.9rem;font-weight:700;text-align:center;color:${ex?scoreColor(ex.score):'inherit'};outline:none"
-                 onfocus="this.select()">
-        </td>
-        <td>
-          <input type="text" placeholder="Ghi chú..." id="nt-${e.id}" value="${ex?ex.note||'':''}"
-                 style="width:100%;min-width:100px;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:.8rem;outline:none">
-        </td>
-        <td style="text-align:center">
-          <div style="display:flex;gap:4px;justify-content:center">
-            <button onclick="saveScore('${e.id}','${e.name}','${date}')" class="sc-save ${ex?'edit':'new'}" style="margin:0">
-              ${ex?'✏️ Sửa':'✓ Lưu'}
-            </button>
-            ${ex?`<button onclick="deleteRating(${ex.id},true)" style="background:none;border:none;color:#e57373;cursor:pointer;font-size:.95rem;padding:0 2px">✕</button>`:''}
-          </div>
-        </td>
-      </tr>`;
+        </td>`;
+        
+      for(let i=1; i<=daysInMonth; i++){
+         const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+         const sVal = st.scores[dk] !== undefined ? st.scores[dk] : '';
+         const nVal = st.notes[dk] || '';
+         const noteHint = nVal ? '2px solid red' : '1px solid transparent';
+         
+         html += `<td style="text-align:center;padding:4px 0">
+           <input type="number" min="0" max="10" step="0.1" title="${nVal}" data-note="${nVal}"
+                  data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}"
+                  class="sc-input" placeholder="-" value="${sVal}"
+                  ondblclick="editDailyNote(this)" onchange="handleScoreChange(this)"
+                  onfocus="this.select()"
+                  style="width:38px;text-align:center;border:none;border-bottom:${noteHint};background:none;font-size:.88rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none">
+         </td>`;
+      }
+      html+=`</tr>`;
     });
     html+='</tbody></table></div></div>';
   });
@@ -641,51 +656,68 @@ function renderScoring(){
   document.getElementById('scoringWrap').innerHTML=html;
 }
 
-async function saveScore(emp_id,emp_name,date){
-  const scEl=document.getElementById('sc-'+emp_id);
-  const ntEl=document.getElementById('nt-'+emp_id);
-  const score=parseFloat(scEl.value);
-  if(isNaN(score)||score<0||score>10){alert('Điểm phải từ 0 đến 10!');scEl.focus();return;}
-  const note=ntEl.value.trim();
-  const row={emp_id,emp_name,date,score,note};
-  if(SB_OK){
-    const {data,error}=await sb.from('daily_ratings').upsert(row,{onConflict:'emp_id,date'}).select();
-    if(error){alert('Lỗi: '+error.message);return;}
-    RATINGS=RATINGS.filter(r=>!(r.emp_id===emp_id&&r.date===date));
-    RATINGS.push(data[0]);
-  } else {
-    RATINGS=RATINGS.filter(r=>!(r.emp_id===emp_id&&r.date===date));
-    RATINGS.push({...row,id:Date.now()});
+async function scoreAllMonth(btn) {
+  const inputs = document.querySelectorAll('.sc-input[data-changed="1"]');
+  if(inputs.length === 0){
+    alert('Không có điểm hay dòng thay đổi mới nào để lưu!');
+    return;
   }
-  renderScoring();
+  
+  const dailyRows = [];
+  let hasError = false;
+  inputs.forEach(el => {
+     let v = el.value.trim();
+     if(v !== '') {
+        const sc = parseFloat(v);
+        if(isNaN(sc) || sc < 0 || sc > 10) hasError = true;
+        else {
+           dailyRows.push({
+              emp_id: el.dataset.empid,
+              emp_name: el.dataset.empname,
+              date: el.dataset.date,
+              score: sc,
+              note: el.dataset.note || ''
+           });
+        }
+     }
+  });
+
+  if(hasError) {
+    alert("Có điểm không hợp lệ. Vui lòng kiểm tra lại điểm (0 - 10).");
+    return;
+  }
+  
+  if(!SB_OK){
+      alert('Không kết nối được lưc trữ DB.');
+      return;
+  }
+  
+  if(btn){
+      btn.textContent = "Đang lưu...";
+      btn.disabled = true;
+  }
+
+  const {error} = await sb.from('daily_ratings').upsert(dailyRows, {onConflict: 'emp_id,date'});
+  
+  if(error){
+      alert('Lỗi lưu điểm: ' + error.message);
+  } else {
+      dailyRows.forEach(row => {
+          RATINGS = RATINGS.filter(r => !(r.emp_id === row.emp_id && r.date === row.date));
+          RATINGS.push(row);
+      });
+      inputs.forEach(el => el.dataset.changed = "0");
+      alert('Đã lưu thành công: ' + dailyRows.length + ' bản ghi điểm!');
+  }
+  
+  if(btn){
+      btn.textContent = "💾 Lưu điểm Tháng";
+      btn.disabled = false;
+  }
 }
 
-async function scoreAll(){
-  const date=document.getElementById('scoreDate').value;
-  if(!date){alert('Chọn ngày!');return;}
-  const emps=allEmps(scoreKip);
-  let saved=0;
-  for(const e of emps){
-    const scEl=document.getElementById('sc-'+e.id);
-    if(!scEl||scEl.value.trim()==='') continue;
-    const score=parseFloat(scEl.value);
-    if(isNaN(score)||score<0||score>10) continue;
-    const note=(document.getElementById('nt-'+e.id)||{}).value||'';
-    const row={emp_id:e.id,emp_name:e.name,date,score,note:note.trim()};
-    if(SB_OK){
-      const {data,error}=await sb.from('daily_ratings').upsert(row,{onConflict:'emp_id,date'}).select();
-      if(error){console.warn(error);continue;}
-      RATINGS=RATINGS.filter(r=>!(r.emp_id===e.id&&r.date===date));
-      RATINGS.push(data[0]);
-    } else {
-      RATINGS=RATINGS.filter(r=>!(r.emp_id===e.id&&r.date===date));
-      RATINGS.push({...row,id:Date.now()});
-    }
-    saved++;
-  }
-  if(!saved){alert('Chưa nhập điểm cho nhân viên nào!');return;}
-  renderScoring();
-}
+async function saveScore(emp_id,emp_name,date){
+  const scEl=document.getElementById('sc-'+emp_id);
 
 async function deleteRating(id,fromScoring=false){
   if(!confirm('Xóa điểm này?')) return;
@@ -931,9 +963,9 @@ function _doShowTab(tab){
   const t=new Date();
   document.getElementById('todayLabel').textContent=
     `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
-  const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-  document.getElementById('scoreDate').value=ts;
-  const currMonth = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+  const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('scoreMonth').value=ts;
+  const currMonth = ts;
   document.getElementById('rfMonth').value = currMonth;
   document.getElementById('apprMonth').value = currMonth;
   
