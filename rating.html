@@ -447,20 +447,25 @@ function checkPw(){
 async function loadData(){
   if(!SB_OK){return;}
   try{
-    const [er,rr,gr,mr]=await Promise.all([
+    // Các bảng bắt buộc
+    const [er,rr,gr]=await Promise.all([
       sb.from('employees').select('*').order('kip').order('sort_order'),
       sb.from('daily_ratings').select('*').order('date'),
       sb.from('rating_config').select('*').order('sort_order'),
-      sb.from('monthly_reviews').select('*')
     ]);
     EMPS={1:[],2:[],3:[],4:[]};
     (er.data||[]).forEach(e=>{
       if(EMPS[e.kip]) EMPS[e.kip].push({id:e.id,name:e.name,role:e.role||'',kip:e.kip});
     });
     RATINGS=rr.data||[];
-    MONTHLY_REVIEWS=mr.data||[];
     if((gr.data||[]).length>0) GRADE_CFG=gr.data;
-  }catch(e){console.warn('Load error:',e);}
+  }catch(e){console.warn('Load error (core):', e);}
+
+  // Bảng monthly_reviews – chưa bắt buộc, bỏ qua nếu chưa tạo
+  try{
+    const mr=await sb.from('monthly_reviews').select('*');
+    MONTHLY_REVIEWS=mr.data||[];
+  }catch(e){MONTHLY_REVIEWS=[];console.warn('monthly_reviews chưa tạo, bỏ qua.');}
 }
 
 // ── TAB 1: KẾT QUẢ ────────────────────────
@@ -957,19 +962,24 @@ function _doShowTab(tab){
 
 // ── INIT ───────────────────────────────────
 (async()=>{
-  const t=new Date();
-  document.getElementById('todayLabel').textContent=
-    `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
-  const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
-  document.getElementById('scoreMonth').value=ts;
-  const currMonth = ts;
-  document.getElementById('rfMonth').value = currMonth;
-  document.getElementById('apprMonth').value = currMonth;
-  
-  await loadData();
-  document.getElementById('loadingOverlay').classList.add('hide');
-  renderResults();
-  renderConfig();
+  try{
+    const t=new Date();
+    document.getElementById('todayLabel').textContent=
+      `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
+    const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+    const scoreMonthEl=document.getElementById('scoreMonth');
+    const rfMonthEl=document.getElementById('rfMonth');
+    const apprMonthEl=document.getElementById('apprMonth');
+    if(scoreMonthEl) scoreMonthEl.value=ts;
+    if(rfMonthEl)    rfMonthEl.value=ts;
+    if(apprMonthEl)  apprMonthEl.value=ts;
+    await loadData();
+  }catch(e){console.error('Init error:',e);}
+  finally{
+    document.getElementById('loadingOverlay').classList.add('hide');
+  }
+  try{renderResults();}catch(e){console.warn(e);}
+  try{renderConfig();}catch(e){console.warn(e);}
 })();
 </script>
 </body>
