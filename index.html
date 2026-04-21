@@ -1288,7 +1288,7 @@ function renderOtBoard(){
 
   let h = `<thead><tr>
       <th style="min-width:140px;position:sticky;left:0;background:#f5f5f5;z-index:2;border-right:1px solid #ddd;padding:6px 12px;color:#333;text-align:left">Nhân viên</th>`;
-  for(let i=1; i<=daysInMonth; i++) h += `<th style="width:38px;padding:6px 0;text-align:center;font-size:.75rem;background:#f5f5f5">${i}</th>`;
+  for(let i=1; i<=daysInMonth; i++) h += `<th style="min-width:44px;padding:6px 0;text-align:center;font-size:.75rem;background:#f5f5f5">${i}</th>`;
   h += `</tr></thead><tbody>`;
 
   if(!empsArr.length) {
@@ -1309,11 +1309,11 @@ function renderOtBoard(){
                cellHtml = ots.map(o => {
                   const isFull = !o.ot_type || o.ot_type === 'full';
                   const title = o.note ? ` title="📝 ${o.note}"` : '';
-                  if(isFull) return `<span class="chip ${o.shift}"${title}>${o.shift}</span>`;
-                  return `<span class="chip" style="background:#e3f2fd;color:#1565c0;font-size:.65rem;padding:2px 4px"${title}>${o.start_time}-${o.end_time}</span>`;
-               }).join('<br>');
+                  if(isFull) return `<div class="chip ${o.shift}"${title} style="margin:2px 0;display:inline-block;">${o.shift}</div>`;
+                  return `<div style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80;font-size:.75rem;padding:3px;border-radius:4px;line-height:1.2;font-weight:700;display:inline-block;white-space:nowrap;margin:2px 0;min-width:36px;"${title}>${o.start_time}<br><span style="color:#ffa726;font-size:.55rem">▼</span><br>${o.end_time}</div>`;
+               }).join('');
             }
-            h += `<td style="text-align:center;padding:4px 0;border-bottom:1px solid #f0f0f0;border-right:1px dotted #f0f0f0">${cellHtml}</td>`;
+            h += `<td style="text-align:center;padding:4px;border-bottom:1px solid #f0f0f0;border-right:1px dotted #e0e0e0;vertical-align:middle;">${cellHtml}</td>`;
          }
          h += `</tr>`;
       });
