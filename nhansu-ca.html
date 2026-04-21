@@ -159,6 +159,32 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   :root{--cw:320px;--ch:110px;--gap:12px}
   .floor{gap:150px}
 }
+
+/* ── LAYOUT EDITOR STYLES ── */
+.layout-edit-btn{background:#455a64!important;color:#fff!important}
+.zone-title-input{background:transparent;border:none;border-bottom:2px dashed #9e9e9e;
+  font-size:.65rem;font-weight:800;color:#1a237e;text-align:center;
+  text-transform:uppercase;width:100%;margin-bottom:4px;outline:none;padding:2px}
+.zone-title-input:focus{border-bottom-color:var(--accent);color:var(--accent)}
+.mc-cell.edit-layout{border-style:dashed;background:#fafafa}
+.mc-cell.edit-layout .mc-code-input{width:100%;border:1px solid #ddd;border-radius:4px;
+  font-size:.75rem;font-weight:700;padding:2px 4px;text-align:center;color:var(--accent)}
+.row-ctrl{display:flex;justify-content:center;margin-top:8px;gap:8px}
+.btn-row-add{background:#f1f3f4;border:1.5px dashed #ccc;color:#666;width:100%;height:32px;
+  border-radius:8px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+.btn-row-add:hover{background:#e8eaed;border-color:#999;color:#333}
+.mc-slot-wrap{position:relative}
+.btn-slot-del{position:absolute;-top:6px;-right:6px;width:18px;height:18px;
+  background:#ef5350;color:#fff;border:none;border-radius:50%;font-size:10px;
+  cursor:pointer;display:none;align-items:center;justify-content:center;z-index:20}
+.mc-slot-wrap:hover .btn-slot-del{display:flex}
+.floor-edit-banner{display:none;background:#263238;color:#fff;padding:8px 16px;
+  font-size:.8rem;font-weight:600;align-items:center;justify-content:center;gap:12px}
+.floor-edit-banner.show{display:flex}
+.btn-zone-del{background:#ffebee;color:#c62828;border:none;padding:2px 8px;border-radius:4px;
+  font-size:.6rem;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-zone-add{background:#fff;border:1.5px dashed var(--accent);color:var(--accent);
+  padding:15px 30px;border-radius:12px;font-weight:700;cursor:pointer;margin:20px}
 </style>
 </head>
 <body>
@@ -177,10 +203,17 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   <a href="index.html" class="btn-back">← Lịch Ca</a>
 </div>
 
-<!-- EDIT BANNER -->
+<!-- EDIT BANNER (Worker Assignments) -->
 <div class="edit-banner" id="editBanner">
-  ✏️ Đang chỉnh sửa – nhấn vào ô để điền tên nhân viên
+  ✏️ Đang gán nhân sự – nhấn vào các máy để điền tên
   <button class="close-btn" onclick="cancelEdit()">✕</button>
+</div>
+
+<!-- LAYOUT EDIT BANNER -->
+<div class="floor-edit-banner" id="layoutEditBanner">
+  ⚙️ CHẾ ĐỘ THIẾT KẾ SƠ ĐỒ – bạn có thể đổi tên khu vực, mã máy và thêm bớt hàng
+  <button class="btn btn-save btn-sm" onclick="saveLayout()">💾 Lưu sơ đồ</button>
+  <button class="btn btn-sec btn-sm" onclick="cancelLayoutEdit()" style="color:#fff;border-color:#555;background:#37474f">✕ Hủy</button>
 </div>
 
 <!-- CONTROLS -->
@@ -195,7 +228,8 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   <input type="text" class="ctrl-date" id="empSearch" placeholder="🔍 Tìm tên NV..." list="empList" oninput="searchEmp()" style="flex:1;min-width:130px;max-width:200px">
   <button class="btn btn-sec" onclick="copyPrev()" title="Sao chép từ ngày hôm qua">📋 Copy</button>
   <button class="btn btn-sec" onclick="window.print()">🖨️ In</button>
-  <button class="btn btn-edit" id="editBtn" onclick="toggleEdit()">✏️ Sửa</button>
+  <button class="btn btn-sec" onclick="toggleLayoutEdit()" title="Chỉnh sửa sơ đồ máy móc">⚙️</button>
+  <button class="btn btn-edit" id="editBtn" onclick="toggleEdit()">✏️ Gán NV</button>
 </div>
 
 <!-- FACTORY FLOOR -->
@@ -219,44 +253,30 @@ const SB_OK=SB_URL.startsWith('https://')&&!SB_URL.includes('PASTE');
 const sb=SB_OK?supabase.createClient(SB_URL,SB_KEY):null;
 
 // ══════════════════════════════════════════════════════════
-// LAYOUT NHÀ MÁY – theo đúng sơ đồ trong hình
-// null = ô trống (spacer)
+// LAYOUT NHÀ MÁY – Mặc định nếu DB trống
 // ══════════════════════════════════════════════════════════
-const LAYOUT_LEFT = [
-  // Cột 1 (trái)   Cột 2 (phải)
-  ['T-24',          'T-23'],
-  ['T-03',           null ],
-  ['CT2',           'CT9' ],
-  ['CT3',           'CT8' ],
-  ['CT4',           'CT7' ],
-  ['CT6',            null ],
-  ['CT5',           'CT1' ],
-  ['VT-04',         'VT-02'],
-  ['LN-01',         'LN-02'],
-  [ null,           'VT1' ],
-  ['ETL-01',        'ETL-TD'],
-  ['ETL-02',         null ],
-  ['Khắc',           null ],
+let FACTORY_DATA = [
+  {
+    title: 'Khu CT / VT / LN / ETL',
+    grid: [
+      ['T-24', 'T-23'], ['T-03', null], ['CT2', 'CT9'], ['CT3', 'CT8'],
+      ['CT4', 'CT7'], ['CT6', null], ['CT5', 'CT1'], ['VT-04', 'VT-02'],
+      ['LN-01', 'LN-02'], [null, 'VT1'], ['ETL-01', 'ETL-TD'],
+      ['ETL-02', null], ['Khắc', null]
+    ]
+  },
+  {
+    title: 'Khu Tiện (T-xx)',
+    grid: [
+      ['T-05', 'T-16'], ['T-06', null], ['T-27', 'T-30'], ['T-25', 'T-28'],
+      ['T-08', 'T-26'], ['T-21', 'T-22'], ['T-19', 'T-20'], ['T-17', 'T-18'],
+      ['T-11', 'T-29'], ['T-15', 'T-14'], ['T-13', 'T-12'], ['T-04', 'T-10'],
+      ['T-09', 'T-31'], ['T-07', null], ['Cưa', null]
+    ]
+  }
 ];
 
-const LAYOUT_RIGHT = [
-  // Cột 1 (trái)   Cột 2 (phải)
-  ['T-05',          'T-16'],
-  ['T-06',           null ],
-  ['T-27',          'T-30'],
-  ['T-25',          'T-28'],
-  ['T-08',          'T-26'],
-  ['T-21',          'T-22'],
-  ['T-19',          'T-20'],
-  ['T-17',          'T-18'],
-  ['T-11',          'T-29'],
-  ['T-15',          'T-14'],
-  ['T-13',          'T-12'],
-  ['T-04',          'T-10'],
-  ['T-09',          'T-31'],
-  ['T-07',           null ],
-  ['Cưa',            null ],
-];
+let layoutEditMode = false;
 
 // ══════════════════════════════════════════════════════════
 // STATE & LOGIC CA KÍP
@@ -342,25 +362,74 @@ async function loadRoster(){
   searchEmp(); 
 }
 
-async function loadEmpList(){
-  if(!SB_OK) return;
-  try{
-    const {data}=await sb.from('employees').select('name');
-    const dl=document.getElementById('empList');
-    (data||[]).forEach(e=>{
-      const o=document.createElement('option');o.value=e.name;dl.appendChild(o);
-    });
-  }catch(e){}
+// ── RENDER FLOOR ──────────────────────────────────────────
+async function loadLayout(){
+  if(SB_OK){
+    try {
+      const {data} = await sb.from('factory_layout').select('*').order('order_index');
+      if(data && data.length > 0){
+        FACTORY_DATA = data.map(d => ({
+          id: d.id,
+          title: d.title,
+          grid: JSON.parse(d.grid_json),
+          order_index: d.order_index
+        }));
+      }
+    } catch(e) {}
+  }
 }
 
-// ── RENDER FLOOR ──────────────────────────────────────────
+async function saveLayout(){
+  const btn = document.querySelector('#layoutEditBanner .btn-save');
+  btn.disabled = true; btn.textContent = '⏳ Đang lưu...';
+  
+  if(SB_OK){
+    try {
+      // Xóa cấu hình cũ và lưu mới để đơn giản hóa việc quản lý thứ tự
+      await sb.from('factory_layout').delete().neq('id', 0);
+      
+      const rows = FACTORY_DATA.map((z, idx) => ({
+        title: z.title,
+        grid_json: JSON.stringify(z.grid),
+        order_index: idx
+      }));
+      
+      const {error} = await sb.from('factory_layout').insert(rows);
+      if(error) throw error;
+      
+      showToast('✅ Đã lưu sơ đồ mới');
+      layoutEditMode = false;
+      document.getElementById('layoutEditBanner').classList.remove('show');
+      renderFloor();
+    } catch(e) {
+      alert('Lỗi lưu sơ đồ: ' + e.message + '\nLưu ý: Bạn cần tạo bảng factory_layout trên Supabase.');
+    }
+  } else {
+    alert('Chưa kết nối Supabase!');
+  }
+  btn.disabled = false; btn.textContent = '💾 Lưu sơ đồ';
+}
+
 function renderFloor(){
   const floor=document.getElementById('floor');
   floor.innerHTML='';
-  floor.appendChild(makeSection('Khu CT / VT / LN / ETL',LAYOUT_LEFT));
-  const dv=document.createElement('div');dv.className='floor-divider';
-  floor.appendChild(dv);
-  floor.appendChild(makeSection('Khu Tiện (T-xx)',LAYOUT_RIGHT));
+  
+  FACTORY_DATA.forEach((zone, zIdx) => {
+    floor.appendChild(makeSection(zone, zIdx));
+    if(zIdx < FACTORY_DATA.length - 1){
+      const dv=document.createElement('div');
+      dv.className='floor-divider';
+      floor.appendChild(dv);
+    }
+  });
+
+  if(layoutEditMode){
+    const btn = document.createElement('button');
+    btn.className = 'btn-zone-add';
+    btn.innerHTML = '➕ Thêm Phân Vùng Mới';
+    btn.onclick = addZone;
+    floor.appendChild(btn);
+  }
 }
 
 function searchEmp(){
@@ -392,35 +461,124 @@ function searchEmp(){
   });
 }
 
-function makeSection(title,layout){
+async function loadEmpList(){
+  if(!SB_OK) return;
+  try{
+    const {data}=await sb.from('employees').select('name');
+    const dl=document.getElementById('empList');
+    (data||[]).forEach(e=>{
+      const o=document.createElement('option');o.value=e.name;dl.appendChild(o);
+    });
+  }catch(e){}
+}
+
+function makeSection(zone, zIdx){
   const sec=document.createElement('div');
   sec.className='section';
-  const lbl=document.createElement('div');
-  lbl.className='section-lbl';lbl.textContent=title;
-  sec.appendChild(lbl);
+  
+  if(layoutEditMode){
+    const ti = document.createElement('input');
+    ti.className = 'zone-title-input';
+    ti.value = zone.title;
+    ti.oninput = (e) => { FACTORY_DATA[zIdx].title = e.target.value; };
+    sec.appendChild(ti);
+
+    const btnDel = document.createElement('button');
+    btnDel.className = 'btn-zone-del';
+    btnDel.textContent = '🗑 Xóa vùng này';
+    btnDel.onclick = () => {
+      if(confirm('Xóa sạch phân vùng này?')) {
+        FACTORY_DATA.splice(zIdx, 1);
+        renderFloor();
+      }
+    };
+    sec.appendChild(btnDel);
+  } else {
+    const lbl=document.createElement('div');
+    lbl.className='section-lbl'; lbl.textContent=zone.title;
+    sec.appendChild(lbl);
+  }
+
   const grid=document.createElement('div');
   grid.className='mc-grid';
-  layout.forEach(row=>{
-    row.forEach(code=>{
-      if(code===null){
+  
+  zone.grid.forEach((row, rIdx) => {
+    row.forEach((code, cIdx) => {
+      const slot = document.createElement('div');
+      slot.className = 'mc-slot-wrap';
+      
+      if(code === null && !layoutEditMode){
         const sp=document.createElement('div');
         sp.className='mc-spacer';
         grid.appendChild(sp);
       } else {
-        grid.appendChild(buildCell(code));
+        const cell = buildCell(code, zIdx, rIdx, cIdx);
+        slot.appendChild(cell);
+        
+        if(layoutEditMode){
+          const del = document.createElement('button');
+          del.className = 'btn-slot-del';
+          del.innerHTML = '✕';
+          del.title = 'Xóa/Ẩn ô này';
+          del.onclick = () => {
+            FACTORY_DATA[zIdx].grid[rIdx][cIdx] = (code===null) ? 'Mới' : null;
+            renderFloor();
+          };
+          slot.appendChild(del);
+        }
+        grid.appendChild(slot);
       }
     });
   });
+  
   sec.appendChild(grid);
+
+  if(layoutEditMode){
+    const ctrl = document.createElement('div');
+    ctrl.className = 'row-ctrl';
+    const btnAdd = document.createElement('button');
+    btnAdd.className = 'btn-row-add';
+    btnAdd.innerHTML = '➕ Thêm hàng';
+    btnAdd.onclick = () => {
+      FACTORY_DATA[zIdx].grid.push([null, null]);
+      renderFloor();
+    };
+    ctrl.appendChild(btnAdd);
+    sec.appendChild(ctrl);
+  }
+
   return sec;
 }
 
-function buildCell(code){
+function addZone(){
+  FACTORY_DATA.push({ title: 'KHU MỚI', grid: [[null, null]] });
+  renderFloor();
+}
+
+function buildCell(code, zIdx, rIdx, cIdx){
   const d=ROSTER[code]||{worker_name:'',note:''};
   const cell=document.createElement('div');
+  
+  if(layoutEditMode){
+    cell.className = 'mc-cell edit-layout';
+    const ci = document.createElement('input');
+    ci.className = 'mc-code-input';
+    ci.value = code || '';
+    ci.placeholder = 'Trống...';
+    ci.oninput = (e) => { FACTORY_DATA[zIdx].grid[rIdx][cIdx] = e.target.value.trim() || null; };
+    cell.appendChild(ci);
+    return cell;
+  }
+
   const hasFill=!!d.worker_name;
   cell.className=`mc-cell${hasFill?' filled':''}${editMode?' edit-mode':''}`;
   cell.dataset.code=code;
+  
+  // Tránh lỗi khi code là null
+  if(!code) {
+     cell.style.visibility = 'hidden';
+     return cell;
+  }
 
   // Code badge
   const codeLbl=document.createElement('div');
@@ -460,27 +618,31 @@ function onInput(code,field,val){
   if(cell) cell.classList.toggle('filled',!!ROSTER[code].worker_name);
 }
 
-// ── EDIT MODE ─────────────────────────────────────────────
+// ── EDIT MODE (Personnel) ─────────────────────────────────
 function toggleEdit(){
+  if(layoutEditMode) return; // Không gán nhân sự khi đang sửa sơ đồ
   if(editMode) saveAll();
   else startEdit();
 }
-function startEdit(){
-  if(!curDate){alert('Vui lòng chọn ngày!');return;}
-  editMode=true;
-  document.getElementById('editBtn').innerHTML='💾 Lưu';
-  document.getElementById('editBtn').className='btn btn-save';
-  document.getElementById('editBanner').classList.add('show');
-  document.getElementById('saveFloat').classList.add('show');
+
+// ── LAYOUT EDIT MODE ──────────────────────────────────────
+function toggleLayoutEdit(){
+  const pw = prompt('Nhập mật khẩu quản trị để sửa sơ đồ:');
+  if(pw !== '741852') {
+    if(pw !== null) alert('Sai mật khẩu!');
+    return;
+  }
+  
+  if(editMode) cancelEdit();
+  layoutEditMode = true;
+  document.getElementById('layoutEditBanner').classList.add('show');
   renderFloor();
 }
-function cancelEdit(){
-  editMode=false;
-  document.getElementById('editBtn').innerHTML='✏️ Sửa';
-  document.getElementById('editBtn').className='btn btn-edit';
-  document.getElementById('editBanner').classList.remove('show');
-  document.getElementById('saveFloat').classList.remove('show');
-  loadRoster();
+
+function cancelLayoutEdit(){
+  layoutEditMode = false;
+  document.getElementById('layoutEditBanner').classList.remove('show');
+  loadLayout().then(() => renderFloor());
 }
 
 // ── SAVE ──────────────────────────────────────────────────
@@ -489,7 +651,14 @@ async function saveAll(){
   const btn=document.getElementById('editBtn');
   btn.disabled=true;btn.textContent='⏳ Đang lưu...';
 
-  const allCodes=[...LAYOUT_LEFT,...LAYOUT_RIGHT].flat().filter(c=>c!==null);
+  // Lấy tất cả mã máy từ FACTORY_DATA mới
+  const allCodes = [];
+  FACTORY_DATA.forEach(z => {
+    z.grid.forEach(row => {
+      row.forEach(c => { if(c) allCodes.push(c); });
+    });
+  });
+
   for(const code of allCodes){
     const d=ROSTER[code]||{worker_name:'',note:'',id:null};
     const row={kip:curKip,date:curDate,machine_code:code,
@@ -556,6 +725,7 @@ function showToast(msg){
     curKip = getKipByShift(ts, curShift);
     document.getElementById('activeKipLbl').textContent = `Đang xem: Kíp ${curKip}`;
     applyKipTheme();
+    await loadLayout(); // Tải sơ đồ từ DB
     await Promise.all([loadRoster(),loadEmpList()]);
   }catch(e){console.error(e);}
   finally{document.getElementById('loadingOverlay').classList.add('hide');}
