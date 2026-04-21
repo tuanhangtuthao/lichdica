@@ -184,15 +184,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 .sum-row .name{font-weight:600;color:#333}
 .sum-row.leader .name{color:#1a237e}
 .role-tag{font-size:.7rem;color:#888;background:#f5f5f5;padding:2px 7px;border-radius:10px}
-.upcoming-wrap{padding:12px 12px 0}
-.upcoming-title{font-size:.88rem;font-weight:700;color:#333;margin-bottom:8px}
-.up-scroll{overflow-x:auto}
-.up-table{border-collapse:collapse;width:100%;background:#fff;border-radius:var(--radius);
-  overflow:hidden;box-shadow:var(--shadow);font-size:11.5px}
-.up-table th{background:#283593;color:#fff;padding:6px 8px;font-weight:600;text-align:center}
-.up-table td{padding:6px 8px;border-bottom:1px solid #f0f0f0;text-align:center}
-.up-table td.kip-name{text-align:left;font-weight:700;white-space:nowrap}
-.up-table td.kip-name.k1{color:var(--k1)}.up-table td.kip-name.k2{color:var(--k2)}.up-table td.kip-name.k3{color:var(--k3)}.up-table td.kip-name.k4{color:var(--k4)}
+
 .chip{display:inline-block;padding:2px 7px;border-radius:10px;font-weight:700;font-size:10.5px}
 .chip.S{background:var(--s-bg);color:var(--s-fg)}
 .chip.C{background:var(--c-bg);color:var(--c-fg)}
@@ -222,8 +214,6 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 .ot-empty{text-align:center;padding:50px 20px;color:#aaa;font-size:.9rem}
 
 /* TAB 3 – DANH SÁCH KÍP */
-.lookup-search{padding:10px 12px 6px}
-.lookup-wrap{padding:0 12px 16px}
 .kip-section{background:#fff;border-radius:var(--radius);margin-bottom:12px;
   overflow:hidden;box-shadow:var(--shadow)}
 .kip-section-head{padding:10px 14px;color:#fff;font-weight:700;
@@ -334,9 +324,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   .summary-section{padding:16px 24px 0}
   .sum-grid{flex-direction:row}
   .sum-card{flex:1}
-  .upcoming-wrap{padding:14px 24px 0}
-  .lookup-search{padding:14px 24px 6px}
-  .lookup-wrap{padding:0 24px 24px}
+
   .emp-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
   .settings-wrap{padding:16px 24px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .settings-card.full{grid-column:1/-1}
@@ -406,7 +394,6 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 <div class="top-tabs">
   <div class="tab active" onclick="showTab('schedule')">📅 Lịch Ca</div>
   <div class="tab"        onclick="showTab('summary')">📊 Hôm Nay</div>
-  <div class="tab"        onclick="showTab('lookup')">👥 Danh Sách Kíp</div>
   <div class="tab"        onclick="showTab('tanca')">⏰ Tăng Ca</div>
   <div class="tab"        onclick="showTab('settings')">⚙️ Cài Đặt</div>
   <a href="rating.html" class="tab tab-rating" title="Đánh giá nhân viên">🏆 Đánh Giá</a>
@@ -449,19 +436,6 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     <div id="holBanner"></div>
     <div class="sum-grid" id="sumGrid"></div>
   </div>
-  <div class="upcoming-wrap">
-    <div class="upcoming-title">📆 14 ngày tới</div>
-    <div class="up-scroll"><table class="up-table" id="upTable"></table></div>
-  </div>
-</div>
-
-<!-- TAB 3: DANH SÁCH KÍP -->
-<div class="page" id="page-lookup">
-  <div class="lookup-search">
-    <input class="search" style="max-width:300px" type="text"
-      placeholder="🔍 Tìm tên / MSNV..." oninput="setLookupQ(this.value)">
-  </div>
-  <div class="lookup-wrap" id="lookupWrap"></div>
 </div>
 
 <!-- TAB 4: CÀI ĐẶT -->
@@ -579,9 +553,6 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   </button>
   <button class="bnav" onclick="showTab('summary')">
     <span class="bicon">📊</span><span class="blabel">Hôm Nay</span>
-  </button>
-  <button class="bnav" onclick="showTab('lookup')">
-    <span class="bicon">👥</span><span class="blabel">DS Kíp</span>
   </button>
   <button class="bnav" onclick="showTab('tanca')">
     <span class="bicon">⏰</span><span class="blabel">Tăng Ca</span>
@@ -1363,7 +1334,7 @@ function setKip(k){
 }
 
 // ── TABS ───────────────────────────────────
-const TABS = ['schedule','summary','lookup','tanca','settings'];
+const TABS = ['schedule','summary','tanca','settings'];
 const SETTINGS_PASS = '741852';
 let unlocked = false;
 
@@ -1379,7 +1350,6 @@ function _goTab(tab){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+tab).classList.add('active');
   if(tab==='summary')  renderSummary();
-  if(tab==='lookup')   renderLookup();
   if(tab==='tanca')    { renderOtBoard(); }
   if(tab==='settings'){ buildEmpSelect(); try{renderOvertime();}catch(_){} renderHolList(); buildPsEmpSelect(); renderEmpSched(); renderEmpMg(); }
 }
@@ -1462,7 +1432,6 @@ function checkPw(){
 function renderAll(){
   renderTable();
   if(activeTab==='summary') renderSummary();
-  if(activeTab==='lookup')  renderLookup();
 }
 
 // ── KHỞI ĐỘNG ──────────────────────────────
