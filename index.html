@@ -1139,7 +1139,9 @@ function calcHours(){
   } else el.textContent='';
 }
 function renderOvertime(){
-  const filterMonth = document.getElementById('otMonthFilter').value;
+  const otMonthEl = document.getElementById('otMonthFilter');
+  if(!otMonthEl) return; // element không tồn tại, bỏ qua
+  const filterMonth = otMonthEl.value;
   const today=new Date(); today.setHours(0,0,0,0);
   
   let validOT = OVERTIME;
@@ -1379,7 +1381,7 @@ function _goTab(tab){
   if(tab==='summary')  renderSummary();
   if(tab==='lookup')   renderLookup();
   if(tab==='tanca')    { renderOtBoard(); }
-  if(tab==='settings'){ buildEmpSelect(); renderOvertime(); renderHolList(); buildPsEmpSelect(); renderEmpSched(); renderEmpMg(); }
+  if(tab==='settings'){ buildEmpSelect(); try{renderOvertime();}catch(_){} renderHolList(); buildPsEmpSelect(); renderEmpSched(); renderEmpMg(); }
 }
 
 // ── QUICK EDIT LOGIC ────────────────────
