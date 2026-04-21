@@ -642,7 +642,7 @@ const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 
 // ── TÍNH CA ────────────────────────────────
 const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
-const REF   = new Date(2026, 3, 11); // 11/04/2026
+const REF   = new Date(2026, 3, 12); // 12/04/2026 (lùi 1 ngày theo thực tế)
 const PHASE = {1:2, 2:10, 3:6};
 function getShift(k, d) {
   const n = Math.round((d - REF) / 864e5);
