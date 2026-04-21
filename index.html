@@ -785,7 +785,9 @@ function renderTable(){
   for(let k=1;k<=3;k++){
     if(kipF!==0&&kipF!==k) continue;
     const ts = dShift(k,today);
-    h += `<tr class="kh k${k}"><td colspan="${3+NDAYS}"><span>▣ KÍP ${k} · Hôm nay: ${SICON[ts]} ${SLBL(ts)}</span></td></tr>`;
+    const bs = getBlockStatus(k,today);
+    const bsLbl = bs.type==='work' ? `(Ngày làm ${bs.day}/${bs.total})` : `(Ngày nghỉ ${bs.day}/${bs.total})`;
+    h += `<tr class="kh k${k}"><td colspan="${3+NDAYS}"><span>▣ KÍP ${k} - Hôm nay: ${SICON[ts]} ${SLBL(ts)} <span style="font-size:0.9em;opacity:0.9;font-weight:normal">${bsLbl}</span></span></td></tr>`;
     (EMPS[k]||[]).forEach(e => {
       if(q&&!e.name.toLowerCase().includes(q)&&!e.id.includes(q)) return;
       const isRot = e.kip === 4 && e.fixed_shift !== 'HC';
@@ -900,9 +902,11 @@ function renderLookup(){
     const emps = (EMPS[k]||[]).filter(e=>!q||e.name.toLowerCase().includes(q)||e.id.includes(q));
     if(emps.length===0&&q) continue;
     const ts = dShift(k,today);
+    const bs = getBlockStatus(k,today);
+    const bsLbl = bs.type==='work' ? `(Ngày làm ${bs.day}/${bs.total})` : `(Ngày nghỉ ${bs.day}/${bs.total})`;
     html += `<div class="kip-section"><div class="kip-section-head k${k}">
       <span>▣ Kíp ${k}</span>
-      <span style="font-size:.78rem;opacity:.9">${emps.length} NV · Hôm nay: ${SICON[ts]} ${SLBL(ts)}</span>
+      <span style="font-size:.78rem;opacity:.9">${emps.length} NV · Hôm nay: ${SICON[ts]} ${SLBL(ts)} ${bsLbl}</span>
     </div><div class="emp-cards-grid">`;
     emps.forEach((e,i) => {
       const ini = e.name.split(' ').slice(-2).map(w=>w[0]).join('').toUpperCase();
