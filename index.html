@@ -514,16 +514,21 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 
 <!-- TAB 5: TĂNG CA -->
 <div class="page" id="page-tanca">
-  <div class="tanca-add">
-    <div class="settings-card">
-      <div class="settings-head">⏰ Thêm Lịch Tăng Ca</div>
-      <div class="settings-body">
+  <div style="display:flex;margin:12px 12px 0;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+    <div id="tabTcList" style="flex:1;text-align:center;padding:12px;font-weight:700;color:#1a237e;background:#e8eaf6;cursor:pointer;transition:0.2s" onclick="switchTcView('list')">⏰ Thêm & Danh Sách</div>
+    <div id="tabTcBoard" style="flex:1;text-align:center;padding:12px;font-weight:700;color:#666;cursor:pointer;border-left:1px solid #eee;transition:0.2s" onclick="switchTcView('board')">📊 Bảng Tổng Hợp</div>
+  </div>
+
+  <div id="tcListView">
+    <div class="tanca-add">
+      <div class="settings-card">
+        <div class="settings-head">⏰ Thêm Lịch Tăng Ca</div>
+        <div class="settings-body">
 
         <!-- Chọn nhân viên -->
         <div class="form-row">
-          <select class="form-select" id="tcEmpSel" onchange="onTcEmpChange()" style="flex:1;min-width:0">
-            <option value="">-- Chọn nhân viên --</option>
-          </select>
+          <input type="text" class="form-input" list="tcEmpDatalist" id="tcEmpSearch" onchange="onTcEmpChange()" placeholder="🔍 Gõ Tên hoặc MSNV để chọn nhanh..." style="flex:1;min-width:0;font-size:1rem;padding:10px;">
+          <datalist id="tcEmpDatalist"></datalist>
         </div>
         <!-- Nhập tay (hiện khi chọn "Khác") -->
         <div class="form-row" id="tcManualRow" style="display:none">
@@ -568,15 +573,26 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
           <button class="btn btn-pri btn-sm" onclick="addOvertime()">+ Thêm</button>
         </div>
 
-      </div>
+    </div>
+    
+    <div class="ot-filter" style="padding:10px 14px;background:#f5f5f5;border-bottom:1px solid #ddd;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+      <span style="font-weight:700;font-size:.85rem;color:#555">Tăng ca trong tháng:</span>
+      <input type="month" id="otMonthFilter" class="form-input" style="width:140px;padding:6px 10px;" onchange="renderOvertime()">
+    </div>
+    <div class="ot-wrap" id="overtimeList"></div>
+  </div>
+
+  <!-- TC BOARD VIEW -->
+  <div id="tcBoardView" style="display:none; padding:12px;">
+    <div class="search-row" style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="month" id="otBoardMonth" class="form-input" style="width:140px;padding:8px 10px;" onchange="renderOtBoard()">
+      <input type="text" id="otBoardSearch" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." style="flex:1;padding:8px 10px" oninput="renderOtBoard()">
+    </div>
+    <div style="overflow-x:auto; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);">
+      <table class="res-table" style="min-width:max-content;width:100%; border-radius:0; box-shadow:none;" id="otTable"></table>
     </div>
   </div>
-  
-  <div class="ot-filter" style="padding:10px 14px;background:#f5f5f5;border-bottom:1px solid #ddd;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
-    <span style="font-weight:700;font-size:.85rem;color:#555">Tăng ca trong tháng:</span>
-    <input type="month" id="otMonthFilter" class="form-input" style="width:140px;padding:6px 10px;" onchange="renderOvertime()">
-  </div>
-  <div class="ot-wrap" id="overtimeList"></div>
+
 </div>
 
 <!-- BOTTOM NAV (mobile) -->
@@ -1100,43 +1116,33 @@ async function resetEmps(){
 
 // ── TĂNG CA ────────────────────────────────
 function buildEmpSelect(){
-  const sel=document.getElementById('tcEmpSel');
-  const cur=sel.value;
-  sel.innerHTML='<option value="">-- Chọn nhân viên --</option>';
+  const dl=document.getElementById('tcEmpDatalist');
+  if(!dl) return;
+  let html='';
   [1,2,3,4].forEach(k=>{
     const emps=EMPS[k]||[];
-    if(!emps.length) return;
-    const grp=document.createElement('optgroup');
-    grp.label=GRP_LABEL[k]||`Kíp ${k}`;
     emps.forEach(e=>{
-      const opt=document.createElement('option');
-      opt.value=`${e.name}|${e.id}`;
-      opt.textContent=`${e.id} – ${e.name}`;
-      grp.appendChild(opt);
+      html+=`<option value="${e.id} - ${e.name}"></option>`;
     });
-    sel.appendChild(grp);
   });
-  const other=document.createElement('option');
-  other.value='__other__'; other.textContent='✏️ Nhập tay...';
-  sel.appendChild(other);
-  sel.value=cur||'';
+  dl.innerHTML=html;
 }
 function onTcEmpChange(){
-  const val=document.getElementById('tcEmpSel').value;
+  const val=document.getElementById('tcEmpSearch').value.trim();
   const mr=document.getElementById('tcManualRow');
-  if(val==='__other__'){
-    mr.style.display='';
-    document.getElementById('tcName').value='';
-    document.getElementById('tcId').value='';
-  } else if(val){
+  const match = val.match(/^(\w+)\s+-\s+(.+)$/); 
+  if(match){
     mr.style.display='none';
-    const [name,id]=val.split('|');
-    document.getElementById('tcName').value=name;
-    document.getElementById('tcId').value=id;
+    document.getElementById('tcId').value=match[1];
+    document.getElementById('tcName').value=match[2];
+  } else if(val) {
+    mr.style.display='flex';
+    document.getElementById('tcId').value='';
+    document.getElementById('tcName').value=val;
   } else {
     mr.style.display='none';
-    document.getElementById('tcName').value='';
     document.getElementById('tcId').value='';
+    document.getElementById('tcName').value='';
   }
 }
 function setOtType(type){
@@ -1238,7 +1244,7 @@ async function addOvertime(){
   
   if(btn){ btn.textContent='+ Thêm'; btn.disabled=false; }
 
-  document.getElementById('tcEmpSel').value='';
+  document.getElementById('tcEmpSearch').value='';
   document.getElementById('tcManualRow').style.display='none';
   document.getElementById('tcName').value='';
   document.getElementById('tcId').value='';
@@ -1253,6 +1259,78 @@ async function removeOvertime(id){
   }
   OVERTIME=OVERTIME.filter(o=>o.id!==id);
   renderOvertime();
+  if(document.getElementById('tcBoardView').style.display !== 'none') renderOtBoard();
+}
+
+// OT BOARD LOGIC
+function switchTcView(v) {
+   document.getElementById('tcListView').style.display = v==='list'?'block':'none';
+   document.getElementById('tcBoardView').style.display = v==='board'?'block':'none';
+   document.getElementById('tabTcList').style.background = v==='list'?'#e8eaf6':'#fff';
+   document.getElementById('tabTcList').style.color = v==='list'?'#1a237e':'#666';
+   document.getElementById('tabTcBoard').style.background = v==='board'?'#e8eaf6':'#fff';
+   document.getElementById('tabTcBoard').style.color = v==='board'?'#1a237e':'#666';
+   if(v==='board') renderOtBoard();
+}
+
+function renderOtBoard(){
+  const mVal = document.getElementById('otBoardMonth').value;
+  const searchQ = document.getElementById('otBoardSearch').value.trim().toLowerCase();
+  if(!mVal) return;
+  const [y, m] = mVal.split('-');
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const prefix = mVal + '-';
+
+  const validOT = OVERTIME.filter(o => o.date.startsWith(prefix));
+  const empMap = {};
+  const allEM = [...(EMPS[1]||[]), ...(EMPS[2]||[]), ...(EMPS[3]||[]), ...(EMPS[4]||[])];
+  allEM.forEach(e => { empMap[e.id] = { id: e.id, name: e.name, dates: {} }; });
+  
+  validOT.forEach(o => {
+     if(!empMap[o.emp_id]) empMap[o.emp_id] = { id: o.emp_id, name: o.emp_name, dates: {} };
+     if(!empMap[o.emp_id].dates[o.date]) empMap[o.emp_id].dates[o.date] = [];
+     empMap[o.emp_id].dates[o.date].push(o);
+  });
+
+  let empsArr = Object.values(empMap);
+  if(searchQ) empsArr = empsArr.filter(e => e.name.toLowerCase().includes(searchQ) || e.id.toLowerCase().includes(searchQ));
+  empsArr = empsArr.filter(e => Object.keys(e.dates).length > 0 || searchQ !== '');
+  empsArr.sort((a,b) => a.name.localeCompare(b.name));
+
+  let h = `<thead><tr>
+      <th style="min-width:140px;position:sticky;left:0;background:#f5f5f5;z-index:2;border-right:1px solid #ddd;padding:6px 12px;color:#333;text-align:left">Nhân viên</th>`;
+  for(let i=1; i<=daysInMonth; i++) h += `<th style="width:38px;padding:6px 0;text-align:center;font-size:.75rem;background:#f5f5f5">${i}</th>`;
+  h += `</tr></thead><tbody>`;
+
+  if(!empsArr.length) {
+      h += `<tr><td colspan="${daysInMonth+1}" style="text-align:center;padding:30px;color:#aaa">Không có nhân viên thoả mãn / dữ liệu tăng ca trống.</td></tr>`;
+  } else {
+      empsArr.forEach(e => {
+         // calculate if this empsArr row should have an altering background
+         h += `<tr>
+           <td style="position:sticky;left:0;background:#fff;border-right:1px solid #f0f0f0;z-index:1;padding:6px 12px">
+             <div style="font-weight:700;font-size:.85rem;color:#222;white-space:nowrap">${e.name}</div>
+             <div style="font-size:.7rem;color:#888">${e.id}</div>
+           </td>`;
+         for(let i=1; i<=daysInMonth; i++){
+            const dk = `${mVal}-${String(i).padStart(2,'0')}`;
+            const ots = e.dates[dk];
+            let cellHtml = '';
+            if(ots && ots.length > 0){
+               cellHtml = ots.map(o => {
+                  const isFull = !o.ot_type || o.ot_type === 'full';
+                  const title = o.note ? ` title="📝 ${o.note}"` : '';
+                  if(isFull) return `<span class="chip ${o.shift}"${title}>${o.shift}</span>`;
+                  return `<span class="chip" style="background:#e3f2fd;color:#1565c0;font-size:.65rem;padding:2px 4px"${title}>${o.start_time}-${o.end_time}</span>`;
+               }).join('<br>');
+            }
+            h += `<td style="text-align:center;padding:4px 0;border-bottom:1px solid #f0f0f0;border-right:1px dotted #f0f0f0">${cellHtml}</td>`;
+         }
+         h += `</tr>`;
+      });
+  }
+  h += `</tbody>`;
+  document.getElementById('otTable').innerHTML = h;
 }
 
 // ── ĐIỀU HƯỚNG ─────────────────────────────
@@ -1389,6 +1467,7 @@ function renderAll(){
   
   const currMonth = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('otMonthFilter').value = currMonth;
+  document.getElementById('otBoardMonth').value = currMonth;
   // Khởi tạo tab mặc định
   await loadData();
   document.getElementById('loadingOverlay').classList.add('hide');
