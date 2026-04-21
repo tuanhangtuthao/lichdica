@@ -20,9 +20,10 @@
   --hdr-h:52px;
   --radius:10px;
   --shadow:0 2px 10px rgba(0,0,0,.09);
-  --col1-w:120px; --col2-w:46px; --col3-w:90px;
-  --hdr1-h:28px; --hdr2-h:28px;
-}
+   --col1-w:110px; --col2-w:46px; --col3-w:80px;
+   --col-d:36px;
+   --hdr1-h:36px; --hdr2-h:38px;
+ }
 @media(min-width:768px){
   :root{ --col1-w:140px; --col2-w:52px; --col3-w:110px; }
 }
@@ -97,13 +98,14 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 
 /* TABLE */
 .tbl-wrap{overflow:auto;padding:0;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow)}
-table{border-collapse:separate;border-spacing:0;font-size:11px;width:100%;table-layout:fixed}
-th,td{padding:5px;border:1px solid #e8e8e8;text-align:center;white-space:nowrap;border-top:none;border-left:none}
-th{background:#1a237e;color:#fff;font-weight:500;height:var(--hdr1-h);position:sticky;top:0;z-index:90}
+table{border-collapse:separate;border-spacing:0;font-size:11px;width:max-content;min-width:100%;table-layout:fixed}
+th,td{padding:4px 2px;border:1px solid #e8e8e8;text-align:center;white-space:nowrap;border-top:none;border-left:none}
+th{background:#1a237e;color:#fff;font-weight:600;position:sticky;top:0;z-index:90}
+.d-c{width:var(--col-d);min-width:var(--col-d)}
 
 /* Header Rows Sticky */
-thead tr:nth-child(1) th{top:0;z-index:110}
-thead tr:nth-child(2) th{top:var(--hdr1-h);z-index:105}
+thead tr:nth-child(1) th{height:var(--hdr1-h);top:0;z-index:110}
+thead tr:nth-child(2) th{height:var(--hdr2-h);top:var(--hdr1-h);z-index:105}
 tr.kh td{position:sticky;top:calc(var(--hdr1-h) + var(--hdr2-h));z-index:100;color:#fff;font-weight:700;text-align:left;padding:7px 10px}
 
 /* Left Columns Sticky */
@@ -789,7 +791,7 @@ function renderTable(){
     const iT=sameD(d,today), iW=d.getDay()===0||d.getDay()===6, iH=!!isHol(d);
     const cls = iT?'today-h':(iH||iW?'wk':'');
     const tip = isHol(d)?isHol(d).name:'';
-    h += `<th class="${cls}" title="${tip||d.toLocaleDateString('vi-VN')}">${d.getDate()}<br>${DN[d.getDay()]}</th>`;
+    h += `<th class="${cls} d-c" title="${tip||d.toLocaleDateString('vi-VN')}">${d.getDate()}<br>${DN[d.getDay()]}</th>`;
   });
   h += '</tr></thead><tbody>';
 
@@ -805,7 +807,7 @@ function renderTable(){
       h += `<tr><td class="c1">${nameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
       dates.forEach(d => {
         const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
-        h += `<td class="sh${s}${tc}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+        h += `<td class="sh${s}${tc} d-c" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
       });
       h += '</tr>';
     });
@@ -821,7 +823,7 @@ function renderTable(){
         h += `<tr><td class="c1">${e.name}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
         dates.forEach(d => {
           const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
-          h += `<td class="sh${s}${tc}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+          h += `<td class="sh${s}${tc} d-c" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
         });
         h += '</tr>';
       });
@@ -834,7 +836,7 @@ function renderTable(){
         h += `<tr><td class="c1">${nameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
         dates.forEach(d => {
           const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
-          h += `<td class="sh${s}${tc}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+          h += `<td class="sh${s}${tc} d-c" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
         });
         h += '</tr>';
       });
