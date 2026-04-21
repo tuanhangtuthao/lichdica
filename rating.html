@@ -716,9 +716,6 @@ async function scoreAllMonth(btn) {
   }
 }
 
-async function saveScore(emp_id,emp_name,date){
-  const scEl=document.getElementById('sc-'+emp_id);
-
 async function deleteRating(id,fromScoring=false){
   if(!confirm('Xóa điểm này?')) return;
   if(SB_OK){
