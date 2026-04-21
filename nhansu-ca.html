@@ -373,8 +373,8 @@ async function loadRoster(){
 async function loadLayout(){
   if(SB_OK){
     try {
-      const {data} = await sb.from('factory_layout').select('*').order('order_index');
-      if(data && data.length > 0){
+      const {data, error} = await sb.from('factory_layout').select('*').order('order_index');
+      if(!error && data && data.length > 0){
         FACTORY_DATA = data.map(d => ({
           id: d.id,
           title: d.title,
@@ -382,7 +382,9 @@ async function loadLayout(){
           order_index: d.order_index
         }));
       }
-    } catch(e) {}
+    } catch(e) {
+      console.warn('Load layout failed, using defaults:', e);
+    }
   }
 }
 
@@ -568,8 +570,9 @@ function addZone(){
 function buildCell(code, color, zIdx, rIdx, cIdx){
   const d=ROSTER[code]||{worker_name:'',note:''};
   const cell=document.createElement('div');
-  cell.style.position = 'relative'; // Cho mc-border
+  cell.style.position = 'relative'; 
 
+  // TRƯỜNG HỢP 1: Đang sửa sơ đồ máy móc
   if(layoutEditMode){
     cell.className = 'mc-cell edit-layout';
     const ci = document.createElement('input');
@@ -579,11 +582,14 @@ function buildCell(code, color, zIdx, rIdx, cIdx){
     ci.oninput = (e) => { 
        const val = e.target.value.trim() || null;
        if(!FACTORY_DATA[zIdx].grid[rIdx][cIdx]) FACTORY_DATA[zIdx].grid[rIdx][cIdx]={c:'',col:''};
-       FACTORY_DATA[zIdx].grid[rIdx][cIdx].c = val; 
+       if(typeof FACTORY_DATA[zIdx].grid[rIdx][cIdx] === 'object'){
+          FACTORY_DATA[zIdx].grid[rIdx][cIdx].c = val; 
+       } else {
+          FACTORY_DATA[zIdx].grid[rIdx][cIdx] = {c: val, col:''};
+       }
     };
     cell.appendChild(ci);
 
-    // Color pallete
     const pal = document.createElement('div');
     pal.className = 'color-pal';
     MC_COLORS.forEach(c => {
@@ -591,7 +597,9 @@ function buildCell(code, color, zIdx, rIdx, cIdx){
        cb.className = `cp-btn${color===c?' active':''}`;
        cb.style.background = c || '#eee';
        cb.onclick = () => {
-          if(!FACTORY_DATA[zIdx].grid[rIdx][cIdx]) FACTORY_DATA[zIdx].grid[rIdx][cIdx]={c:code,col:''};
+          if(!FACTORY_DATA[zIdx].grid[rIdx][cIdx] || typeof FACTORY_DATA[zIdx].grid[rIdx][cIdx] !== 'object'){
+             FACTORY_DATA[zIdx].grid[rIdx][cIdx]={c:code,col:''};
+          }
           FACTORY_DATA[zIdx].grid[rIdx][cIdx].col = c;
           renderFloor();
        };
@@ -601,16 +609,17 @@ function buildCell(code, color, zIdx, rIdx, cIdx){
     return cell;
   }
 
-  const hasFill=!!d.worker_name;
-  cell.className=`mc-cell${hasFill?' filled':''}${editMode?' edit-mode':''}`;
-  cell.dataset.code=code;
-  
+  // TRƯỜNG HỢP 2: Đang ở chế độ xem bình thường hoặc gán nhân viên
   if(!code) {
+     cell.className = 'mc-cell';
      cell.style.visibility = 'hidden';
      return cell;
   }
 
-  // Border color indicator
+  const hasFill=!!d.worker_name;
+  cell.className=`mc-cell${hasFill?' filled':''}${editMode?' edit-mode':''}`;
+  cell.dataset.code=code;
+
   if(color){
     const b = document.createElement('div');
     b.className = 'mc-border';
@@ -649,19 +658,44 @@ function buildCell(code, color, zIdx, rIdx, cIdx){
   return cell;
 }
 
+// ── EDIT MODE (Personnel) ─────────────────────────────────
+function toggleEdit(){
+  // Chống xung đột: Nếu đang sửa sơ đồ thì báo cho người dùng
+  if(layoutEditMode) {
+    if(confirm('Bạn đang ở chế độ Sửa Sơ Đồ. Bạn có muốn thoát ra để Gán Nhân Viên không?')) {
+      cancelLayoutEdit();
+      setTimeout(startEdit, 100);
+    }
+    return;
+  }
+  if(editMode) saveAll();
+  else startEdit();
+}
+function startEdit(){
+  curDate = document.getElementById('rDate').value; // Cập nhật lại ngày mới nhất
+  if(!curDate){alert('Vui lòng chọn ngày trước khi gán nhân viên!');return;}
+  editMode=true;
+  document.getElementById('editBtn').innerHTML='💾 Lưu';
+  document.getElementById('editBtn').className='btn btn-save';
+  document.getElementById('editBanner').classList.add('show');
+  document.getElementById('saveFloat').classList.add('show');
+  renderFloor();
+}
+function cancelEdit(){
+  editMode=false;
+  document.getElementById('editBtn').innerHTML='✏️ Gán NV';
+  document.getElementById('editBtn').className='btn btn-edit';
+  document.getElementById('editBanner').classList.remove('show');
+  document.getElementById('saveFloat').classList.remove('show');
+  loadRoster();
+}
+
 function onInput(code,field,val){
   if(!ROSTER[code]) ROSTER[code]={worker_name:'',note:'',id:null};
   ROSTER[code][field]=val;
   // Sửa lỗi Selector khi mã máy chứa ký tự đặc biệt
-  const cell=document.querySelector(`.mc-cell[data-code="${code.replace(/"/g, '\\"')}"]`);
+  const cell=document.querySelector(`.mc-cell[data-code="${CSS.escape(code)}"]`);
   if(cell) cell.classList.toggle('filled',!!ROSTER[code].worker_name);
-}
-
-// ── EDIT MODE (Personnel) ─────────────────────────────────
-function toggleEdit(){
-  if(layoutEditMode) return; // Không gán nhân sự khi đang sửa sơ đồ
-  if(editMode) saveAll();
-  else startEdit();
 }
 
 // ── LAYOUT EDIT MODE ──────────────────────────────────────
