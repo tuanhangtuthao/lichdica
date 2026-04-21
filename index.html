@@ -387,6 +387,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   <div class="hdr-right" style="display:flex!important;align-items:center;gap:8px">
     <span style="font-size:.7rem;opacity:.8;text-align:right">Làm 4 ngày · Nghỉ 2 ngày<br>Sáng / Chiều luân phiên</span>
     <a href="rating.html" class="btn-rating" title="Đánh giá nhân viên">🏆</a>
+    <a href="nhansu-ca.html" class="btn-rating" title="Nhân sự trong ca">👷</a>
   </div>
 </div>
 
@@ -397,6 +398,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   <div class="tab"        onclick="showTab('tanca')">⏰ Tăng Ca</div>
   <div class="tab"        onclick="showTab('settings')">⚙️ Cài Đặt</div>
   <a href="rating.html" class="tab tab-rating" title="Đánh giá nhân viên">🏆 Đánh Giá</a>
+  <a href="nhansu-ca.html" class="tab tab-rating" style="color:#2e7d32!important" title="Nhân sự trong ca">👷 Nhân Sự Ca</a>
 </div>
 
 <!-- TAB 1: LỊCH CA -->
@@ -613,8 +615,8 @@ const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 
 // ── TÍNH CA ────────────────────────────────
 const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
-const REF   = new Date(2026, 3, 12); // 12/04/2026
-const PHASE = {1:3, 2:7, 3:11};
+const REF   = new Date(2026, 3, 12); // 12/04/2026 – mốc tham chiếu
+const PHASE = {1:5, 2:9, 3:1}; // Kíp1=S, Kíp2=C, Kíp3=N ngày 21/04/2026
 function getShift(k, d) {
   const n = Math.round((d - REF) / 864e5);
   return CYCLE[((n + PHASE[k]) % 12 + 12) % 12];
