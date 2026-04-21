@@ -431,76 +431,76 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   <div class="lookup-wrap" id="lookupWrap"></div>
 </div>
 
-<!-- TAB 4: CAI DAT -->
+<!-- TAB 4: CÀI ĐẶT -->
 <div class="page" id="page-settings">
-  <div style="display:flex;margin:10px 12px 0;border-radius:10px;overflow:hidden;box-shadow:var(--shadow)">
-    <button id="sAccOT"    onclick="showSettingsGroup('ot')"    style="flex:1;padding:9px 4px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#e8eaf6;color:#1a237e;transition:.15s;line-height:1.4">&#9200;<br>Tang Ca</button>
-    <button id="sAccEmp"   onclick="showSettingsGroup('emp')"   style="flex:1;padding:9px 4px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.4">&#128100;<br>Nhan Vien</button>
-    <button id="sAccSched" onclick="showSettingsGroup('sched')" style="flex:1;padding:9px 4px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.4">&#128260;<br>Phan Ca</button>
-    <button id="sAccHol"   onclick="showSettingsGroup('hol')"   style="flex:1;padding:9px 4px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.4">&#128197;<br>Ngay Le</button>
+  <div style="display:flex;margin:0;border-radius:0;overflow:hidden;box-shadow:var(--shadow);border-bottom:2px solid #e8eaf6">
+    <button id="sAccOT"    onclick="showSettingsGroup('ot')"    style="flex:1;padding:10px 4px;font-size:.72rem;font-weight:700;border:none;cursor:pointer;background:#e8eaf6;color:#1a237e;transition:.15s;line-height:1.5">⏰<br>Tăng Ca</button>
+    <button id="sAccEmp"   onclick="showSettingsGroup('emp')"   style="flex:1;padding:10px 4px;font-size:.72rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">👤<br>Nhân Viên</button>
+    <button id="sAccSched" onclick="showSettingsGroup('sched')" style="flex:1;padding:10px 4px;font-size:.72rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">🔄<br>Phân Ca</button>
+    <button id="sAccHol"   onclick="showSettingsGroup('hol')"   style="flex:1;padding:10px 4px;font-size:.72rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">📅<br>Ngày Lễ</button>
   </div>
-  <div id="sGroupOT" class="settings-wrap">
-    <div class="settings-card">
-      <div class="settings-head" style="background:linear-gradient(90deg,#1a237e,#3949ab);color:#fff">&#9200; Tao Lich Tang Ca</div>
+  <div id="sGroupOT" class="settings-wrap" style="margin:0;border-radius:0">
+    <div class="settings-card" style="border-radius:0;margin:0;box-shadow:none;border-bottom:1px solid #e8eaf6">
+      <div class="settings-head" style="background:linear-gradient(90deg,#1a237e,#3949ab);color:#fff;border-radius:0">⏰ Tạo Lịch Tăng Ca</div>
       <div class="settings-body">
-        <div class="form-row"><input type="text" class="form-input" list="tcEmpDatalist" id="tcEmpSearch" onchange="onTcEmpChange()" placeholder="&#128269; Go Ten hoac MSNV..." style="flex:1;padding:10px;font-size:.9rem"><datalist id="tcEmpDatalist"></datalist></div>
-        <div class="form-row" id="tcManualRow" style="display:none"><input type="text" class="form-input" placeholder="Ho ten nhan vien" id="tcName"><input type="text" class="form-input" placeholder="MSNV" id="tcId" style="flex:0 0 76px"></div>
+        <div class="form-row"><input type="text" class="form-input" list="tcEmpDatalist" id="tcEmpSearch" onchange="onTcEmpChange()" placeholder="🔍 Gõ Tên hoặc MSNV để chọn nhanh..." style="flex:1;padding:10px;font-size:.9rem"><datalist id="tcEmpDatalist"></datalist></div>
+        <div class="form-row" id="tcManualRow" style="display:none"><input type="text" class="form-input" placeholder="Họ tên nhân viên" id="tcName"><input type="text" class="form-input" placeholder="MSNV" id="tcId" style="flex:0 0 76px"></div>
         <div class="form-row" style="flex-wrap:wrap;align-items:flex-end;gap:8px">
-          <div style="flex:1;min-width:120px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Tu ngay</div><input type="date" class="form-input" id="tcDate" style="width:100%"></div>
-          <div style="flex:1;min-width:120px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Den ngay (tuy chon)</div><input type="date" class="form-input" id="tcDateTo" style="width:100%"></div>
-          <div class="ot-type-toggle"><button class="ot-type-btn active" id="btnFullCa" onclick="setOtType('full')">Full Ca</button><button class="ot-type-btn" id="btnByHour" onclick="setOtType('hour')">Theo Gio</button></div>
+          <div style="flex:1;min-width:120px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Từ ngày</div><input type="date" class="form-input" id="tcDate" style="width:100%"></div>
+          <div style="flex:1;min-width:120px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Đến ngày (tuỳ chọn)</div><input type="date" class="form-input" id="tcDateTo" style="width:100%"></div>
+          <div class="ot-type-toggle"><button class="ot-type-btn active" id="btnFullCa" onclick="setOtType('full')">Full Ca</button><button class="ot-type-btn" id="btnByHour" onclick="setOtType('hour')">Theo Giờ</button></div>
         </div>
-        <div id="tcFullRow" class="form-row"><select class="form-select" id="tcShift" style="flex:1"><option value="S">Ca Sang (S)</option><option value="C">Ca Chieu (C)</option><option value="C1">Ca 1</option><option value="C2">Ca 2</option><option value="C3">Ca 3</option></select></div>
+        <div id="tcFullRow" class="form-row"><select class="form-select" id="tcShift" style="flex:1"><option value="S">☀️ Ca Sáng (S)</option><option value="C">🌙 Ca Chiều (C)</option><option value="C1">① Ca 1</option><option value="C2">② Ca 2</option><option value="C3">③ Ca 3</option></select></div>
         <div id="tcHourRow" class="form-row" style="display:none;align-items:flex-end;gap:8px">
-          <div style="flex:1"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Gio bat dau</div><input type="time" class="form-input" id="tcStart" style="width:100%" oninput="calcHours()"></div>
-          <span style="padding-bottom:8px;color:#bbb;font-size:1.2rem">&#8594;</span>
-          <div style="flex:1"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Gio ket thuc <span id="tcHourCount" style="color:#388e3c;font-weight:700"></span></div><input type="time" class="form-input" id="tcEnd" style="width:100%" oninput="calcHours()"></div>
+          <div style="flex:1"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Giờ bắt đầu</div><input type="time" class="form-input" id="tcStart" style="width:100%" oninput="calcHours()"></div>
+          <span style="padding-bottom:8px;color:#bbb;font-size:1.2rem">→</span>
+          <div style="flex:1"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Giờ kết thúc <span id="tcHourCount" style="color:#388e3c;font-weight:700"></span></div><input type="time" class="form-input" id="tcEnd" style="width:100%" oninput="calcHours()"></div>
         </div>
-        <div class="form-row"><input type="text" class="form-input" placeholder="Ghi chu..." id="tcNote"><button class="btn btn-pri" style="white-space:nowrap" onclick="addOvertime()">+ Them</button></div>
+        <div class="form-row"><input type="text" class="form-input" placeholder="📝 Ghi chú..." id="tcNote"><button class="btn btn-pri" style="white-space:nowrap" onclick="addOvertime()">+ Thêm</button></div>
       </div>
       <div style="padding:8px 14px;display:flex;justify-content:space-between;align-items:center;background:#e8eaf6;border-top:1px solid #c5cae9">
-        <span style="font-weight:700;font-size:.8rem;color:#1a237e">Da len lich - thang:</span>
+        <span style="font-weight:700;font-size:.8rem;color:#1a237e">📋 Đã lên lịch – tháng:</span>
         <input type="month" id="otMonthFilter" class="form-input" style="width:140px;padding:6px 10px" onchange="renderOvertime()">
       </div>
       <div class="ot-wrap" id="overtimeList" style="max-height:280px;overflow-y:auto"></div>
     </div>
   </div>
-  <div id="sGroupEmp" class="settings-wrap" style="display:none">
-    <div class="settings-card">
-      <div class="settings-head" style="background:linear-gradient(90deg,#1b5e20,#388e3c);color:#fff">&#128100; Them Nhan Vien</div>
+  <div id="sGroupEmp" class="settings-wrap" style="display:none;margin:0;border-radius:0">
+    <div class="settings-card" style="border-radius:0;margin:0;box-shadow:none;border-bottom:1px solid #e8eaf6">
+      <div class="settings-head" style="background:linear-gradient(90deg,#1b5e20,#388e3c);color:#fff;border-radius:0">👤 Thêm Nhân Viên</div>
       <div class="settings-body">
-        <div class="form-row"><input type="text" class="form-input" placeholder="Ho ten day du" id="eNm"><input type="text" class="form-input" placeholder="MSNV" id="eId" style="flex:0 0 80px"></div>
-        <div class="form-row"><input type="text" class="form-input" placeholder="May / bo phan dam nhan" id="eRl"><select class="form-select" id="eKp" style="flex:0 0 auto"><option value="1|">Kip 1 (xoay)</option><option value="2|">Kip 2 (xoay)</option><option value="3|">Kip 3 (xoay)</option><option value="4|HC">Hanh Chinh</option><option value="4|">Ca Xoay (thu cong)</option></select><button class="btn btn-pri" onclick="addEmp()">+ Them</button></div>
+        <div class="form-row"><input type="text" class="form-input" placeholder="Họ tên đầy đủ" id="eNm"><input type="text" class="form-input" placeholder="MSNV" id="eId" style="flex:0 0 80px"></div>
+        <div class="form-row"><input type="text" class="form-input" placeholder="Máy / bộ phận đảm nhận" id="eRl"><select class="form-select" id="eKp" style="flex:0 0 auto"><option value="1|">Kíp 1 (xoay)</option><option value="2|">Kíp 2 (xoay)</option><option value="3|">Kíp 3 (xoay)</option><option value="4|HC">Hành Chính</option><option value="4|">Ca Xoay (thủ công)</option></select><button class="btn btn-pri" onclick="addEmp()">+ Thêm</button></div>
       </div>
     </div>
-    <div class="settings-card full">
-      <div class="settings-head" style="display:flex;justify-content:space-between;align-items:center"><span>&#128203; Danh Sach Nhan Vien</span><button class="btn btn-sec btn-sm" onclick="resetEmps()">&#8634; Mac dinh</button></div>
+    <div class="settings-card full" style="border-radius:0;margin:0;box-shadow:none">
+      <div class="settings-head" style="display:flex;justify-content:space-between;align-items:center"><span>📋 Danh Sách Nhân Viên</span><button class="btn btn-sec btn-sm" onclick="resetEmps()">↺ Khôi phục</button></div>
       <div class="settings-body" style="padding:0 0 4px"><ul class="emp-list-manage" id="empMgList"></ul></div>
     </div>
   </div>
-  <div id="sGroupSched" class="settings-wrap" style="display:none">
-    <div class="settings-card full">
-      <div class="settings-head" style="background:linear-gradient(90deg,#4a148c,#7b1fa2);color:#fff">&#128260; Phan Ca Xoay</div>
+  <div id="sGroupSched" class="settings-wrap" style="display:none;margin:0;border-radius:0">
+    <div class="settings-card full" style="border-radius:0;margin:0;box-shadow:none">
+      <div class="settings-head" style="background:linear-gradient(90deg,#4a148c,#7b1fa2);color:#fff;border-radius:0">🔄 Phân Ca Xoay</div>
       <div class="settings-body">
-        <div style="font-size:.78rem;color:#555;background:#f3e5f5;padding:8px 12px;border-radius:8px;margin-bottom:12px;border-left:3px solid #9c27b0">Chi dinh ca cho nhan vien Ca Xoay theo tung khoang thoi gian.</div>
-        <div class="form-row"><select class="form-select" id="psEmp" style="flex:1;min-width:0"><option value="">-- Chon nhan vien Ca Xoay --</option></select></div>
+        <div style="font-size:.78rem;color:#555;background:#f3e5f5;padding:8px 12px;border-radius:8px;margin-bottom:12px;border-left:3px solid #9c27b0">Chỉ định ca cho nhân viên Ca Xoay theo từng khoảng thời gian.</div>
+        <div class="form-row"><select class="form-select" id="psEmp" style="flex:1;min-width:0"><option value="">-- Chọn nhân viên Ca Xoay --</option></select></div>
         <div class="form-row" style="flex-wrap:wrap;align-items:flex-end;gap:8px">
-          <div style="flex:1;min-width:100px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Tu ngay</div><input type="date" class="form-input" id="psFrom" style="width:100%"></div>
-          <span style="padding-bottom:8px;color:#bbb;font-size:1.2rem">&#8594;</span>
-          <div style="flex:1;min-width:100px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Den ngay</div><input type="date" class="form-input" id="psTo" style="width:100%"></div>
-          <select class="form-select" id="psShift" style="flex:0 0 auto;align-self:flex-end"><option value="C1">Ca 1</option><option value="C2">Ca 2</option><option value="C3">Ca 3</option><option value="N">Nghi</option></select>
-          <button class="btn btn-pri" style="align-self:flex-end" onclick="addEmpSched()">+ Them</button>
+          <div style="flex:1;min-width:100px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Từ ngày</div><input type="date" class="form-input" id="psFrom" style="width:100%"></div>
+          <span style="padding-bottom:8px;color:#bbb;font-size:1.2rem">→</span>
+          <div style="flex:1;min-width:100px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Đến ngày</div><input type="date" class="form-input" id="psTo" style="width:100%"></div>
+          <select class="form-select" id="psShift" style="flex:0 0 auto;align-self:flex-end"><option value="C1">Ca 1</option><option value="C2">Ca 2</option><option value="C3">Ca 3</option><option value="N">Nghỉ</option></select>
+          <button class="btn btn-pri" style="align-self:flex-end" onclick="addEmpSched()">+ Thêm</button>
         </div>
         <ul class="holiday-list" id="empSchedList" style="max-height:280px;margin-top:8px"></ul>
       </div>
     </div>
   </div>
-  <div id="sGroupHol" class="settings-wrap" style="display:none">
-    <div class="settings-card">
-      <div class="settings-head" style="background:linear-gradient(90deg,#b71c1c,#e53935);color:#fff">&#128197; Ngay Nghi Le</div>
+  <div id="sGroupHol" class="settings-wrap" style="display:none;margin:0;border-radius:0">
+    <div class="settings-card" style="border-radius:0;margin:0;box-shadow:none">
+      <div class="settings-head" style="background:linear-gradient(90deg,#b71c1c,#e53935);color:#fff;border-radius:0">📅 Ngày Nghỉ Lễ</div>
       <div class="settings-body">
-        <div style="font-size:.78rem;color:#555;background:#ffebee;padding:8px 12px;border-radius:8px;margin-bottom:12px;border-left:3px solid #f44336">Ngay le hien "L" thay cho ca binh thuong. Mac dinh: 30/4, 1/5, 2/9, 1/1</div>
-        <div class="form-row"><input type="date" class="form-input" id="hDate" style="flex:0 0 auto"><input type="text" class="form-input" placeholder="Ten ngay le..." id="hName"><button class="btn btn-pri" onclick="addHoliday()">+ Them</button></div>
+        <div style="font-size:.78rem;color:#555;background:#ffebee;padding:8px 12px;border-radius:8px;margin-bottom:12px;border-left:3px solid #f44336">Ngày lễ hiển thị &ldquo;L&rdquo; thay ca bình thường. Mặc định: 30/4, 1/5, 2/9, 1/1</div>
+        <div class="form-row"><input type="date" class="form-input" id="hDate" style="flex:0 0 auto"><input type="text" class="form-input" placeholder="Tên ngày lễ..." id="hName"><button class="btn btn-pri" onclick="addHoliday()">+ Thêm</button></div>
         <ul class="holiday-list" id="holidayList"></ul>
       </div>
     </div>
