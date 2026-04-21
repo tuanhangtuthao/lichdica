@@ -532,8 +532,11 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
         </div>
 
         <!-- Ngày + loại tăng ca -->
-        <div class="form-row" style="align-items:center">
-          <input type="date" class="form-input" id="tcDate" style="flex:0 0 auto">
+        <div class="form-row" style="align-items:center;flex-wrap:wrap">
+          <div style="display:flex; gap:6px; flex:1; min-width:200px">
+            <input type="date" class="form-input" id="tcDate" style="flex:1" title="Từ ngày">
+            <input type="date" class="form-input" id="tcDateTo" style="flex:1" title="Đến ngày (tuỳ chọn)">
+          </div>
           <div class="ot-type-toggle">
             <button class="ot-type-btn active" id="btnFullCa" onclick="setOtType('full')">Full Ca</button>
             <button class="ot-type-btn"         id="btnByHour" onclick="setOtType('hour')">Theo Giờ</button>
@@ -567,6 +570,11 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 
       </div>
     </div>
+  </div>
+  
+  <div class="ot-filter" style="padding:10px 14px;background:#f5f5f5;border-bottom:1px solid #ddd;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+    <span style="font-weight:700;font-size:.85rem;color:#555">Tăng ca trong tháng:</span>
+    <input type="month" id="otMonthFilter" class="form-input" style="width:140px;padding:6px 10px;" onchange="renderOvertime()">
   </div>
   <div class="ot-wrap" id="overtimeList"></div>
 </div>
@@ -1148,13 +1156,20 @@ function calcHours(){
   } else el.textContent='';
 }
 function renderOvertime(){
+  const filterMonth = document.getElementById('otMonthFilter').value;
   const today=new Date(); today.setHours(0,0,0,0);
-  if(!OVERTIME.length){
-    document.getElementById('overtimeList').innerHTML='<div class="ot-empty">📋 Chưa có lịch tăng ca nào.<br><span style="font-size:.8rem">Dùng form bên trên để thêm.</span></div>';
+  
+  let validOT = OVERTIME;
+  if(filterMonth){
+      validOT = OVERTIME.filter(o => o.date.startsWith(filterMonth + '-'));
+  }
+  
+  if(!validOT.length){
+    document.getElementById('overtimeList').innerHTML='<div class="ot-empty">📋 Không có lịch tăng ca ở tháng này.<br><span style="font-size:.8rem">Dùng form bên trên để thêm.</span></div>';
     return;
   }
   const grp={};
-  [...OVERTIME].sort((a,b)=>a.date.localeCompare(b.date)).forEach(o=>{ (grp[o.date]=grp[o.date]||[]).push(o); });
+  [...validOT].sort((a,b)=>a.date.localeCompare(b.date)).forEach(o=>{ (grp[o.date]=grp[o.date]||[]).push(o); });
   let html='';
   Object.keys(grp).forEach(date=>{
     const d=new Date(date+'T00:00:00');
@@ -1181,12 +1196,15 @@ function renderOvertime(){
   document.getElementById('overtimeList').innerHTML=html;
 }
 async function addOvertime(){
-  const date=document.getElementById('tcDate').value;
+  const dFromStr=document.getElementById('tcDate').value;
+  const dToStr=document.getElementById('tcDateTo').value || dFromStr;
   const emp_name=document.getElementById('tcName').value.trim();
   const emp_id=document.getElementById('tcId').value.trim();
   const note=document.getElementById('tcNote').value.trim();
-  if(!date||!emp_name){alert('Chọn nhân viên và ngày tăng ca!');return;}
-  let shift=null, start_time=null, end_time=null;
+  if(!dFromStr||!emp_name){alert('Chọn nhân viên và ngày bắt đầu tăng ca!');return;}
+  if(dToStr < dFromStr){alert('Ngày kết thúc không được hiển thị lùi so với ngày bắt đầu!');return;}
+
+  let shift='TC', start_time=null, end_time=null;
   if(otType==='full'){
     shift=document.getElementById('tcShift').value;
   } else {
@@ -1194,14 +1212,32 @@ async function addOvertime(){
     end_time=document.getElementById('tcEnd').value;
     if(!start_time||!end_time){alert('Nhập giờ bắt đầu và kết thúc!');return;}
   }
-  const row={date,emp_name,emp_id,note,ot_type:otType,shift,start_time,end_time};
-  if(SB_OK){
-    const {data,error}=await sb.from('overtime').insert(row).select();
-    if(error){alert('Lỗi: '+error.message);return;}
-    OVERTIME.push(data[0]);
-  } else {
-    OVERTIME.push({...row,id:Date.now()});
+  
+  const dStart = new Date(dFromStr);
+  const dEnd = new Date(dToStr);
+  const datesToSave = [];
+  for(let d = new Date(dStart); d <= dEnd; d.setDate(d.getDate()+1)) {
+      datesToSave.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
   }
+
+  const rows = datesToSave.map(date => ({
+      date, emp_name, emp_id, note, ot_type:otType, shift, start_time, end_time
+  }));
+
+  const btn = event.target || document.querySelector('.form-row .btn-pri');
+  if(btn){ btn.textContent='Đang lưu...'; btn.disabled=true; }
+
+  if(SB_OK){
+    const {data,error}=await sb.from('overtime').insert(rows).select();
+    if(error){alert('Lỗi: '+error.message);}
+    else if(data) { OVERTIME = OVERTIME.concat(data); }
+  } else {
+    const timebase = Date.now();
+    rows.forEach((r,i) => OVERTIME.push({...r, id: timebase + i}));
+  }
+  
+  if(btn){ btn.textContent='+ Thêm'; btn.disabled=false; }
+
   document.getElementById('tcEmpSel').value='';
   document.getElementById('tcManualRow').style.display='none';
   document.getElementById('tcName').value='';
@@ -1345,11 +1381,15 @@ function renderAll(){
 (async () => {
   initLabel();
   // Đặt ngày mặc định cho các form = hôm nay
-  const td = new Date();
-  const todayStr = `${td.getFullYear()}-${String(td.getMonth()+1).padStart(2,'0')}-${String(td.getDate()).padStart(2,'0')}`;
-  document.getElementById('tcDate').value = todayStr;
-  document.getElementById('psFrom').value = todayStr;
-  document.getElementById('psTo').value = todayStr;
+  const t = new Date();
+  const ts=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  document.getElementById('qeFrom').value=ts;
+  document.getElementById('qeTo').value=ts;
+  document.getElementById('tcDate').value=ts;
+  
+  const currMonth = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('otMonthFilter').value = currMonth;
+  // Khởi tạo tab mặc định
   await loadData();
   document.getElementById('loadingOverlay').classList.add('hide');
   goToday();
