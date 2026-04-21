@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Nhân Sự Trong Ca</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --k1:#1565c0;--k1l:#e3f2fd;--k1d:#0d47a1;
+  --k2:#6a1b9a;--k2l:#f3e5f5;--k2d:#4a148c;
+  --k3:#2e7d32;--k3l:#e8f5e9;--k3d:#1b5e20;
+  --accent:var(--k1);--accent-l:var(--k1l);--accent-d:var(--k1d);
+  --cw:130px;--ch:60px;--gap:4px;
+  --hdr-h:52px;--ctrl-h:50px;
+  --radius:8px;--shadow:0 2px 8px rgba(0,0,0,.1);
+}
+html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
+
+/* ── LOADING ── */
+.loading-overlay{position:fixed;inset:0;background:#1a237e;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff}
+.loading-overlay.hide{display:none}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── HEADER ── */
+.hdr{height:var(--hdr-h);background:linear-gradient(135deg,var(--accent-d),var(--accent));
+  color:#fff;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hdr-left h1{font-size:.95rem;font-weight:700;line-height:1.2}
+.hdr-left .sub{font-size:.68rem;opacity:.8;margin-top:2px}
+.btn-back{color:#fff;opacity:.85;font-size:.78rem;text-decoration:none;
+  border:1px solid rgba(255,255,255,.4);padding:6px 10px;border-radius:8px;
+  display:inline-flex;align-items:center;gap:4px;transition:.15s;white-space:nowrap}
+.btn-back:hover{opacity:1;background:rgba(255,255,255,.2)}
+
+/* ── EDIT BANNER ── */
+.edit-banner{display:none;align-items:center;gap:8px;padding:6px 16px;
+  background:#fff3e0;border-bottom:2px solid #fb8c00;
+  font-size:.78rem;font-weight:700;color:#e65100}
+.edit-banner.show{display:flex}
+.edit-banner .close-btn{background:none;border:none;cursor:pointer;color:#e65100;
+  font-size:1rem;margin-left:auto;padding:2px 4px}
+
+/* ── CONTROLS ── */
+.ctrl-bar{height:var(--ctrl-h);background:#fff;border-bottom:1px solid #e0e0e0;
+  display:flex;align-items:center;gap:8px;padding:0 16px;flex-wrap:wrap;
+  position:sticky;top:var(--hdr-h);z-index:190;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.kip-btns{display:flex;gap:4px}
+.kbtn{padding:5px 13px;border:2px solid #ccc;border-radius:20px;cursor:pointer;
+  font-size:.78rem;font-weight:700;background:#f5f5f5;color:#999;transition:.15s}
+.kbtn.active.k1{background:var(--k1l);color:var(--k1);border-color:var(--k1)}
+.kbtn.active.k2{background:var(--k2l);color:var(--k2);border-color:var(--k2)}
+.kbtn.active.k3{background:var(--k3l);color:var(--k3);border-color:var(--k3)}
+.ctrl-date{height:34px;padding:0 9px;border:1.5px solid #ccc;border-radius:8px;
+  font-size:.83rem;outline:none}
+.ctrl-date:focus{border-color:var(--accent)}
+.ctrl-space{flex:1}
+.btn{height:34px;padding:0 13px;border:none;border-radius:8px;cursor:pointer;
+  font-size:.8rem;font-weight:700;display:inline-flex;align-items:center;gap:5px;transition:.15s}
+.btn-edit{background:var(--accent);color:#fff}.btn-edit:hover{opacity:.88}
+.btn-save{background:#2e7d32;color:#fff}.btn-save:hover{opacity:.88}
+.btn-sec{background:#fff;border:1.5px solid #ccc;color:#555}.btn-sec:hover{background:#f5f5f5}
+
+/* ── FLOOR WRAPPER ── */
+.floor-wrap{overflow-x:auto;padding:14px 16px 90px}
+
+/* ── FLOOR LAYOUT ── */
+/* Bố cục: 2 phần (trái + phải) đặt cạnh nhau như sơ đồ nhà máy */
+.floor{display:inline-flex;gap:16px;align-items:flex-start;min-width:max-content}
+.floor-divider{width:3px;min-height:200px;background:linear-gradient(180deg,transparent 0%,#c5cae9 15%,#c5cae9 85%,transparent 100%);align-self:stretch;flex-shrink:0}
+
+/* ── SECTION ── */
+.section{display:flex;flex-direction:column;gap:var(--gap)}
+.section-lbl{font-size:.65rem;font-weight:800;color:#9e9e9e;letter-spacing:.1em;
+  text-transform:uppercase;text-align:center;padding-bottom:4px}
+
+/* ── MACHINE GRID (2 cols each section) ── */
+.mc-grid{display:grid;grid-template-columns:var(--cw) var(--cw);gap:var(--gap)}
+
+/* ── MACHINE CELL ── */
+.mc-cell{
+  width:var(--cw);min-height:var(--ch);
+  background:#fff;border:1.5px solid #ddd;border-radius:var(--radius);
+  padding:5px 8px 4px;display:flex;flex-direction:column;
+  transition:.15s;overflow:hidden}
+.mc-cell.filled{border-color:var(--accent);background:var(--accent-l)}
+.mc-cell.edit-mode:hover{border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(21,101,192,.12)}
+.mc-cell.edit-mode{cursor:text}
+
+/* Code label */
+.mc-code{font-size:.7rem;font-weight:900;color:var(--accent);line-height:1;margin-bottom:3px}
+
+/* View mode */
+.mc-name{font-size:.9rem;font-weight:700;color:#1a1a1a;line-height:1.2;
+  min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-note{font-size:.65rem;color:#888;font-style:italic;margin-top:2px;min-height:12px}
+
+/* Edit mode inputs */
+.mc-name-input,.mc-note-input{
+  width:100%;border:none;outline:none;background:transparent;
+  font-family:inherit;padding:0;line-height:1.2}
+.mc-name-input{font-size:.9rem;font-weight:700;color:#1a1a1a;min-height:22px}
+.mc-note-input{font-size:.65rem;color:#888;font-style:italic;margin-top:2px;min-height:16px}
+.mc-name-input::placeholder{color:#bbb;font-weight:400;font-style:normal}
+.mc-note-input::placeholder{color:#ccc}
+
+/* Spacer (empty slot) */
+.mc-spacer{width:var(--cw);min-height:var(--ch)}
+
+/* ── SAVE FLOAT ── */
+.save-float{position:fixed;bottom:18px;right:16px;z-index:300;
+  background:#2e7d32;color:#fff;border:none;border-radius:40px;
+  padding:11px 20px;font-size:.88rem;font-weight:700;
+  display:none;align-items:center;gap:6px;
+  box-shadow:0 4px 18px rgba(0,0,0,.28);cursor:pointer}
+.save-float.show{display:flex}
+
+/* ── SUCCESS TOAST ── */
+.toast{position:fixed;bottom:70px;right:16px;z-index:400;
+  background:#1b5e20;color:#fff;padding:10px 18px;border-radius:10px;
+  font-size:.82rem;font-weight:700;display:none;align-items:center;gap:8px;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);transition:.3s}
+.toast.show{display:flex}
+
+/* ── PRINT ── */
+@media print{
+  .hdr,.ctrl-bar,.edit-banner,.save-float,.toast{display:none!important}
+  .floor-wrap{padding:4px;overflow:visible}
+  .floor{gap:10px}
+  body{background:#fff}
+  .mc-cell{page-break-inside:avoid}
+  .floor-divider{background:#aaa}
+}
+
+/* ── MOBILE ── */
+@media(max-width:680px){
+  :root{--cw:108px;--ch:54px}
+  .floor{flex-direction:column;gap:12px}
+  .floor-divider{width:100%;height:3px;min-height:0;align-self:auto;
+    background:linear-gradient(90deg,transparent,#c5cae9 20%,#c5cae9 80%,transparent)}
+  .ctrl-bar{height:auto;padding:8px 12px;gap:6px}
+  .floor-wrap{padding:10px 12px 100px}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="font-size:.9rem;opacity:.85">Đang tải...</div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr" id="mainHdr">
+  <div class="hdr-left">
+    <h1>🏭 Nhân Sự Trong Ca</h1>
+    <div class="sub" id="todayLbl"></div>
+  </div>
+  <a href="index.html" class="btn-back">← Lịch Ca</a>
+</div>
+
+<!-- EDIT BANNER -->
+<div class="edit-banner" id="editBanner">
+  ✏️ Đang chỉnh sửa – nhấn vào ô để điền tên nhân viên
+  <button class="close-btn" onclick="cancelEdit()">✕</button>
+</div>
+
+<!-- CONTROLS -->
+<div class="ctrl-bar">
+  <div class="kip-btns">
+    <button class="kbtn k1 active" id="kbtn1" onclick="setKip(1)">Kíp 1</button>
+    <button class="kbtn k2" id="kbtn2" onclick="setKip(2)">Kíp 2</button>
+    <button class="kbtn k3" id="kbtn3" onclick="setKip(3)">Kíp 3</button>
+  </div>
+  <input type="date" class="ctrl-date" id="rDate" onchange="loadRoster()">
+  <div class="ctrl-space"></div>
+  <button class="btn btn-sec" onclick="copyPrev()" title="Sao chép từ ngày hôm qua">📋 Copy</button>
+  <button class="btn btn-sec" onclick="window.print()">🖨️ In</button>
+  <button class="btn btn-edit" id="editBtn" onclick="toggleEdit()">✏️ Sửa</button>
+</div>
+
+<!-- FACTORY FLOOR -->
+<div class="floor-wrap">
+  <div class="floor" id="floor"></div>
+</div>
+
+<!-- SAVE FLOAT (mobile) -->
+<button class="save-float" id="saveFloat" onclick="saveAll()">💾 Lưu tất cả</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Đã lưu</div>
+
+<datalist id="empList"></datalist>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL='https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const SB_OK=SB_URL.startsWith('https://')&&!SB_URL.includes('PASTE');
+const sb=SB_OK?supabase.createClient(SB_URL,SB_KEY):null;
+
+// ══════════════════════════════════════════════════════════
+// LAYOUT NHÀ MÁY – theo đúng sơ đồ trong hình
+// null = ô trống (spacer)
+// ══════════════════════════════════════════════════════════
+const LAYOUT_LEFT = [
+  // Cột 1 (trái)   Cột 2 (phải)
+  ['T-24',          'T-23'],
+  ['T-03',           null ],
+  ['CT2',           'CT9' ],
+  ['CT3',           'CT8' ],
+  ['CT4',           'CT7' ],
+  ['CT6',            null ],
+  ['CT5',           'CT1' ],
+  ['VT-04',         'VT-02'],
+  ['LN-01',         'LN-02'],
+  [ null,           'VT1' ],
+  ['ETL-01',        'ETL-TD'],
+  ['ETL-02',         null ],
+  ['Khắc',           null ],
+];
+
+const LAYOUT_RIGHT = [
+  // Cột 1 (trái)   Cột 2 (phải)
+  ['T-05',          'T-16'],
+  ['T-06',           null ],
+  ['T-27',          'T-30'],
+  ['T-25',          'T-28'],
+  ['T-08',          'T-26'],
+  ['T-21',          'T-22'],
+  ['T-19',          'T-20'],
+  ['T-17',          'T-18'],
+  ['T-11',          'T-29'],
+  ['T-15',          'T-14'],
+  ['T-13',          'T-12'],
+  ['T-04',          'T-10'],
+  ['T-09',          'T-31'],
+  ['T-07',           null ],
+  ['Cưa',            null ],
+];
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let curKip=1, curDate='', editMode=false;
+let ROSTER={}; // { machineCode: {worker_name, note, id} }
+
+const DFUL=['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+function dKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function fmtD(d){return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;}
+
+// ── KÍP / COLORS ──────────────────────────────────────────
+const KIP_COLORS={
+  1:{a:'#1565c0',al:'#e3f2fd',ad:'#0d47a1'},
+  2:{a:'#6a1b9a',al:'#f3e5f5',ad:'#4a148c'},
+  3:{a:'#2e7d32',al:'#e8f5e9',ad:'#1b5e20'},
+};
+function applyKipTheme(){
+  const c=KIP_COLORS[curKip];
+  const r=document.documentElement;
+  r.style.setProperty('--accent',c.a);
+  r.style.setProperty('--accent-l',c.al);
+  r.style.setProperty('--accent-d',c.ad);
+  document.getElementById('mainHdr').style.background=
+    `linear-gradient(135deg,${c.ad},${c.a})`;
+}
+function setKip(k){
+  curKip=k;
+  [1,2,3].forEach(i=>{
+    const b=document.getElementById('kbtn'+i);
+    b.className=`kbtn k${i}${i===k?' active':''}`;
+  });
+  applyKipTheme();
+  loadRoster();
+}
+
+// ── LOAD ──────────────────────────────────────────────────
+async function loadRoster(){
+  curDate=document.getElementById('rDate').value;
+  ROSTER={};
+  if(SB_OK&&curDate){
+    try{
+      const {data}=await sb.from('shift_roster').select('*')
+        .eq('kip',curKip).eq('date',curDate);
+      (data||[]).forEach(r=>{
+        ROSTER[r.machine_code]={worker_name:r.worker_name||'',note:r.note||'',id:r.id};
+      });
+    }catch(e){console.warn(e);}
+  }
+  renderFloor();
+}
+
+async function loadEmpList(){
+  if(!SB_OK) return;
+  try{
+    const {data}=await sb.from('employees').select('name');
+    const dl=document.getElementById('empList');
+    (data||[]).forEach(e=>{
+      const o=document.createElement('option');o.value=e.name;dl.appendChild(o);
+    });
+  }catch(e){}
+}
+
+// ── RENDER FLOOR ──────────────────────────────────────────
+function renderFloor(){
+  const floor=document.getElementById('floor');
+  floor.innerHTML='';
+  floor.appendChild(makeSection('Khu CT / VT / LN / ETL',LAYOUT_LEFT));
+  const dv=document.createElement('div');dv.className='floor-divider';
+  floor.appendChild(dv);
+  floor.appendChild(makeSection('Khu Tiện (T-xx)',LAYOUT_RIGHT));
+}
+
+function makeSection(title,layout){
+  const sec=document.createElement('div');
+  sec.className='section';
+  const lbl=document.createElement('div');
+  lbl.className='section-lbl';lbl.textContent=title;
+  sec.appendChild(lbl);
+  const grid=document.createElement('div');
+  grid.className='mc-grid';
+  layout.forEach(row=>{
+    row.forEach(code=>{
+      if(code===null){
+        const sp=document.createElement('div');
+        sp.className='mc-spacer';
+        grid.appendChild(sp);
+      } else {
+        grid.appendChild(buildCell(code));
+      }
+    });
+  });
+  sec.appendChild(grid);
+  return sec;
+}
+
+function buildCell(code){
+  const d=ROSTER[code]||{worker_name:'',note:''};
+  const cell=document.createElement('div');
+  const hasFill=!!d.worker_name;
+  cell.className=`mc-cell${hasFill?' filled':''}${editMode?' edit-mode':''}`;
+  cell.dataset.code=code;
+
+  // Code badge
+  const codeLbl=document.createElement('div');
+  codeLbl.className='mc-code';
+  codeLbl.textContent=code;
+  cell.appendChild(codeLbl);
+
+  if(editMode){
+    const ni=document.createElement('input');
+    ni.type='text';ni.className='mc-name-input';
+    ni.placeholder='Họ tên...';ni.value=d.worker_name;
+    ni.setAttribute('list','empList');
+    ni.autocomplete='off';
+    ni.oninput=e=>onInput(code,'worker_name',e.target.value);
+    cell.appendChild(ni);
+
+    const nti=document.createElement('input');
+    nti.type='text';nti.className='mc-note-input';
+    nti.placeholder='Ghi chú (gá tay, TA…)';nti.value=d.note;
+    nti.oninput=e=>onInput(code,'note',e.target.value);
+    cell.appendChild(nti);
+  } else {
+    const nv=document.createElement('div');
+    nv.className='mc-name';nv.textContent=d.worker_name||'';
+    cell.appendChild(nv);
+    const ntv=document.createElement('div');
+    ntv.className='mc-note';ntv.textContent=d.note||'';
+    cell.appendChild(ntv);
+  }
+  return cell;
+}
+
+function onInput(code,field,val){
+  if(!ROSTER[code]) ROSTER[code]={worker_name:'',note:'',id:null};
+  ROSTER[code][field]=val;
+  const cell=document.querySelector(`.mc-cell[data-code="${CSS.escape(code)}"]`);
+  if(cell) cell.classList.toggle('filled',!!ROSTER[code].worker_name);
+}
+
+// ── EDIT MODE ─────────────────────────────────────────────
+function toggleEdit(){
+  if(editMode) saveAll();
+  else startEdit();
+}
+function startEdit(){
+  if(!curDate){alert('Vui lòng chọn ngày!');return;}
+  editMode=true;
+  document.getElementById('editBtn').innerHTML='💾 Lưu';
+  document.getElementById('editBtn').className='btn btn-save';
+  document.getElementById('editBanner').classList.add('show');
+  document.getElementById('saveFloat').classList.add('show');
+  renderFloor();
+}
+function cancelEdit(){
+  editMode=false;
+  document.getElementById('editBtn').innerHTML='✏️ Sửa';
+  document.getElementById('editBtn').className='btn btn-edit';
+  document.getElementById('editBanner').classList.remove('show');
+  document.getElementById('saveFloat').classList.remove('show');
+  loadRoster();
+}
+
+// ── SAVE ──────────────────────────────────────────────────
+async function saveAll(){
+  if(!curDate){alert('Chọn ngày!');return;}
+  const btn=document.getElementById('editBtn');
+  btn.disabled=true;btn.textContent='⏳ Đang lưu...';
+
+  const allCodes=[...LAYOUT_LEFT,...LAYOUT_RIGHT].flat().filter(c=>c!==null);
+  for(const code of allCodes){
+    const d=ROSTER[code]||{worker_name:'',note:'',id:null};
+    const row={kip:curKip,date:curDate,machine_code:code,
+      worker_name:d.worker_name.trim(),note:d.note.trim()};
+    if(SB_OK){
+      try{
+        const {data,error}=await sb.from('shift_roster')
+          .upsert(row,{onConflict:'kip,date,machine_code'}).select();
+        if(!error&&data&&data[0]){
+          ROSTER[code]=ROSTER[code]||{};
+          ROSTER[code].id=data[0].id;
+          ROSTER[code].worker_name=data[0].worker_name;
+          ROSTER[code].note=data[0].note;
+        }
+      }catch(e){console.warn(e);}
+    }
+  }
+
+  editMode=false;
+  btn.disabled=false;
+  btn.innerHTML='✏️ Sửa';
+  btn.className='btn btn-edit';
+  document.getElementById('editBanner').classList.remove('show');
+  document.getElementById('saveFloat').classList.remove('show');
+  renderFloor();
+  showToast('✅ Đã lưu xong!');
+}
+
+// ── COPY PREV DAY ─────────────────────────────────────────
+async function copyPrev(){
+  if(!curDate){alert('Chọn ngày trước!');return;}
+  const d=new Date(curDate+'T00:00:00');
+  d.setDate(d.getDate()-1);
+  const prevDate=dKey(d);
+  if(!confirm(`Copy dữ liệu từ ${fmtD(d)} sang hôm nay?`)) return;
+  if(!SB_OK){alert('Cần kết nối Supabase!');return;}
+  const {data,error}=await sb.from('shift_roster').select('*')
+    .eq('kip',curKip).eq('date',prevDate);
+  if(error||!data||!data.length){
+    alert(`Không có dữ liệu ngày ${fmtD(d)}!`);return;
+  }
+  ROSTER={};
+  data.forEach(r=>{ROSTER[r.machine_code]={worker_name:r.worker_name||'',note:r.note||'',id:null};});
+  startEdit();
+  showToast(`📋 Đã copy từ ${fmtD(d)}`);
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+(async()=>{
+  try{
+    const t=new Date();
+    const ts=dKey(t);
+    document.getElementById('todayLbl').textContent=
+      `${DFUL[t.getDay()]}, ${fmtD(t)}`;
+    document.getElementById('rDate').value=ts;
+    curDate=ts;
+    applyKipTheme();
+    await Promise.all([loadRoster(),loadEmpList()]);
+  }catch(e){console.error(e);}
+  finally{document.getElementById('loadingOverlay').classList.add('hide');}
+})();
+</script>
+</body>
+</html>
