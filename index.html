@@ -614,12 +614,14 @@ const SB_OK = SB_URL.startsWith('https://') && !SB_URL.includes('PASTE');
 const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 
 // ── TÍNH CA ────────────────────────────────
+// Chu kỳ 12 ngày: S×4 → N×2 → C×4 → N×2 (4 ngày làm, 2 ngày nghỉ)
 const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
 const REF   = new Date(2026, 3, 12); // 12/04/2026 – mốc tham chiếu
 const PHASE = {1:5, 2:9, 3:1}; // Kíp1=S, Kíp2=C, Kíp3=N ngày 21/04/2026
 function getShift(k, d) {
+  const len = CYCLE.length;
   const n = Math.round((d - REF) / 864e5);
-  return CYCLE[((n + PHASE[k]) % 12 + 12) % 12];
+  return CYCLE[((n + PHASE[k]) % len + len) % len];
 }
 
 // ── DỮ LIỆU MẶC ĐỊNH ─────────────────────
