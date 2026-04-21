@@ -598,26 +598,44 @@ function renderScoring(){
     if(!kEmps.length) return;
     html+=`<div class="kip-group-wrap">
       <div class="kip-head kh-k${k}">${GRP_LABEL[k]||'Kíp '+k} <span style="font-weight:400;font-size:.75rem;opacity:.85">(${kEmps.length} người)</span></div>
-      <div class="card" style="margin:0 12px;border-radius:var(--radius)">`;
+      <div style="overflow-x:auto; margin: 0 12px; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);">
+        <table class="res-table" style="width:100%; min-width:400px; box-shadow:none; border-radius:0;">
+          <thead>
+            <tr>
+              <th style="min-width:120px;position:sticky;left:0;z-index:1;background:#f5f5f5;color:#333;border-right:1px solid #f0f0f0">Họ tên / MSNV</th>
+              <th style="width:75px;text-align:center">Điểm</th>
+              <th>Ghi chú ngày (nếu có)</th>
+              <th style="width:65px;text-align:center">Lưu</th>
+            </tr>
+          </thead>
+          <tbody>`;
     kEmps.forEach(e=>{
       const ex=dayMap[e.id];
-      html+=`<div class="sc-row${ex?' scored':''}" id="scrow-${e.id}">
-        <div class="sc-info">
-          <span class="sc-name">${e.name}</span>
-          <span class="sc-sub">${e.id}${e.role?' · '+e.role:''}</span>
-        </div>
-        <input class="sc-num" type="number" min="0" max="10" step="0.1"
-          placeholder="0–10" id="sc-${e.id}" value="${ex?ex.score:''}"
-          style="${ex?'border-color:'+scoreColor(ex.score)+';color:'+scoreColor(ex.score):''}">
-        <input class="sc-note" type="text" placeholder="Ghi chú..."
-          id="nt-${e.id}" value="${ex?ex.note||'':''}">
-        <button class="sc-save ${ex?'edit':'new'}" onclick="saveScore('${e.id}','${e.name}','${date}')">
-          ${ex?'✏️':'✓'}
-        </button>
-        ${ex?`<button class="sc-del" onclick="deleteRating(${ex.id},true)">✕</button>`:''}
-      </div>`;
+      html+=`<tr class="${ex?'scored':''}" style="${ex?'background:#f1f8e9':''}">
+        <td style="position:sticky;left:0;background:${ex?'#f1f8e9':'#fff'};border-right:1px solid #f0f0f0;">
+          <div style="font-weight:700;font-size:.85rem;color:#222">${e.name}</div>
+          <div style="font-size:.68rem;color:#888">${e.id}${e.role?' · '+e.role:''}</div>
+        </td>
+        <td style="text-align:center">
+          <input type="number" min="0" max="10" step="0.1" placeholder="-" id="sc-${e.id}" value="${ex?ex.score:''}" 
+                 style="width:56px;padding:6px;border:1.5px solid ${ex?scoreColor(ex.score):'#ccc'};border-radius:6px;font-size:.9rem;font-weight:700;text-align:center;color:${ex?scoreColor(ex.score):'inherit'};outline:none"
+                 onfocus="this.select()">
+        </td>
+        <td>
+          <input type="text" placeholder="Ghi chú..." id="nt-${e.id}" value="${ex?ex.note||'':''}"
+                 style="width:100%;min-width:100px;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:.8rem;outline:none">
+        </td>
+        <td style="text-align:center">
+          <div style="display:flex;gap:4px;justify-content:center">
+            <button onclick="saveScore('${e.id}','${e.name}','${date}')" class="sc-save ${ex?'edit':'new'}" style="margin:0">
+              ${ex?'✏️ Sửa':'✓ Lưu'}
+            </button>
+            ${ex?`<button onclick="deleteRating(${ex.id},true)" style="background:none;border:none;color:#e57373;cursor:pointer;font-size:.95rem;padding:0 2px">✕</button>`:''}
+          </div>
+        </td>
+      </tr>`;
     });
-    html+='</div></div>';
+    html+='</tbody></table></div></div>';
   });
   if(!html) html='<div style="text-align:center;padding:40px;color:#aaa">Không có nhân viên.</div>';
   document.getElementById('scoringWrap').innerHTML=html;
