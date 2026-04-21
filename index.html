@@ -617,7 +617,7 @@ const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 // Chu kỳ 12 ngày: S×4 → N×2 → C×4 → N×2 (4 ngày làm, 2 ngày nghỉ)
 const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
 const REF   = new Date(2026, 3, 12); // 12/04/2026 – mốc tham chiếu
-const PHASE = {1:5, 2:9, 3:1}; // Kíp1=S, Kíp2=C, Kíp3=N ngày 21/04/2026
+const PHASE = {1:3, 2:11, 3:7}; // 12/04: Kíp1=S, Kíp2=N, Kíp3=C – theo lịch thực tế
 function getShift(k, d) {
   const len = CYCLE.length;
   const n = Math.round((d - REF) / 864e5);
