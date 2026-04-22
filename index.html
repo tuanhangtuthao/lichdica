@@ -737,16 +737,46 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
           <span style="font-size:.85rem;font-weight:700;color:#c62828">⏰ Có tăng ca</span>
         </label>
         <div id="qeOtFields" style="display:none;margin-top:10px">
-          <div style="display:flex;gap:10px;margin-bottom:6px">
-            <div style="flex:0 0 110px">
-              <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Số giờ tăng ca</label>
-              <input type="number" class="form-input" id="qeOtHours"
-                min="0.5" max="12" step="0.5" value="2"
-                style="width:100%;font-weight:700;font-size:1rem;text-align:center">
+          <!-- Toggle loại tăng ca -->
+          <div style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #ffcdd2;margin-bottom:10px">
+            <button id="qeOtBtnHour" onclick="setQeOtType('hour')"
+              style="flex:1;padding:7px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;background:#e53935;color:#fff;transition:.15s">
+              ⏱ Theo giờ
+            </button>
+            <button id="qeOtBtnFull" onclick="setQeOtType('full')"
+              style="flex:1;padding:7px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;background:#ffebee;color:#c62828;transition:.15s">
+              📋 Full ca
+            </button>
+          </div>
+          <!-- Theo giờ -->
+          <div id="qeOtHourFields">
+            <div style="display:flex;gap:10px;margin-bottom:6px">
+              <div style="flex:0 0 110px">
+                <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Số giờ tăng ca</label>
+                <input type="number" class="form-input" id="qeOtHours"
+                  min="0.5" max="12" step="0.5" value="2"
+                  style="width:100%;font-weight:700;font-size:1rem;text-align:center">
+              </div>
+              <div style="flex:1">
+                <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú</label>
+                <input type="text" class="form-input" id="qeOtNote" placeholder="Vd: Hoàn thành đơn hàng...">
+              </div>
             </div>
-            <div style="flex:1">
-              <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú tăng ca</label>
-              <input type="text" class="form-input" id="qeOtNote" placeholder="Vd: Hoàn thành đơn hàng...">
+          </div>
+          <!-- Full ca -->
+          <div id="qeOtFullFields" style="display:none">
+            <div style="display:flex;gap:10px;margin-bottom:6px">
+              <div style="flex:1">
+                <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Loại ca</label>
+                <select class="form-select" id="qeOtFullShift" style="width:100%;font-weight:700">
+                  <option value="S">☀️ Full Ca Sáng (6h–18h)</option>
+                  <option value="C">🌙 Full Ca Chiều (18h–6h)</option>
+                </select>
+              </div>
+              <div style="flex:1">
+                <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú</label>
+                <input type="text" class="form-input" id="qeOtFullNote" placeholder="Vd: Làm bù Kíp 2...">
+              </div>
             </div>
           </div>
           <div id="qeOtInfo" style="display:none;font-size:.72rem;color:#1565c0;padding:4px 8px;background:#e3f2fd;border-radius:6px">
@@ -1853,9 +1883,25 @@ function _showQeModal() {
   document.getElementById('qeOtFields').style.display = 'none';
   document.getElementById('qeOtHours').value = '2';
   document.getElementById('qeOtNote').value = '';
+  document.getElementById('qeOtFullNote').value = '';
   document.getElementById('qeOtInfo').style.display = 'none';
   document.getElementById('btnSaveQE').innerText = '💾 Lưu lịch';
+  setQeOtType('hour'); // mặc định theo giờ
   document.getElementById('qEditModal').classList.add('show');
+}
+let qeOtMode = 'hour'; // 'hour' | 'full'
+function setQeOtType(mode) {
+  qeOtMode = mode;
+  document.getElementById('qeOtBtnHour').style.cssText =
+    'flex:1;padding:7px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s;' +
+    (mode==='hour' ? 'background:#e53935;color:#fff' : 'background:#ffebee;color:#c62828');
+  document.getElementById('qeOtBtnFull').style.cssText =
+    'flex:1;padding:7px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s;' +
+    (mode==='full' ? 'background:#e53935;color:#fff' : 'background:#ffebee;color:#c62828');
+  document.getElementById('qeOtHourFields').style.display = mode==='hour' ? 'block' : 'none';
+  document.getElementById('qeOtFullFields').style.display = mode==='full' ? 'block' : 'none';
+  const on = document.getElementById('qeOtToggle').checked;
+  if(on) document.getElementById('btnSaveQE').innerText = '💾 Lưu ca + tăng ca';
 }
 function closeQuickEdit() { document.getElementById('qEditModal').classList.remove('show'); }
 
@@ -1912,7 +1958,9 @@ async function saveQuickEdit() {
   const otOn    = document.getElementById('qeOtToggle').checked;
   const otHours = parseFloat(document.getElementById('qeOtHours').value) || 0;
   const otNote  = document.getElementById('qeOtNote').value.trim();
-  if(otOn && otHours <= 0){ alert('Số giờ tăng ca phải lớn hơn 0!'); return; }
+  const otFullShift = document.getElementById('qeOtFullShift').value;
+  const otFullNote  = document.getElementById('qeOtFullNote').value.trim();
+  if(otOn && qeOtMode==='hour' && otHours <= 0){ alert('Số giờ tăng ca phải lớn hơn 0!'); return; }
 
   const btn = document.getElementById('btnSaveQE');
   btn.disabled = true; btn.innerText = '⌛ Đang lưu...';
@@ -1941,23 +1989,29 @@ async function saveQuickEdit() {
 
     // 3. Lưu tăng ca hàng loạt (nếu có)
     if(otOn) {
-      const otNoteStr = otHours + 'h' + (otNote ? ' – ' + otNote : '');
-      // tạo danh sách từng ngày trong khoảng from→to
       const otRows = [];
       for(let d = new Date(from); d <= new Date(to); d.setDate(d.getDate()+1)) {
-        const otShift = shift; // Ca 1/2/3 từ qeShift
-        const otStart = OT_START[otShift] || null;
-        const otEnd   = otStart ? calcOtEnd(otStart, otHours) : null;
-        otRows.push({
-          date: dKey(new Date(d)),
-          emp_name: eNm,
-          emp_id: curQeEmpId,
-          note: otNoteStr,          // "2.5h – ghi chú" giữ lại để tham khảo
-          ot_type: 'partial',
-          shift: otShift,           // C1 / C2 / C3
-          start_time: otStart,      // '14:00' / '10:00' / '18:00'
-          end_time: otEnd           // tự tính từ giờ nhập
-        });
+        let row;
+        if(qeOtMode === 'full') {
+          // Full ca Sáng / Chiều
+          row = {
+            date: dKey(new Date(d)), emp_name: eNm, emp_id: curQeEmpId,
+            note: otFullNote || null, ot_type: 'full',
+            shift: otFullShift, start_time: null, end_time: null
+          };
+        } else {
+          // Theo giờ
+          const otNoteStr = otHours + 'h' + (otNote ? ' – ' + otNote : '');
+          const otShift = shift;
+          const otStart = OT_START[otShift] || null;
+          const otEnd   = otStart ? calcOtEnd(otStart, otHours) : null;
+          row = {
+            date: dKey(new Date(d)), emp_name: eNm, emp_id: curQeEmpId,
+            note: otNoteStr, ot_type: 'partial',
+            shift: otShift, start_time: otStart, end_time: otEnd
+          };
+        }
+        otRows.push(row);
       }
       if(SB_OK) {
         const {data: otData, error: otErr} = await sb.from('overtime').insert(otRows).select();
