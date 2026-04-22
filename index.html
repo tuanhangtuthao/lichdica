@@ -115,9 +115,13 @@ th{background:#1a237e;color:#fff;font-weight:600;position:sticky;top:0;z-index:9
 .ot-mode-btn.active{background:#1a237e;color:#fff}
 .ot-mode-btn:hover:not(.active){background:#c5cae9}
 /* Lọc theo ca */
-.ot-sf-btn{padding:5px 12px;border:1.5px solid #ccc;border-radius:20px;font-size:.75rem;
+.ot-sf-btn{padding:5px 10px;border:1.5px solid #ccc;border-radius:20px;font-size:.75rem;
   font-weight:700;cursor:pointer;background:#fff;color:#666;transition:.15s;white-space:nowrap}
+.ot-sf-btn.ca-btn{min-width:48px;text-align:center} /* Ca 1/2/3 bằng nhau */
 .ot-sf-btn:hover{border-color:#999}
+/* Cột hôm nay trong bảng lịch */
+th.today-h{background:#f9a825 !important;color:#222 !important;font-weight:800}
+th.wk{background:#546e7a !important;color:#fff !important}
 .ot-sf-btn.active{background:#1a237e;color:#fff;border-color:#1a237e}
 .ot-sf-btn.active.c1{background:#01579b;border-color:#01579b}
 .ot-sf-btn.active.c2{background:#6a1b9a;border-color:#6a1b9a}
@@ -162,7 +166,9 @@ th.c1{z-index:150;background:#37474f}
 thead tr:nth-child(1) th.c1{z-index:160}
 thead tr:nth-child(2) th.c1{z-index:155}
 
-td.c1{background:#fafafa;border-left:1px solid #e8e8e8}
+td.c1{background:#fafafa;border-left:1px solid #e8e8e8;border-right:2px solid #c5cae9}
+tbody tr:nth-child(even) td.c1{background:#f1f3f5}
+tbody tr.kh td.c1{background:inherit !important;border-right:none}
 tr.kh td{background:#1a237e}
 
 /* Month & Kip labels sticky scroll */
@@ -176,7 +182,7 @@ td.shS{background:var(--s-bg);color:var(--s-fg);font-weight:700}
 td.shC{background:var(--c-bg);color:var(--c-fg);font-weight:700}
 td.shN{background:var(--n-bg);color:var(--n-fg);font-weight:700}
 td.shL{background:var(--h-bg);color:var(--h-fg);font-weight:700}
-td.today-c{outline:2px solid #f9a825;outline-offset:-2px}
+td.today-c{outline:2px solid #f9a825;outline-offset:-2px;background-color:rgba(249,168,37,.13) !important}
 tr.kh.k1 td{background:var(--k1)}
 tr.kh.k2 td{background:var(--k2)}
 tr.kh.k3 td{background:var(--k3)}
@@ -647,13 +653,13 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     </div>
     <!-- Lọc theo ca -->
     <div style="display:flex;gap:8px;margin-bottom:10px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;scrollbar-width:none" id="otShiftFilter">
-      <button class="ot-sf-btn active" data-sf=""   onclick="setOtShiftF(this,'')">Tất cả</button>
-      <button class="ot-sf-btn c1"     data-sf="C1" onclick="setOtShiftF(this,'C1')">Ca 1</button>
-      <button class="ot-sf-btn c2"     data-sf="C2" onclick="setOtShiftF(this,'C2')">Ca 2</button>
-      <button class="ot-sf-btn c3"     data-sf="C3" onclick="setOtShiftF(this,'C3')">Ca 3</button>
-      <button class="ot-sf-btn s"      data-sf="S"  onclick="setOtShiftF(this,'S')">Full Sáng</button>
-      <button class="ot-sf-btn c"      data-sf="C"  onclick="setOtShiftF(this,'C')">Full Chiều</button>
-      <button class="ot-sf-btn hc"     data-sf="HC" onclick="setOtShiftF(this,'HC')">Hành Chính</button>
+      <button class="ot-sf-btn active"    data-sf=""   onclick="setOtShiftF(this,'')">Tất cả</button>
+      <button class="ot-sf-btn c1 ca-btn" data-sf="C1" onclick="setOtShiftF(this,'C1')">Ca 1</button>
+      <button class="ot-sf-btn c2 ca-btn" data-sf="C2" onclick="setOtShiftF(this,'C2')">Ca 2</button>
+      <button class="ot-sf-btn c3 ca-btn" data-sf="C3" onclick="setOtShiftF(this,'C3')">Ca 3</button>
+      <button class="ot-sf-btn s"         data-sf="S"  onclick="setOtShiftF(this,'S')">Sáng</button>
+      <button class="ot-sf-btn c"         data-sf="C"  onclick="setOtShiftF(this,'C')">Chiều</button>
+      <button class="ot-sf-btn hc"        data-sf="HC" onclick="setOtShiftF(this,'HC')">HC</button>
     </div>
 
     <!-- Stats bar -->
