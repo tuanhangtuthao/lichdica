@@ -834,7 +834,31 @@ function allEmps(){ const a=[]; [1,2,3,4].forEach(k=>(EMPS[k]||[]).forEach(e=>a.
 // ── STATE ──────────────────────────────────
 let startDate, searchQ='', kipF=0, lookQ='', activeTab='schedule';
 let OVERTIME = [];
-let EMP_SCHED = []; // [{id,emp_id,emp_name,start_date,end_date,shift}]
+let EMP_SCHED = [];
+
+// ── GIỜ TĂNG CA MẶC ĐỊNH THEO CA ──────────
+const OT_START = { C1:'14:00', C2:'10:00', C3:'18:00', S:'14:00', C:'22:00' };
+// Tính giờ kết thúc = giờ bắt đầu + số giờ (có thể lẻ 0.5)
+function calcOtEnd(startStr, hours) {
+  if(!startStr || !hours) return null;
+  const [h,m] = startStr.split(':').map(Number);
+  const total = h*60 + m + Math.round(parseFloat(hours)*60);
+  return String(Math.floor(total/60)%24).padStart(2,'0') + ':' + String(total%60).padStart(2,'0');
+}
+// Lấy giờ bắt/kết thúc + số giờ cho 1 bản ghi OT (tự tính khi null)
+function resolveOtTimes(o) {
+  let start = o.start_time, end = o.end_time, hours = null;
+  // Thử parse hours từ note kiểu "2.5h – ..."
+  if(o.note){ const mx = o.note.match(/^([\d.]+)h/); if(mx) hours = parseFloat(mx[1]); }
+  // Nếu chưa có start, tính từ shift default
+  if(!start) { start = OT_START[o.shift] || null; }
+  if(!end && start && hours)  { end = calcOtEnd(start, hours); }
+  if(!hours && start && end) {
+    const [h1,m1]=start.split(':').map(Number), [h2,m2]=end.split(':').map(Number);
+    const diff = ((h2*60+m2)-(h1*60+m1))/60; if(diff>0) hours=diff;
+  }
+  return { start, end, hours };
+} // [{id,emp_id,emp_name,start_date,end_date,shift}]
 let otType = 'full';
 const NDAYS = 28;
 
@@ -1244,14 +1268,20 @@ function renderOvertime(){
         <span style="font-size:.75rem;opacity:.8">${grp[date].length} người</span></div>`;
     grp[date].forEach(o=>{
       const isFull=!o.ot_type||o.ot_type==='full';
-      const badge=isFull
-        ? `<span class="chip ${o.shift}">${o.shift}</span>`
-        : `<span class="chip" style="background:#e3f2fd;color:#1565c0">⏱ ${o.start_time}–${o.end_time}</span>`;
+      let badge;
+      if(isFull){
+        badge=`<span class="chip ${o.shift}">${o.shift}</span>`;
+      } else {
+        const t=resolveOtTimes(o);
+        const hLbl=t.hours?(t.hours%1===0?t.hours+'h':t.hours+'h'):'';
+        badge=`<span class="chip" style="background:#e3f2fd;color:#1565c0;font-size:.75rem">⏱ ${t.start||'?'}→${t.end||'?'}${hLbl?' ('+hLbl+')':''}</span>`;
+      }
+      const noteClean = o.note ? o.note.replace(/^[\d.]+h(\s*–\s*)?/,'').trim() : '';
       html+=`<div class="ot-item">
         ${badge}
         <div class="ot-info">
           <div class="ot-name">${o.emp_name}${o.emp_id?` <span style="color:#999;font-weight:400">(${o.emp_id})</span>`:''}</div>
-          ${o.note?`<div class="ot-note">📝 ${o.note}</div>`:''}
+          ${noteClean?`<div class="ot-note">📝 ${noteClean}</div>`:''}
         </div>
         <button class="del-btn" onclick="removeOvertime(${o.id})">✕</button>
       </div>`;
@@ -1395,22 +1425,25 @@ function renderOtBoard(){
       
       dayOts.forEach(o => {
         const isFull = !o.ot_type || o.ot_type === 'full';
-        const col = getOtColor(o.shift);
-        const note = o.note ? `<div style="font-size:.65rem;color:#888;font-style:italic;margin-top:2px">${o.note}</div>` : '';
-        
+        const col = getOtColor(isFull ? o.shift : (o.shift||'TC'));
+        const noteClean = o.note ? o.note.replace(/^[\d.]+h(\s*–\s*)?/,'').trim() : '';
+        const noteHtml = noteClean ? `<div style="font-size:.62rem;color:#888;font-style:italic;margin-top:2px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${noteClean}</div>` : '';
+
         if(isFull){
           h += `<div style="background:${col.bg};border:1px solid ${col.bd};border-radius:8px;padding:6px 10px;min-width:56px;text-align:center">
             <div style="font-size:.72rem;color:#888;font-weight:600">${dayName} ${dayNum}</div>
             <div style="font-weight:800;font-size:1rem;color:${col.fg};line-height:1.1">${col.label}</div>
-            ${note}
+            ${noteHtml}
           </div>`;
         } else {
-          h += `<div style="background:#fff8f0;border:1.5px solid #ffb74d;border-radius:8px;padding:6px 10px;min-width:60px;text-align:center">
+          const t = resolveOtTimes(o);
+          const hLbl = t.hours ? (t.hours % 1 === 0 ? t.hours + 'h' : t.hours + 'h') : '';
+          h += `<div style="background:#fff8f0;border:1.5px solid #ffb74d;border-radius:8px;padding:6px 10px;min-width:64px;text-align:center">
             <div style="font-size:.72rem;color:#888;font-weight:600">${dayName} ${dayNum}</div>
-            <div style="font-weight:700;font-size:.82rem;color:#e65100;line-height:1.4">${o.start_time}</div>
-            <div style="color:#ffa726;font-size:.6rem">&#9660;</div>
-            <div style="font-weight:700;font-size:.82rem;color:#e65100;line-height:1">${o.end_time}</div>
-            ${note}
+            <div style="font-weight:700;font-size:.8rem;color:#e65100;line-height:1.4">${t.start||'?'}</div>
+            <div style="color:#ffa726;font-size:.58rem;line-height:1">▼${hLbl?` <b>${hLbl}</b>`:''}</div>
+            <div style="font-weight:700;font-size:.8rem;color:#e65100;line-height:1">${t.end||'?'}</div>
+            ${noteHtml}
           </div>`;
         }
       });
@@ -1588,15 +1621,18 @@ async function saveQuickEdit() {
       // tạo danh sách từng ngày trong khoảng from→to
       const otRows = [];
       for(let d = new Date(from); d <= new Date(to); d.setDate(d.getDate()+1)) {
+        const otShift = shift; // Ca 1/2/3 từ qeShift
+        const otStart = OT_START[otShift] || null;
+        const otEnd   = otStart ? calcOtEnd(otStart, otHours) : null;
         otRows.push({
           date: dKey(new Date(d)),
           emp_name: eNm,
           emp_id: curQeEmpId,
-          note: otNoteStr,
+          note: otNoteStr,          // "2.5h – ghi chú" giữ lại để tham khảo
           ot_type: 'partial',
-          shift: 'TC',
-          start_time: null,
-          end_time: null
+          shift: otShift,           // C1 / C2 / C3
+          start_time: otStart,      // '14:00' / '10:00' / '18:00'
+          end_time: otEnd           // tự tính từ giờ nhập
         });
       }
       if(SB_OK) {
