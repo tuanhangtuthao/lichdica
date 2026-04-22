@@ -1772,71 +1772,125 @@ function renderOtBoard(){
 
 // ── MODE A: GRID TABLE ────────────────────────
 function _renderGrid(el, empsArr, y, m, days){
-  const DN2 = ['CN','T2','T3','T4','T5','T6','T7'];
-  const KIP_BG  = {1:'#1565c0',2:'#6a1b9a',3:'#2e7d32',0:'#00695c'};
-  const KIP_LBL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',0:'HC / Cố Định'};
-  // OT cell color by shift
+  const DN2     = ['CN','T2','T3','T4','T5','T6','T7'];
+  const MN      = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                   'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  const KIP_BG  = {1:'var(--k1)',2:'var(--k2)',3:'var(--k3)',4:'var(--k4)',0:'#455a64'};
+  const KIP_LBL = {1:'KÍP 1',2:'KÍP 2',3:'KÍP 3',4:'HÀNH CHÍNH',0:'CỐ ĐỊNH / KHÁC'};
   const CELL_BG = {S:'#c8e6c9',C:'#ffe0b2',C1:'#b3e5fc',C2:'#e1bee7',C3:'#c8e6c9',HC:'#e0f2f1',HC1:'#e0f2f1',HC2:'#e0f2f1'};
   const CELL_FG = {S:'#1b5e20',C:'#bf360c',C1:'#01579b',C2:'#4a148c',C3:'#1b5e20',HC:'#00695c',HC1:'#00695c',HC2:'#00695c'};
 
-  let h = `<div class="ot-card"><div class="ot-grid-wrap"><table><thead><tr>
-    <th class="ot-grid-th-nm" style="background:#1a237e;color:#fff;text-align:left">Nhân viên</th>`;
-  for(let d=1;d<=days;d++){
-    const dt = new Date(y,m-1,d);
-    const isW = dt.getDay()===0||dt.getDay()===6;
-    h += `<th style="background:${isW?'#546e7a':'#283593'};color:#fff;min-width:26px;width:26px;font-size:.63rem;line-height:1.3">${d}<br>${DN2[dt.getDay()]}</th>`;
-  }
-  h += `<th style="background:#1b5e20;color:#fff;min-width:44px;padding:6px 4px;font-size:.73rem">Σ giờ</th></tr></thead><tbody>`;
+  // Xác định ngày hôm nay trong tháng này
+  const now = new Date(); now.setHours(0,0,0,0);
+  const todayD = (now.getFullYear()===y && now.getMonth()===m-1) ? now.getDate() : -1;
 
-  let lastKip = -1;
-  empsArr.forEach((e,idx) => {
+  // Tính nhóm tháng (phòng TH span 2 tháng)
+  const mGroups=[], seen={};
+  for(let d=1;d<=days;d++){
+    const mm=new Date(y,m-1,d).getMonth();
+    if(!seen[mm]){seen[mm]=0;} seen[mm]++;
+  }
+  Object.keys(seen).forEach(k=>mGroups.push({m:parseInt(k),s:seen[k]}));
+
+  // Header row 1: tên cột + tháng span
+  const H1='34px', H2='36px';
+  let h = `<div class="ot-card" style="overflow:hidden"><div class="ot-grid-wrap"><table style="border-collapse:separate;border-spacing:0;width:max-content;min-width:100%"><thead>
+  <tr>
+    <th rowspan="2" style="position:sticky;left:0;top:0;z-index:12;background:#37474f;color:#fff;
+      min-width:120px;width:120px;font-size:.78rem;font-weight:700;padding:6px 10px;
+      text-align:left;vertical-align:middle;border-right:2px solid #546e7a;height:${H1}">Nhân viên</th>`;
+  mGroups.forEach(g=>{
+    h += `<th colspan="${g.s}" style="position:sticky;top:0;z-index:8;background:#1a237e;color:#fff;
+      font-weight:700;font-size:.72rem;text-align:left;padding:4px 8px;height:${H1};border-bottom:1px solid #283593">
+      <span style="position:sticky;left:130px;display:inline-block;white-space:nowrap">${MN[g.m]}</span></th>`;
+  });
+  h += `<th rowspan="2" style="position:sticky;top:0;z-index:12;background:#1b5e20;color:#fff;
+    min-width:38px;width:38px;font-size:.7rem;font-weight:700;padding:4px 2px;vertical-align:middle;
+    text-align:center;border-left:1px solid #2e7d32;height:${H1}">Σh</th>
+  </tr>
+  <tr>`;
+  // Header row 2: ngày + thứ
+  for(let d=1;d<=days;d++){
+    const dt  = new Date(y,m-1,d);
+    const isW = dt.getDay()===0||dt.getDay()===6;
+    const isTd= d===todayD;
+    const bg  = isTd?'#f9a825':(isW?'#546e7a':'#283593');
+    const fg  = isTd?'#222':'#fff';
+    const fw  = isTd?'800':'600';
+    h += `<th style="position:sticky;top:${H1};z-index:8;background:${bg};color:${fg};font-weight:${fw};
+      min-width:30px;width:30px;font-size:.6rem;line-height:1.3;padding:3px 1px;
+      text-align:center;height:${H2}">${d}<br>${DN2[dt.getDay()]}</th>`;
+  }
+  h += `</tr></thead><tbody>`;
+
+  let lastKip = -1, rowIdx = 0;
+  empsArr.forEach(e => {
+    // Dòng kíp header
     if(e.kip !== lastKip){
       lastKip = e.kip;
-      const bg = KIP_BG[e.kip]||'#455a64';
-      h += `<tr><td colspan="${days+2}" style="background:${bg};color:#fff;padding:4px 10px;font-weight:700;font-size:.73rem">▣ ${KIP_LBL[e.kip]||'Khác'}</td></tr>`;
+      const bg  = KIP_BG[e.kip]||'#455a64';
+      const cnt = empsArr.filter(x=>x.kip===e.kip).length;
+      h += `<tr><td colspan="${days+2}" style="background:${bg};color:#fff;font-weight:700;
+        font-size:.72rem;padding:5px 10px;border-top:2px solid rgba(255,255,255,.2)">
+        <span style="position:sticky;left:10px;display:inline-block;white-space:nowrap">
+          ▣ ${KIP_LBL[e.kip]||'Khác'} · ${cnt} NV
+        </span></td></tr>`;
+      rowIdx = 0;
     }
     // Tổng giờ nhân viên
     let empH = 0;
     Object.values(e.dates).flat().forEach(o=>{ const t=resolveOtTimes(o); if(t.hours) empH+=t.hours; });
-    const rowBg = idx%2===0?'#fff':'#f8f9ff';
-    h += `<tr style="background:${rowBg}"><td class="ot-grid-nm">${e.name}</td>`;
+    const evenBg = rowIdx%2===0?'#fff':'#f1f3f5';
+    rowIdx++;
+    h += `<tr><td style="position:sticky;left:0;z-index:3;background:${evenBg};
+      min-width:120px;width:120px;font-weight:600;font-size:.78rem;padding:6px 10px;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;
+      border-right:2px solid #c5cae9;color:#1a237e">${e.name}</td>`;
 
     for(let d=1;d<=days;d++){
-      const dk = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const dt = new Date(y,m-1,d);
+      const dk  = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dt  = new Date(y,m-1,d);
       const isW = dt.getDay()===0||dt.getDay()===6;
+      const isTd= d===todayD;
       const dayOts = e.dates[dk];
-      const emptyBg = isW?'#f0f2f5':'inherit';
+      // nền ô
+      let tdStyle = '';
+      if(isTd)       tdStyle = `style="background:rgba(249,168,37,.15);outline:2px solid #f9a825;outline-offset:-2px"`;
+      else if(isW)   tdStyle = `style="background:#f0f2f5"`;
+      else if(rowIdx%2===0) tdStyle = `style="background:#f1f3f5"`;
+
       if(!dayOts){
-        h += `<td style="background:${emptyBg}"></td>`;
+        h += `<td ${tdStyle}></td>`;
       } else {
         const o = dayOts[0];
         const isFull = !o.ot_type||o.ot_type==='full';
         const rShift = resolveOtShift(o);
         if(isFull){
-          const bg2 = CELL_BG[rShift]||'#ffe0b2';
-          const fg2 = CELL_FG[rShift]||'#bf360c';
-          h += `<td><span class="ot-badge" style="background:${bg2};color:${fg2}">${rShift||'TC'}</span></td>`;
+          const cbg = CELL_BG[rShift]||'#ffe0b2';
+          const cfg = CELL_FG[rShift]||'#bf360c';
+          h += `<td ${tdStyle}><span class="ot-badge" style="background:${cbg};color:${cfg}">${rShift||'TC'}</span></td>`;
         } else {
-          const t = resolveOtTimes(o);
-          const hLbl = t.hours?(t.hours%1===0?t.hours+'h':t.hours.toFixed(1)+'h'):'⏱';
-          h += `<td><span class="ot-badge" style="background:#fce4ec;color:#c62828">${hLbl}</span></td>`;
+          const t   = resolveOtTimes(o);
+          const hLbl= t.hours?(t.hours%1===0?t.hours+'h':t.hours.toFixed(1)+'h'):'⏱';
+          h += `<td ${tdStyle}><span class="ot-badge" style="background:#fce4ec;color:#c62828">${hLbl}</span></td>`;
         }
       }
     }
     const hLbl = empH>0?(empH%1===0?empH+'h':empH.toFixed(1)+'h'):'—';
-    h += `<td style="text-align:center;font-weight:700;font-size:.78rem;color:${empH>0?'#2e7d32':'#bbb'};background:${empH>0?'#e8f5e9':'inherit'}">${hLbl}</td></tr>`;
+    h += `<td style="text-align:center;font-weight:800;font-size:.75rem;
+      color:${empH>0?'#2e7d32':'#bbb'};background:${empH>0?'#e8f5e9':evenBg};
+      border-left:1px solid #e8e8e8">${hLbl}</td></tr>`;
   });
 
-  // Chú thích – chip màu
-  const legStyle = 'display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;font-size:.72rem;font-weight:700';
-  const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block;flex-shrink:0"></span>`;
+  // Legend chip
+  const ls = 'display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;font-size:.72rem;font-weight:700';
+  const dot= c=>`<span style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block;flex-shrink:0"></span>`;
   h += `</tbody></table></div></div>
   <div class="ot-card" style="padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px">
-    <span style="${legStyle};background:#c8e6c9;color:#1b5e20">${dot('#1b5e20')}Full Sáng</span>
-    <span style="${legStyle};background:#ffe0b2;color:#bf360c">${dot('#bf360c')}Full Chiều</span>
-    <span style="${legStyle};background:#e0f2f1;color:#00695c">${dot('#00695c')}Ca 1 / 2 / 3</span>
-    <span style="${legStyle};background:#fce4ec;color:#c62828">${dot('#c62828')}Theo giờ</span>
+    <span style="${ls};background:#c8e6c9;color:#1b5e20">${dot('#1b5e20')}Full Sáng</span>
+    <span style="${ls};background:#ffe0b2;color:#bf360c">${dot('#bf360c')}Full Chiều</span>
+    <span style="${ls};background:#e0f2f1;color:#00695c">${dot('#00695c')}Ca 1 / 2 / 3</span>
+    <span style="${ls};background:#fce4ec;color:#c62828">${dot('#c62828')}Theo giờ</span>
   </div>`;
   el.innerHTML = h;
 }
