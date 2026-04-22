@@ -698,6 +698,88 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   </div>
 </div>
 
+<!-- MODAL TĂNG CA KÍP (kíp 1/2/3) -->
+<div class="qmodal-overlay" id="kipOtModal" onclick="if(event.target===this)closeKipOt()">
+  <div class="qmodal-box">
+    <div class="qmodal-head" style="background:#b71c1c">
+      <span>⏰ Đăng Ký Tăng Ca</span>
+      <button onclick="closeKipOt()" style="background:none;border:none;color:#fff;font-size:1.4rem;line-height:1;cursor:pointer">✕</button>
+    </div>
+    <div class="qmodal-body">
+      <div style="margin-bottom:12px">
+        <div style="font-size:.72rem;color:#777;margin-bottom:2px">Nhân viên</div>
+        <div id="kipOtName" style="font-weight:700;font-size:1rem;color:#b71c1c"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="flex:1">
+          <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Từ ngày</label>
+          <input type="date" class="form-input" id="kipOtFrom" style="width:100%" onchange="updateKipOtInfo()">
+        </div>
+        <div style="flex:1">
+          <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Đến ngày</label>
+          <input type="date" class="form-input" id="kipOtTo" style="width:100%" onchange="updateKipOtInfo()">
+        </div>
+      </div>
+      <!-- Toggle loại tăng ca -->
+      <div style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #ffcdd2;margin-bottom:12px">
+        <button id="kipOtBtnHour" onclick="setKipOtType('hour')"
+          style="flex:1;padding:8px;border:none;font-size:.8rem;font-weight:700;cursor:pointer;background:#e53935;color:#fff">
+          ⏱ Theo giờ
+        </button>
+        <button id="kipOtBtnFull" onclick="setKipOtType('full')"
+          style="flex:1;padding:8px;border:none;font-size:.8rem;font-weight:700;cursor:pointer;background:#ffebee;color:#c62828">
+          📋 Full ca
+        </button>
+      </div>
+      <!-- Theo giờ -->
+      <div id="kipOtHourFields">
+        <div style="display:flex;gap:10px;margin-bottom:8px">
+          <div style="flex:0 0 110px">
+            <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Số giờ</label>
+            <input type="number" class="form-input" id="kipOtHours" min="0.5" max="12" step="0.5" value="2"
+              style="width:100%;font-weight:700;font-size:1rem;text-align:center">
+          </div>
+          <div style="flex:1">
+            <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ca tăng ca</label>
+            <select class="form-select" id="kipOtShift" style="width:100%;font-weight:700">
+              <option value="C1">① Ca 1 (14:00–18:00)</option>
+              <option value="C2">② Ca 2 (10:00–14:00)</option>
+              <option value="C3">③ Ca 3 (18:00–22:00)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú</label>
+          <input type="text" class="form-input" id="kipOtNote" style="width:100%" placeholder="Vd: Hoàn thành đơn hàng...">
+        </div>
+      </div>
+      <!-- Full ca -->
+      <div id="kipOtFullFields" style="display:none">
+        <div style="display:flex;gap:10px;margin-bottom:8px">
+          <div style="flex:1">
+            <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Loại ca</label>
+            <select class="form-select" id="kipOtFullShift" style="width:100%;font-weight:700">
+              <option value="S">☀️ Full Ca Sáng (6h–18h)</option>
+              <option value="C">🌙 Full Ca Chiều (18h–6h)</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú</label>
+            <input type="text" class="form-input" id="kipOtFullNote" style="width:100%" placeholder="Vd: Làm bù Kíp 2...">
+          </div>
+        </div>
+      </div>
+      <div id="kipOtInfo" style="display:none;font-size:.72rem;color:#1565c0;padding:4px 8px;background:#e3f2fd;border-radius:6px">
+        📅 Sẽ tạo tăng ca cho <strong id="kipOtDayCount">1</strong> ngày
+      </div>
+    </div>
+    <div class="qmodal-footer">
+      <button class="btn btn-sec" onclick="closeKipOt()">Hủy</button>
+      <button class="btn btn-pri" id="btnSaveKipOt" onclick="saveKipOt()" style="background:#b71c1c">⏰ Lưu tăng ca</button>
+    </div>
+  </div>
+</div>
+
 <!-- QUICK EDIT MODAL -->
 <div class="qmodal-overlay" id="qEditModal" onclick="if(event.target===this)closeQuickEdit()">
   <div class="qmodal-box">
@@ -737,46 +819,16 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
           <span style="font-size:.85rem;font-weight:700;color:#c62828">⏰ Có tăng ca</span>
         </label>
         <div id="qeOtFields" style="display:none;margin-top:10px">
-          <!-- Toggle loại tăng ca -->
-          <div style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #ffcdd2;margin-bottom:10px">
-            <button id="qeOtBtnHour" onclick="setQeOtType('hour')"
-              style="flex:1;padding:7px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;background:#e53935;color:#fff;transition:.15s">
-              ⏱ Theo giờ
-            </button>
-            <button id="qeOtBtnFull" onclick="setQeOtType('full')"
-              style="flex:1;padding:7px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;background:#ffebee;color:#c62828;transition:.15s">
-              📋 Full ca
-            </button>
-          </div>
-          <!-- Theo giờ -->
-          <div id="qeOtHourFields">
-            <div style="display:flex;gap:10px;margin-bottom:6px">
-              <div style="flex:0 0 110px">
-                <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Số giờ tăng ca</label>
-                <input type="number" class="form-input" id="qeOtHours"
-                  min="0.5" max="12" step="0.5" value="2"
-                  style="width:100%;font-weight:700;font-size:1rem;text-align:center">
-              </div>
-              <div style="flex:1">
-                <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú</label>
-                <input type="text" class="form-input" id="qeOtNote" placeholder="Vd: Hoàn thành đơn hàng...">
-              </div>
+          <div style="display:flex;gap:10px;margin-bottom:6px">
+            <div style="flex:0 0 110px">
+              <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Số giờ tăng ca</label>
+              <input type="number" class="form-input" id="qeOtHours"
+                min="0.5" max="12" step="0.5" value="2"
+                style="width:100%;font-weight:700;font-size:1rem;text-align:center">
             </div>
-          </div>
-          <!-- Full ca -->
-          <div id="qeOtFullFields" style="display:none">
-            <div style="display:flex;gap:10px;margin-bottom:6px">
-              <div style="flex:1">
-                <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Loại ca</label>
-                <select class="form-select" id="qeOtFullShift" style="width:100%;font-weight:700">
-                  <option value="S">☀️ Full Ca Sáng (6h–18h)</option>
-                  <option value="C">🌙 Full Ca Chiều (18h–6h)</option>
-                </select>
-              </div>
-              <div style="flex:1">
-                <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú</label>
-                <input type="text" class="form-input" id="qeOtFullNote" placeholder="Vd: Làm bù Kíp 2...">
-              </div>
+            <div style="flex:1">
+              <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú</label>
+              <input type="text" class="form-input" id="qeOtNote" placeholder="Vd: Hoàn thành đơn hàng...">
             </div>
           </div>
           <div id="qeOtInfo" style="display:none;font-size:.72rem;color:#1565c0;padding:4px 8px;background:#e3f2fd;border-radius:6px">
@@ -1053,7 +1105,10 @@ function renderTable(){
     (EMPS[k]||[]).forEach(e => {
       if(q&&!e.name.toLowerCase().includes(q)&&!e.id.includes(q)) return;
       const isRot = e.kip === 4 && e.fixed_shift !== 'HC';
-      const nameHtml = isRot ? `<span class="name-edit" onclick="openQuickEdit('${e.id}','${e.name}')" title="Phân ca nhanh">${e.name}</span>` : e.name;
+      const isKip = e.kip >= 1 && e.kip <= 3;
+      const nameHtml = isKip
+        ? `<span class="name-edit" onclick="openKipOt('${e.id}','${e.name}')" title="Đăng ký tăng ca" style="color:#b71c1c">${e.name}</span>`
+        : isRot ? `<span class="name-edit" onclick="openQuickEdit('${e.id}','${e.name}')" title="Phân ca nhanh">${e.name}</span>` : e.name;
       h += `<tr><td class="c1">${nameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
       dates.forEach(d => {
         const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
@@ -1883,27 +1938,94 @@ function _showQeModal() {
   document.getElementById('qeOtFields').style.display = 'none';
   document.getElementById('qeOtHours').value = '2';
   document.getElementById('qeOtNote').value = '';
-  document.getElementById('qeOtFullNote').value = '';
   document.getElementById('qeOtInfo').style.display = 'none';
   document.getElementById('btnSaveQE').innerText = '💾 Lưu lịch';
-  setQeOtType('hour'); // mặc định theo giờ
   document.getElementById('qEditModal').classList.add('show');
 }
-let qeOtMode = 'hour'; // 'hour' | 'full'
-function setQeOtType(mode) {
-  qeOtMode = mode;
-  document.getElementById('qeOtBtnHour').style.cssText =
-    'flex:1;padding:7px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s;' +
-    (mode==='hour' ? 'background:#e53935;color:#fff' : 'background:#ffebee;color:#c62828');
-  document.getElementById('qeOtBtnFull').style.cssText =
-    'flex:1;padding:7px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s;' +
-    (mode==='full' ? 'background:#e53935;color:#fff' : 'background:#ffebee;color:#c62828');
-  document.getElementById('qeOtHourFields').style.display = mode==='hour' ? 'block' : 'none';
-  document.getElementById('qeOtFullFields').style.display = mode==='full' ? 'block' : 'none';
-  const on = document.getElementById('qeOtToggle').checked;
-  if(on) document.getElementById('btnSaveQE').innerText = '💾 Lưu ca + tăng ca';
-}
 function closeQuickEdit() { document.getElementById('qEditModal').classList.remove('show'); }
+
+// ── MODAL TĂNG CA KÍP (kíp 1/2/3) ───────────
+let curKipOtId = '', curKipOtName = '';
+let kipOtMode = 'hour'; // 'hour' | 'full'
+
+function openKipOt(id, name) {
+  curKipOtId = id; curKipOtName = name;
+  const dk = dKey(new Date());
+  document.getElementById('kipOtName').innerText = name;
+  document.getElementById('kipOtFrom').value = dk;
+  document.getElementById('kipOtTo').value = dk;
+  document.getElementById('kipOtHours').value = '2';
+  document.getElementById('kipOtNote').value = '';
+  document.getElementById('kipOtFullNote').value = '';
+  document.getElementById('kipOtInfo').style.display = 'none';
+  setKipOtType('hour');
+  document.getElementById('kipOtModal').classList.add('show');
+}
+function closeKipOt() { document.getElementById('kipOtModal').classList.remove('show'); }
+
+function setKipOtType(mode) {
+  kipOtMode = mode;
+  const btnH = document.getElementById('kipOtBtnHour');
+  const btnF = document.getElementById('kipOtBtnFull');
+  btnH.style.cssText = `flex:1;padding:8px;border:none;font-size:.8rem;font-weight:700;cursor:pointer;${mode==='hour'?'background:#e53935;color:#fff':'background:#ffebee;color:#c62828'}`;
+  btnF.style.cssText = `flex:1;padding:8px;border:none;font-size:.8rem;font-weight:700;cursor:pointer;${mode==='full'?'background:#e53935;color:#fff':'background:#ffebee;color:#c62828'}`;
+  document.getElementById('kipOtHourFields').style.display = mode==='hour'?'block':'none';
+  document.getElementById('kipOtFullFields').style.display = mode==='full'?'block':'none';
+}
+
+function updateKipOtInfo() {
+  const from = document.getElementById('kipOtFrom').value;
+  const to   = document.getElementById('kipOtTo').value;
+  const info = document.getElementById('kipOtInfo');
+  if(!from || !to) return;
+  const days = Math.max(1, Math.round((new Date(to)-new Date(from))/864e5)+1);
+  document.getElementById('kipOtDayCount').textContent = days;
+  info.style.display = days > 1 ? 'block' : 'none';
+}
+
+async function saveKipOt() {
+  const from = document.getElementById('kipOtFrom').value;
+  const to   = document.getElementById('kipOtTo').value;
+  if(!from || !to || to < from) { alert('Ngày không hợp lệ!'); return; }
+
+  const eNm = allEmps().find(x=>x.id===curKipOtId)?.name || curKipOtName;
+  const otRows = [];
+
+  for(let d=new Date(from); d<=new Date(to); d.setDate(d.getDate()+1)) {
+    let row;
+    if(kipOtMode === 'full') {
+      const shift = document.getElementById('kipOtFullShift').value;
+      const note  = document.getElementById('kipOtFullNote').value.trim();
+      row = { date:dKey(new Date(d)), emp_name:eNm, emp_id:curKipOtId,
+              note:note||null, ot_type:'full', shift, start_time:null, end_time:null };
+    } else {
+      const hours = parseFloat(document.getElementById('kipOtHours').value)||0;
+      const shift = document.getElementById('kipOtShift').value;
+      const note  = document.getElementById('kipOtNote').value.trim();
+      if(hours<=0){ alert('Số giờ phải lớn hơn 0!'); return; }
+      const otStart = OT_START[shift]||null;
+      const otEnd   = otStart ? calcOtEnd(otStart, hours) : null;
+      const noteStr = hours+'h'+(note?' – '+note:'');
+      row = { date:dKey(new Date(d)), emp_name:eNm, emp_id:curKipOtId,
+              note:noteStr, ot_type:'partial', shift, start_time:otStart, end_time:otEnd };
+    }
+    otRows.push(row);
+  }
+
+  const btn = document.getElementById('btnSaveKipOt');
+  btn.disabled = true; btn.innerText = '⌛ Đang lưu...';
+  if(SB_OK) {
+    const {data, error} = await sb.from('overtime').insert(otRows).select();
+    if(error){ alert('Lỗi: '+error.message); }
+    else if(data) OVERTIME = OVERTIME.concat(data);
+  } else {
+    otRows.forEach((r,i) => OVERTIME.push({...r, id:Date.now()+i}));
+  }
+  btn.disabled = false; btn.innerText = '⏰ Lưu tăng ca';
+  closeKipOt();
+  renderSummary();
+  if(document.getElementById('page-tanca').classList.contains('active')) renderOtBoard();
+}
 
 // ── MẬT KHẨU QUICK EDIT ──────────────────
 function _openQePw() {
@@ -1958,9 +2080,7 @@ async function saveQuickEdit() {
   const otOn    = document.getElementById('qeOtToggle').checked;
   const otHours = parseFloat(document.getElementById('qeOtHours').value) || 0;
   const otNote  = document.getElementById('qeOtNote').value.trim();
-  const otFullShift = document.getElementById('qeOtFullShift').value;
-  const otFullNote  = document.getElementById('qeOtFullNote').value.trim();
-  if(otOn && qeOtMode==='hour' && otHours <= 0){ alert('Số giờ tăng ca phải lớn hơn 0!'); return; }
+  if(otOn && otHours <= 0){ alert('Số giờ tăng ca phải lớn hơn 0!'); return; }
 
   const btn = document.getElementById('btnSaveQE');
   btn.disabled = true; btn.innerText = '⌛ Đang lưu...';
@@ -1991,27 +2111,15 @@ async function saveQuickEdit() {
     if(otOn) {
       const otRows = [];
       for(let d = new Date(from); d <= new Date(to); d.setDate(d.getDate()+1)) {
-        let row;
-        if(qeOtMode === 'full') {
-          // Full ca Sáng / Chiều
-          row = {
-            date: dKey(new Date(d)), emp_name: eNm, emp_id: curQeEmpId,
-            note: otFullNote || null, ot_type: 'full',
-            shift: otFullShift, start_time: null, end_time: null
-          };
-        } else {
-          // Theo giờ
-          const otNoteStr = otHours + 'h' + (otNote ? ' – ' + otNote : '');
-          const otShift = shift;
-          const otStart = OT_START[otShift] || null;
-          const otEnd   = otStart ? calcOtEnd(otStart, otHours) : null;
-          row = {
-            date: dKey(new Date(d)), emp_name: eNm, emp_id: curQeEmpId,
-            note: otNoteStr, ot_type: 'partial',
-            shift: otShift, start_time: otStart, end_time: otEnd
-          };
-        }
-        otRows.push(row);
+        const otNoteStr = otHours + 'h' + (otNote ? ' – ' + otNote : '');
+        const otShift = shift;
+        const otStart = OT_START[otShift] || null;
+        const otEnd   = otStart ? calcOtEnd(otStart, otHours) : null;
+        otRows.push({
+          date: dKey(new Date(d)), emp_name: eNm, emp_id: curQeEmpId,
+          note: otNoteStr, ot_type: 'partial',
+          shift: otShift, start_time: otStart, end_time: otEnd
+        });
       }
       if(SB_OK) {
         const {data: otData, error: otErr} = await sb.from('overtime').insert(otRows).select();
