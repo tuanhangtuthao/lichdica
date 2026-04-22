@@ -721,7 +721,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
         </div>
       </div>
       <!-- Toggle loại tăng ca -->
-      <div style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #ffcdd2;margin-bottom:12px">
+      <div id="kipOtTypeToggle" style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #ffcdd2;margin-bottom:12px">
         <button id="kipOtBtnHour" onclick="setKipOtType('hour')"
           style="flex:1;padding:8px;border:none;font-size:.8rem;font-weight:700;cursor:pointer;background:#e53935;color:#fff">
           ⏱ Theo giờ
@@ -1126,7 +1126,8 @@ function renderTable(){
     if(hcEmps.length>0){
       h += `<tr class="kh k4"><td colspan="${3+NDAYS}">▣ HÀNH CHÍNH · ${hcEmps.length} NV</td></tr>`;
       hcEmps.forEach(e => {
-        h += `<tr><td class="c1">${e.name}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
+        const hcNameHtml = `<span class="name-edit" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca" style="color:#00695c">${e.name}</span>`;
+        h += `<tr><td class="c1">${hcNameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
         dates.forEach(d => {
           const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
           const hasOt = OVERTIME.some(o=>o.emp_id===e.id&&o.date===dKey(d));
@@ -1232,7 +1233,7 @@ function renderSummary(){
         const s=empShift(e,today);
         const ots = getEmpOtOnDate(e.id, dk);
         const otBadge = makeOtSmBadge(ots);
-        sg += `<div class="sum-row"><span class="name">${e.name}</span>
+        sg += `<div class="sum-row"><span class="name" style="cursor:pointer;color:#00695c" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca">${e.name}</span>
           <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></span></div>`;
       });
       sg += '</div></div>';
@@ -1925,7 +1926,7 @@ let qeUnlocked = false; // nhớ trong phiên, không hỏi lại
 
 function openQuickEdit(id, name) {
   curQeEmpId = id; curQeName = name;
-  if (!qeUnlocked) { _openQePw(); return; }
+  if (!qeUnlocked) { _openQePw(_showQeModal); return; }
   _showQeModal();
 }
 function _showQeModal() {
@@ -1944,20 +1945,28 @@ function _showQeModal() {
 }
 function closeQuickEdit() { document.getElementById('qEditModal').classList.remove('show'); }
 
-// ── MODAL TĂNG CA KÍP (kíp 1/2/3) ───────────
+// ── MODAL TĂNG CA KÍP (kíp 1/2/3) + HC ──────
 let curKipOtId = '', curKipOtName = '';
 let kipOtMode = 'hour'; // 'hour' | 'full'
+let kipOtHcMode = false; // true = HC: chỉ theo giờ, không có Full Ca
 
-function openKipOt(id, name) {
-  curKipOtId = id; curKipOtName = name;
+function openKipOt(id, name, hcMode = false) {
+  curKipOtId = id; curKipOtName = name; kipOtHcMode = hcMode;
+  if (!qeUnlocked) { _openQePw(() => _showKipOtModal()); return; }
+  _showKipOtModal();
+}
+function _showKipOtModal() {
   const dk = dKey(new Date());
-  document.getElementById('kipOtName').innerText = name;
+  document.getElementById('kipOtName').innerText = curKipOtName;
   document.getElementById('kipOtFrom').value = dk;
   document.getElementById('kipOtTo').value = dk;
   document.getElementById('kipOtHours').value = '2';
   document.getElementById('kipOtNote').value = '';
   document.getElementById('kipOtFullNote').value = '';
   document.getElementById('kipOtInfo').style.display = 'none';
+  // HC: ẩn toggle Full Ca, chỉ hiện Theo giờ
+  const toggleRow = document.getElementById('kipOtTypeToggle');
+  if (toggleRow) toggleRow.style.display = kipOtHcMode ? 'none' : 'flex';
   setKipOtType('hour');
   document.getElementById('kipOtModal').classList.add('show');
 }
@@ -2027,8 +2036,11 @@ async function saveKipOt() {
   if(document.getElementById('page-tanca').classList.contains('active')) renderOtBoard();
 }
 
-// ── MẬT KHẨU QUICK EDIT ──────────────────
-function _openQePw() {
+// ── MẬT KHẨU CHUNG (Quick Edit + Tăng Ca) ──
+let _pwCallback = null; // hàm sẽ gọi sau khi mở khóa thành công
+
+function _openQePw(callback) {
+  _pwCallback = callback || _showQeModal;
   document.getElementById('qePwInput').value = '';
   document.getElementById('qePwErr').textContent = '';
   document.getElementById('qePwModal').classList.add('show');
@@ -2040,7 +2052,7 @@ function checkQePw() {
   if (v === SETTINGS_PASS) {
     qeUnlocked = true;
     closeQePw();
-    _showQeModal();
+    if (_pwCallback) { const fn = _pwCallback; _pwCallback = null; fn(); }
   } else {
     const inp = document.getElementById('qePwInput');
     inp.style.borderColor = '#e53935';
