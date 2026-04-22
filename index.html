@@ -603,6 +603,27 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   </button>
 </nav>
 
+<!-- QUICK EDIT – PASSWORD GATE -->
+<div class="qmodal-overlay" id="qePwModal" onclick="if(event.target===this)closeQePw()">
+  <div class="qmodal-box" style="max-width:300px">
+    <div class="qmodal-head" style="background:#283593">
+      <span>🔐 Xác nhận quyền</span>
+      <button onclick="closeQePw()" style="background:none;border:none;color:#fff;font-size:1.4rem;line-height:1;cursor:pointer">✕</button>
+    </div>
+    <div class="qmodal-body" style="text-align:center">
+      <div style="font-size:.82rem;color:#666;margin-bottom:12px">Nhập mật khẩu để phân ca nhanh</div>
+      <input class="form-input" type="password" id="qePwInput" maxlength="10"
+        placeholder="••••••" style="width:100%;text-align:center;font-size:1.3rem;letter-spacing:6px"
+        onkeydown="if(event.key==='Enter')checkQePw()">
+      <div id="qePwErr" style="color:#e53935;font-size:.75rem;margin-top:6px;min-height:16px"></div>
+    </div>
+    <div class="qmodal-footer">
+      <button class="btn btn-sec" onclick="closeQePw()">Hủy</button>
+      <button class="btn btn-pri" onclick="checkQePw()">🔓 Mở</button>
+    </div>
+  </div>
+</div>
+
 <!-- QUICK EDIT MODAL -->
 <div class="qmodal-overlay" id="qEditModal" onclick="if(event.target===this)closeQuickEdit()">
   <div class="qmodal-box">
@@ -612,20 +633,20 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     </div>
     <div class="qmodal-body">
       <div style="margin-bottom:15px">
-        <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Nhận viên</label>
+        <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Nhân viên</label>
         <div id="qeName" style="font-weight:700;font-size:1.1rem;color:#1a237e"></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:15px">
         <div style="flex:1">
           <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Từ ngày</label>
-          <input type="date" class="form-input" id="qeFrom" style="width:100%">
+          <input type="date" class="form-input" id="qeFrom" style="width:100%" onchange="updateQeOtWarning()">
         </div>
         <div style="flex:1">
           <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Đến ngày</label>
-          <input type="date" class="form-input" id="qeTo" style="width:100%">
+          <input type="date" class="form-input" id="qeTo" style="width:100%" onchange="updateQeOtWarning()">
         </div>
       </div>
-      <div>
+      <div style="margin-bottom:14px">
         <label style="display:block;font-size:.75rem;color:#777;margin-bottom:4px">Chọn ca làm việc</label>
         <select class="form-select" id="qeShift" style="width:100%;font-size:1rem;font-weight:700">
           <option value="C1">① Ca 1</option>
@@ -633,6 +654,31 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
           <option value="C3">③ Ca 3</option>
           <option value="N">🏠 Nghỉ</option>
         </select>
+      </div>
+      <!-- ── TĂNG CA SECTION ── -->
+      <div style="border-top:1px solid #e8eaf6;padding-top:12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+          <input type="checkbox" id="qeOtToggle" onchange="toggleQeOt()"
+            style="width:16px;height:16px;accent-color:#e53935;cursor:pointer">
+          <span style="font-size:.85rem;font-weight:700;color:#c62828">⏰ Có tăng ca ngày này</span>
+        </label>
+        <div id="qeOtFields" style="display:none;margin-top:10px">
+          <div style="display:flex;gap:10px;margin-bottom:6px">
+            <div style="flex:0 0 110px">
+              <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Số giờ tăng ca</label>
+              <input type="number" class="form-input" id="qeOtHours"
+                min="0.5" max="12" step="0.5" value="2"
+                style="width:100%;font-weight:700;font-size:1rem;text-align:center">
+            </div>
+            <div style="flex:1">
+              <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Ghi chú tăng ca</label>
+              <input type="text" class="form-input" id="qeOtNote" placeholder="Vd: Hoàn thành đơn hàng...">
+            </div>
+          </div>
+          <div id="qeOtWarn" style="display:none;font-size:.72rem;color:#f57c00;padding:4px 8px;background:#fff8e1;border-radius:6px">
+            ⚠️ Tăng ca chỉ ghi được cho 1 ngày — vui lòng đặt Từ ngày = Đến ngày
+          </div>
+        </div>
       </div>
     </div>
     <div class="qmodal-footer">
@@ -1432,29 +1478,86 @@ function _goTab(tab){
 }
 
 // ── QUICK EDIT LOGIC ────────────────────
-let curQeEmpId = '';
+let curQeEmpId = '', curQeName = '';
+let qeUnlocked = false; // nhớ trong phiên, không hỏi lại
+
 function openQuickEdit(id, name) {
-  curQeEmpId = id;
-  document.getElementById('qeName').innerText = name;
+  curQeEmpId = id; curQeName = name;
+  if (!qeUnlocked) { _openQePw(); return; }
+  _showQeModal();
+}
+function _showQeModal() {
+  document.getElementById('qeName').innerText = curQeName;
   const todayStr = dKey(new Date());
   document.getElementById('qeFrom').value = todayStr;
   document.getElementById('qeTo').value = todayStr;
+  // reset tăng ca
+  document.getElementById('qeOtToggle').checked = false;
+  document.getElementById('qeOtFields').style.display = 'none';
+  document.getElementById('qeOtHours').value = '2';
+  document.getElementById('qeOtNote').value = '';
+  document.getElementById('qeOtWarn').style.display = 'none';
+  document.getElementById('btnSaveQE').innerText = '💾 Lưu lịch';
   document.getElementById('qEditModal').classList.add('show');
 }
 function closeQuickEdit() { document.getElementById('qEditModal').classList.remove('show'); }
 
-async function saveQuickEdit() {
+// ── MẬT KHẨU QUICK EDIT ──────────────────
+function _openQePw() {
+  document.getElementById('qePwInput').value = '';
+  document.getElementById('qePwErr').textContent = '';
+  document.getElementById('qePwModal').classList.add('show');
+  setTimeout(() => document.getElementById('qePwInput').focus(), 100);
+}
+function closeQePw() { document.getElementById('qePwModal').classList.remove('show'); }
+function checkQePw() {
+  const v = document.getElementById('qePwInput').value.trim();
+  if (v === SETTINGS_PASS) {
+    qeUnlocked = true;
+    closeQePw();
+    _showQeModal();
+  } else {
+    const inp = document.getElementById('qePwInput');
+    inp.style.borderColor = '#e53935';
+    document.getElementById('qePwErr').textContent = 'Mật khẩu không đúng!';
+    inp.value = '';
+    setTimeout(() => { inp.style.borderColor = ''; }, 600);
+  }
+}
+
+// ── TĂNG CA TRONG QUICK EDIT ─────────────
+function toggleQeOt() {
+  const on = document.getElementById('qeOtToggle').checked;
+  document.getElementById('qeOtFields').style.display = on ? 'block' : 'none';
+  document.getElementById('btnSaveQE').innerText = on ? '💾 Lưu ca + tăng ca' : '💾 Lưu lịch';
+  if (on) updateQeOtWarning();
+}
+function updateQeOtWarning() {
   const from = document.getElementById('qeFrom').value;
-  const to = document.getElementById('qeTo').value;
+  const to   = document.getElementById('qeTo').value;
+  const warn = document.getElementById('qeOtWarn');
+  if (warn) warn.style.display = (from && to && from !== to) ? 'block' : 'none';
+}
+
+async function saveQuickEdit() {
+  const from  = document.getElementById('qeFrom').value;
+  const to    = document.getElementById('qeTo').value;
   const shift = document.getElementById('qeShift').value;
   if(!from || !to) { alert('Vui lòng chọn ngày!'); return; }
-  if(to < from) { alert('Ngày kết thúc không hợp lệ!'); return; }
-  
+  if(to < from)    { alert('Ngày kết thúc không hợp lệ!'); return; }
+
+  // kiểm tra tăng ca
+  const otOn    = document.getElementById('qeOtToggle').checked;
+  const otHours = parseFloat(document.getElementById('qeOtHours').value) || 0;
+  const otNote  = document.getElementById('qeOtNote').value.trim();
+  if(otOn && from !== to) { alert('Tăng ca chỉ ghi được cho 1 ngày — vui lòng đặt Từ ngày = Đến ngày!'); return; }
+  if(otOn && otHours <= 0){ alert('Số giờ tăng ca phải lớn hơn 0!'); return; }
+
   const btn = document.getElementById('btnSaveQE');
   btn.disabled = true; btn.innerText = '⌛ Đang lưu...';
-  
+
   try {
-    // 1. Dọn dẹp chồng lấn
+    // 1. Dọn dẹp chồng lấn lịch ca
     const ov = EMP_SCHED.filter(x => x.emp_id === curQeEmpId && x.start_date <= to && x.end_date >= from);
     for(const r of ov) {
       if(r.start_date < from && r.end_date > to) {
@@ -1470,17 +1573,41 @@ async function saveQuickEdit() {
         await sb.from('emp_schedule').delete().eq('id', r.id);
       }
     }
-    // 2. Lưu mới
-    const eNm = allEmps().find(x=>x.id===curQeEmpId)?.name || 'Unknown';
+
+    // 2. Lưu lịch ca
+    const eNm = allEmps().find(x=>x.id===curQeEmpId)?.name || curQeName;
     await sb.from('emp_schedule').insert([{emp_id:curQeEmpId, emp_name:eNm, start_date:from, end_date:to, shift}]);
-    
-    // 3. Làm mới
+
+    // 3. Lưu tăng ca (nếu có)
+    if(otOn && SB_OK) {
+      const otRow = {
+        date: from,
+        emp_name: eNm,
+        emp_id: curQeEmpId,
+        note: otHours + 'h' + (otNote ? ' – ' + otNote : ''),
+        ot_type: 'partial',
+        shift: 'TC',
+        start_time: null,
+        end_time: null
+      };
+      const {data: otData, error: otErr} = await sb.from('overtime').insert([otRow]).select();
+      if(otErr) console.warn('Lưu tăng ca lỗi:', otErr.message);
+      else if(otData) OVERTIME = OVERTIME.concat(otData);
+    } else if(otOn && !SB_OK) {
+      OVERTIME.push({ id: Date.now(), date:from, emp_name:eNm, emp_id:curQeEmpId,
+        note: otHours+'h'+(otNote?' – '+otNote:''), ot_type:'partial', shift:'TC' });
+    }
+
+    // 4. Làm mới
     const {data:esData} = await sb.from('emp_schedule').select('*').order('start_date');
     EMP_SCHED = esData || [];
     renderAll();
     closeQuickEdit();
   } catch(err) { alert('Lỗi: ' + err.message); }
-  finally { btn.disabled = false; btn.innerText = '💾 Lưu lịch'; }
+  finally {
+    btn.disabled = false;
+    btn.innerText = document.getElementById('qeOtToggle').checked ? '💾 Lưu ca + tăng ca' : '💾 Lưu lịch';
+  }
 }
 
 // ── MẬT KHẨU ──────────────────────────────
