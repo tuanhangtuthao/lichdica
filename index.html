@@ -1812,10 +1812,10 @@ function _renderGrid(el, empsArr, y, m, days, empFull={}){
     text-align:center;border-left:1px solid #2e7d32;height:${H1}">Σh</th>
   </tr>
   <tr>`;
-  // Header row 2: ngày + thứ
+  // Header row 2: ngày + thứ (chỉ CN là cuối tuần, T7 là ngày thường)
   for(let d=1;d<=days;d++){
     const dt  = new Date(y,m-1,d);
-    const isW = dt.getDay()===0||dt.getDay()===6;
+    const isW = dt.getDay()===0;
     const isTd= d===todayD;
     const bg  = isTd?'#f9a825':(isW?'#546e7a':'#283593');
     const fg  = isTd?'#222':'#fff';
@@ -1854,7 +1854,7 @@ function _renderGrid(el, empsArr, y, m, days, empFull={}){
     for(let d=1;d<=days;d++){
       const dk  = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dt  = new Date(y,m-1,d);
-      const isW = dt.getDay()===0||dt.getDay()===6;
+      const isW = dt.getDay()===0;
       const isTd= d===todayD;
       const dayOts = e.dates[dk];
 
