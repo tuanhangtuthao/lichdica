@@ -124,6 +124,8 @@ th{background:#1a237e;color:#fff;font-weight:600;position:sticky;top:0;z-index:9
 .ot-sf-btn.active.c3{background:#2e7d32;border-color:#2e7d32}
 .ot-sf-btn.active.s{background:#f57f17;border-color:#f57f17}
 .ot-sf-btn.active.c{background:#3949ab;border-color:#3949ab}
+.ot-sf-btn.active.hc{background:#00695c;border-color:#00695c}
+#otShiftFilter::-webkit-scrollbar{display:none}
 /* Stat chip */
 .ot-stat-chip{background:#fff;border:1px solid #e0e0e0;border-radius:8px;
   padding:6px 12px;font-size:.78rem;text-align:center;flex:1;min-width:80px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
@@ -644,13 +646,14 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
       <input type="text"  id="otBoardSearch" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." style="flex:1;min-width:120px;padding:8px 10px;font-size:.9rem" oninput="renderOtBoard()">
     </div>
     <!-- Lọc theo ca -->
-    <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap" id="otShiftFilter">
-      <button class="ot-sf-btn active" data-sf="" onclick="setOtShiftF(this,'')">Tất cả</button>
+    <div style="display:flex;gap:5px;margin-bottom:10px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;scrollbar-width:none" id="otShiftFilter">
+      <button class="ot-sf-btn active" data-sf=""   onclick="setOtShiftF(this,'')">Tất cả</button>
       <button class="ot-sf-btn c1"     data-sf="C1" onclick="setOtShiftF(this,'C1')">① Ca 1</button>
       <button class="ot-sf-btn c2"     data-sf="C2" onclick="setOtShiftF(this,'C2')">② Ca 2</button>
       <button class="ot-sf-btn c3"     data-sf="C3" onclick="setOtShiftF(this,'C3')">③ Ca 3</button>
       <button class="ot-sf-btn s"      data-sf="S"  onclick="setOtShiftF(this,'S')">☀️ Full Sáng</button>
       <button class="ot-sf-btn c"      data-sf="C"  onclick="setOtShiftF(this,'C')">🌙 Full Chiều</button>
+      <button class="ot-sf-btn hc"     data-sf="HC" onclick="setOtShiftF(this,'HC')">🏢 Hành Chính</button>
     </div>
 
     <!-- Stats bar -->
@@ -745,6 +748,8 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
               <option value="C1">① Ca 1 (14:00–18:00)</option>
               <option value="C2">② Ca 2 (10:00–14:00)</option>
               <option value="C3">③ Ca 3 (18:00–22:00)</option>
+              <option value="HC1" class="hc-opt" style="display:none">🏢 Sáng sớm (6:00–8:00)</option>
+              <option value="HC2" class="hc-opt" style="display:none">🏢 Chiều tối (17:00–20:00)</option>
             </select>
           </div>
         </div>
@@ -993,7 +998,7 @@ let OVERTIME = [];
 let EMP_SCHED = [];
 
 // ── GIỜ TĂNG CA MẶC ĐỊNH THEO CA ──────────
-const OT_START = { C1:'14:00', C2:'10:00', C3:'18:00', S:'14:00', C:'22:00' };
+const OT_START = { C1:'14:00', C2:'10:00', C3:'18:00', S:'14:00', C:'22:00', HC1:'06:00', HC2:'17:00' };
 // Tính giờ kết thúc = giờ bắt đầu + số giờ (có thể lẻ 0.5)
 function calcOtEnd(startStr, hours) {
   if(!startStr || !hours) return null;
@@ -1023,8 +1028,9 @@ function resolveOtShift(o) {
   const isFull = !o.ot_type || o.ot_type === 'full';
   // Full ca: S hoặc C (nghỉ làm bù cho kíp khác)
   if(isFull && o.shift && ['S','C'].includes(o.shift)) return o.shift;
-  // Tăng ca giờ: nếu đã lưu C1/C2/C3 dùng luôn
+  // Tăng ca giờ: nếu đã lưu C1/C2/C3/HC1/HC2 dùng luôn
   if(o.shift && ['C1','C2','C3'].includes(o.shift)) return o.shift;
+  if(o.shift && ['HC1','HC2'].includes(o.shift)) return 'HC';
   // Tự suy từ start_time (14h→C1, 10h→C2, 18h→C3)
   const t = resolveOtTimes(o);
   if(!t.start) return o.shift || '';
@@ -1033,6 +1039,8 @@ function resolveOtShift(o) {
   if(mins >= 14*60 && mins < 18*60) return 'C1';
   if(mins >= 10*60 && mins < 14*60) return 'C2';
   if(mins >= 18*60 && mins < 22*60) return 'C3';
+  if(mins >= 6*60  && mins < 9*60)  return 'HC'; // HC sáng sớm 6-8h
+  if(mins >= 17*60 && mins < 21*60) return 'HC'; // HC chiều tối 17-20h
   return o.shift || '';
 }
 
@@ -1722,8 +1730,8 @@ function _renderGrid(el, empsArr, y, m, days){
   const KIP_BG  = {1:'#1565c0',2:'#6a1b9a',3:'#2e7d32',0:'#00695c'};
   const KIP_LBL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',0:'HC / Cố Định'};
   // OT cell color by shift
-  const CELL_BG = {S:'#c8e6c9',C:'#ffe0b2',C1:'#b3e5fc',C2:'#e1bee7',C3:'#c8e6c9'};
-  const CELL_FG = {S:'#1b5e20',C:'#bf360c',C1:'#01579b',C2:'#4a148c',C3:'#1b5e20'};
+  const CELL_BG = {S:'#c8e6c9',C:'#ffe0b2',C1:'#b3e5fc',C2:'#e1bee7',C3:'#c8e6c9',HC:'#e0f2f1',HC1:'#e0f2f1',HC2:'#e0f2f1'};
+  const CELL_FG = {S:'#1b5e20',C:'#bf360c',C1:'#01579b',C2:'#4a148c',C3:'#1b5e20',HC:'#00695c',HC1:'#00695c',HC2:'#00695c'};
 
   let h = `<div class="ot-grid-wrap"><table><thead><tr>
     <th class="ot-grid-th-nm" style="background:#1a237e;color:#fff;text-align:left">Nhân viên</th>`;
@@ -1964,6 +1972,13 @@ function _showKipOtModal() {
   document.getElementById('kipOtNote').value = '';
   document.getElementById('kipOtFullNote').value = '';
   document.getElementById('kipOtInfo').style.display = 'none';
+  // Chuyển options shift theo HC hay kíp
+  const sel = document.getElementById('kipOtShift');
+  for(const opt of sel.options) {
+    const isHcOpt = opt.value.startsWith('HC');
+    opt.style.display = (kipOtHcMode === isHcOpt) ? '' : 'none';
+  }
+  sel.value = kipOtHcMode ? 'HC2' : 'C1'; // mặc định HC2 (17h) hoặc C1 (14h)
   // HC: ẩn toggle Full Ca, chỉ hiện Theo giờ
   const toggleRow = document.getElementById('kipOtTypeToggle');
   if (toggleRow) toggleRow.style.display = kipOtHcMode ? 'none' : 'flex';
