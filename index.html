@@ -1714,9 +1714,9 @@ function renderOtBoard(){
   let validOT = OVERTIME.filter(o => o.date && o.date.startsWith(prefix));
   if(otBoardShiftF) validOT = validOT.filter(o => resolveOtShift(o) === otBoardShiftF);
 
-  const empMeta  = {};
+  const empMeta = {}, empFull = {};
   [...(EMPS[1]||[]),...(EMPS[2]||[]),...(EMPS[3]||[]),...(EMPS[4]||[])]
-    .forEach(e => { empMeta[e.id] = { kip:e.kip, name:e.name }; });
+    .forEach(e => { empMeta[e.id] = { kip:e.kip, name:e.name }; empFull[e.id] = e; });
 
   const empMap   = {};
   validOT.forEach(o => {
@@ -1766,12 +1766,12 @@ function renderOtBoard(){
     return;
   }
 
-  if(otBoardMode==='grid') _renderGrid(contentEl, empsArr, y, m, daysInMonth);
+  if(otBoardMode==='grid') _renderGrid(contentEl, empsArr, y, m, daysInMonth, empFull);
   else                      _renderByDay(contentEl, validOT, empMeta, y, m, searchQ);
 }
 
 // ── MODE A: GRID TABLE ────────────────────────
-function _renderGrid(el, empsArr, y, m, days){
+function _renderGrid(el, empsArr, y, m, days, empFull={}){
   const DN2     = ['CN','T2','T3','T4','T5','T6','T7'];
   const MN      = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
                    'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
@@ -1779,6 +1779,9 @@ function _renderGrid(el, empsArr, y, m, days){
   const KIP_LBL = {1:'KÍP 1',2:'KÍP 2',3:'KÍP 3',4:'HÀNH CHÍNH',0:'CỐ ĐỊNH / KHÁC'};
   const CELL_BG = {S:'#c8e6c9',C:'#ffe0b2',C1:'#b3e5fc',C2:'#e1bee7',C3:'#c8e6c9',HC:'#e0f2f1',HC1:'#e0f2f1',HC2:'#e0f2f1'};
   const CELL_FG = {S:'#1b5e20',C:'#bf360c',C1:'#01579b',C2:'#4a148c',C3:'#1b5e20',HC:'#00695c',HC1:'#00695c',HC2:'#00695c'};
+  // Màu ca làm việc nền ô (giống lịch ca)
+  const SHIFT_BG = {S:'var(--s-bg)',C:'var(--c-bg)',N:'var(--n-bg)',L:'var(--h-bg)',HC:'var(--hc-bg)'};
+  const SHIFT_FG = {S:'var(--s-fg)',C:'var(--c-fg)',N:'var(--n-fg)',L:'var(--h-fg)',HC:'var(--hc-fg)'};
 
   // Xác định ngày hôm nay trong tháng này
   const now = new Date(); now.setHours(0,0,0,0);
@@ -1847,20 +1850,27 @@ function _renderGrid(el, empsArr, y, m, days){
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;
       border-right:2px solid #c5cae9;color:#1a237e">${e.name}</td>`;
 
+    const empObj = empFull[e.id];
     for(let d=1;d<=days;d++){
       const dk  = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dt  = new Date(y,m-1,d);
       const isW = dt.getDay()===0||dt.getDay()===6;
       const isTd= d===todayD;
       const dayOts = e.dates[dk];
-      // nền ô
-      let tdStyle = '';
-      if(isTd)       tdStyle = `style="background:rgba(249,168,37,.15);outline:2px solid #f9a825;outline-offset:-2px"`;
-      else if(isW)   tdStyle = `style="background:#f0f2f5"`;
-      else if(rowIdx%2===0) tdStyle = `style="background:#f1f3f5"`;
+
+      // Màu ca làm việc của NV hôm đó
+      const sh   = empObj ? empShift(empObj, dt) : '';
+      const shBg = SHIFT_BG[sh] || (isW ? '#f0f2f5' : (rowIdx%2===0?'#fff':'#f1f3f5'));
+      const shFg = SHIFT_FG[sh] || '#aaa';
+
+      // Outline hôm nay đè lên
+      const tdOutline = isTd ? ';outline:2px solid #f9a825;outline-offset:-2px' : '';
+      const tdStyle   = `style="background:${shBg}${tdOutline}"`;
 
       if(!dayOts){
-        h += `<td ${tdStyle}></td>`;
+        // Hiện chữ ca nhỏ nếu có màu
+        const shLbl = sh && sh!=='N' ? `<span style="font-size:.58rem;font-weight:700;color:${shFg};opacity:.7">${sh}</span>` : '';
+        h += `<td ${tdStyle}>${shLbl}</td>`;
       } else {
         const o = dayOts[0];
         const isFull = !o.ot_type||o.ot_type==='full';
