@@ -132,11 +132,10 @@ th.wk{background:#546e7a !important;color:#fff !important}
 .ot-sf-btn.active[data-sf="S"]{background:#e65100}
 .ot-sf-btn.active[data-sf="C"]{background:#3949ab}
 .ot-sf-btn.active[data-sf="HC"]{background:#00695c}
-/* Stat chip – gradient + màu ngữ nghĩa */
-.ot-stat-chip{background:linear-gradient(135deg,#e8eaf6,#f3f4ff);border:1px solid #c5cae9;
-  border-radius:10px;padding:10px 8px;font-size:.78rem;text-align:center;flex:1;min-width:80px}
-.ot-stat-chip .val{font-size:1.25rem;font-weight:900;display:block;line-height:1.1;
-  color:#1a237e;margin-bottom:2px}
+/* Stat chip – trong card */
+.ot-stat-chip{background:#fff;padding:12px 8px;font-size:.78rem;text-align:center;flex:1}
+.ot-stat-chip .val{font-size:1.3rem;font-weight:900;display:block;line-height:1.1;
+  color:#1a237e;margin-bottom:3px}
 /* Grid table */
 .ot-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;
   box-shadow:0 1px 6px rgba(0,0,0,.1)}
@@ -184,6 +183,9 @@ th.wk{background:#546e7a !important;color:#fff !important}
 @keyframes ot-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
 .ot-td-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#fff;
   margin-right:5px;animation:ot-pulse 1.5s infinite;vertical-align:middle}
+/* Card wrapper cho từng section */
+.ot-card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);
+  margin-bottom:10px;overflow:hidden}
 
 /* Header Rows Sticky */
 thead tr:nth-child(1) th{height:var(--hdr1-h);top:0;z-index:130}
@@ -673,32 +675,33 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   </div>
 </div>
 <div class="page" id="page-tanca">
-  <div id="tcBoardView" style="padding:10px 10px 0">
+  <div id="tcBoardView" style="padding:10px;background:#f0f2f5;min-height:100%">
 
     <!-- Toggle chế độ xem -->
-    <div style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #c5cae9;margin-bottom:10px">
+    <div style="display:flex;border-radius:10px;overflow:hidden;border:2px solid #1a237e;margin-bottom:10px">
       <button id="btnOtGrid" class="ot-mode-btn active" onclick="setOtBoardMode('grid')">📅 Grid tháng</button>
       <button id="btnOtDay"  class="ot-mode-btn"        onclick="setOtBoardMode('day')">📋 Theo ngày</button>
     </div>
 
-    <!-- Filter bar -->
-    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-      <input type="month" id="otBoardMonth" class="form-input" style="flex:0 0 auto;padding:8px 10px;font-size:.9rem" onchange="renderOtBoard()">
-      <input type="text"  id="otBoardSearch" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." style="flex:1;min-width:120px;padding:8px 10px;font-size:.9rem" oninput="renderOtBoard()">
-    </div>
-    <!-- Lọc theo ca -->
-    <div style="display:flex;gap:8px;margin-bottom:10px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;scrollbar-width:none" id="otShiftFilter">
-      <button class="ot-sf-btn active"    data-sf=""   onclick="setOtShiftF(this,'')">Tất cả</button>
-      <button class="ot-sf-btn c1 ca-btn" data-sf="C1" onclick="setOtShiftF(this,'C1')">Ca 1</button>
-      <button class="ot-sf-btn c2 ca-btn" data-sf="C2" onclick="setOtShiftF(this,'C2')">Ca 2</button>
-      <button class="ot-sf-btn c3 ca-btn" data-sf="C3" onclick="setOtShiftF(this,'C3')">Ca 3</button>
-      <button class="ot-sf-btn s"         data-sf="S"  onclick="setOtShiftF(this,'S')">Sáng</button>
-      <button class="ot-sf-btn c"         data-sf="C"  onclick="setOtShiftF(this,'C')">Chiều</button>
-      <button class="ot-sf-btn hc"        data-sf="HC" onclick="setOtShiftF(this,'HC')">HC</button>
+    <!-- Filter card -->
+    <div class="ot-card">
+      <div style="padding:10px 12px 6px;display:flex;gap:8px;flex-wrap:wrap">
+        <input type="month" id="otBoardMonth" class="form-input" style="flex:0 0 auto;padding:7px 10px;font-size:.85rem" onchange="renderOtBoard()">
+        <input type="text"  id="otBoardSearch" class="form-input" placeholder="Tìm tên hoặc MSNV..." style="flex:1;min-width:120px;padding:7px 10px;font-size:.85rem" oninput="renderOtBoard()">
+      </div>
+      <div style="display:flex;gap:6px;padding:0 12px 10px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none" id="otShiftFilter">
+        <button class="ot-sf-btn active"    data-sf=""   onclick="setOtShiftF(this,'')">Tất cả</button>
+        <button class="ot-sf-btn ca-btn"    data-sf="C1" onclick="setOtShiftF(this,'C1')">Ca 1</button>
+        <button class="ot-sf-btn ca-btn"    data-sf="C2" onclick="setOtShiftF(this,'C2')">Ca 2</button>
+        <button class="ot-sf-btn ca-btn"    data-sf="C3" onclick="setOtShiftF(this,'C3')">Ca 3</button>
+        <button class="ot-sf-btn"           data-sf="S"  onclick="setOtShiftF(this,'S')">Sáng</button>
+        <button class="ot-sf-btn"           data-sf="C"  onclick="setOtShiftF(this,'C')">Chiều</button>
+        <button class="ot-sf-btn"           data-sf="HC" onclick="setOtShiftF(this,'HC')">HC</button>
+      </div>
     </div>
 
     <!-- Stats bar -->
-    <div id="otStatsBar" style="display:none;gap:6px;margin-bottom:10px;flex-wrap:wrap"></div>
+    <div id="otStatsBar" style="display:none;gap:8px;margin-bottom:10px"></div>
 
     <!-- Board content -->
     <div id="otBoardContent"></div>
@@ -1751,10 +1754,12 @@ function renderOtBoard(){
   });
   const statsEl = document.getElementById('otStatsBar');
   statsEl.style.display = 'flex';
+  statsEl.className = 'ot-card';
+  statsEl.style.cssText = 'display:flex;gap:0;margin-bottom:10px;overflow:hidden';
   statsEl.innerHTML = `
     <div class="ot-stat-chip"><span class="val">${empsArr.length}</span>Nhân viên</div>
-    <div class="ot-stat-chip"><span class="val" style="color:#e65100">${totalDays}</span>Ngày OT</div>
-    <div class="ot-stat-chip"><span class="val" style="color:#2e7d32">${totalH%1===0?totalH:totalH.toFixed(1)}h</span>Tổng giờ</div>`;
+    <div class="ot-stat-chip" style="border-left:1px solid #e0e0e0"><span class="val" style="color:#e65100">${totalDays}</span>Ngày OT</div>
+    <div class="ot-stat-chip" style="border-left:1px solid #e0e0e0"><span class="val" style="color:#2e7d32">${totalH%1===0?totalH:totalH.toFixed(1)}h</span>Tổng giờ</div>`;
 
   if(!empsArr.length){
     contentEl.innerHTML=`<div style="text-align:center;padding:50px 20px;color:#aaa">📋 Không có dữ liệu tăng ca tháng này</div>`;
@@ -1774,7 +1779,7 @@ function _renderGrid(el, empsArr, y, m, days){
   const CELL_BG = {S:'#c8e6c9',C:'#ffe0b2',C1:'#b3e5fc',C2:'#e1bee7',C3:'#c8e6c9',HC:'#e0f2f1',HC1:'#e0f2f1',HC2:'#e0f2f1'};
   const CELL_FG = {S:'#1b5e20',C:'#bf360c',C1:'#01579b',C2:'#4a148c',C3:'#1b5e20',HC:'#00695c',HC1:'#00695c',HC2:'#00695c'};
 
-  let h = `<div class="ot-grid-wrap"><table><thead><tr>
+  let h = `<div class="ot-card"><div class="ot-grid-wrap"><table><thead><tr>
     <th class="ot-grid-th-nm" style="background:#1a237e;color:#fff;text-align:left">Nhân viên</th>`;
   for(let d=1;d<=days;d++){
     const dt = new Date(y,m-1,d);
@@ -1826,8 +1831,8 @@ function _renderGrid(el, empsArr, y, m, days){
   // Chú thích – chip màu
   const legStyle = 'display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;font-size:.72rem;font-weight:700';
   const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block;flex-shrink:0"></span>`;
-  h += `</tbody></table></div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding:2px 0">
+  h += `</tbody></table></div></div>
+  <div class="ot-card" style="padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px">
     <span style="${legStyle};background:#c8e6c9;color:#1b5e20">${dot('#1b5e20')}Full Sáng</span>
     <span style="${legStyle};background:#ffe0b2;color:#bf360c">${dot('#bf360c')}Full Chiều</span>
     <span style="${legStyle};background:#e0f2f1;color:#00695c">${dot('#00695c')}Ca 1 / 2 / 3</span>
