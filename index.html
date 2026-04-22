@@ -109,6 +109,32 @@ th{background:#1a237e;color:#fff;font-weight:600;position:sticky;top:0;z-index:9
 /* Chấm đỏ OT trên ô lịch */
 .d-c.cell-ot::after{content:'';position:absolute;top:2px;right:2px;
   width:5px;height:5px;border-radius:50%;background:#e53935;display:block}
+/* Toggle chế độ bảng tăng ca */
+.ot-mode-btn{flex:1;padding:9px 6px;border:none;font-size:.8rem;font-weight:700;
+  cursor:pointer;transition:.15s;background:#e8eaf6;color:#5c6bc0}
+.ot-mode-btn.active{background:#1a237e;color:#fff}
+.ot-mode-btn:hover:not(.active){background:#c5cae9}
+/* Stat chip */
+.ot-stat-chip{background:#fff;border:1px solid #e0e0e0;border-radius:8px;
+  padding:6px 12px;font-size:.78rem;text-align:center;flex:1;min-width:80px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ot-stat-chip .val{font-size:1.1rem;font-weight:900;display:block;color:#1a237e}
+/* Grid table */
+.ot-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;
+  box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.ot-grid-wrap table{border-collapse:collapse;white-space:nowrap;font-size:.73rem;background:#fff}
+.ot-grid-wrap th{padding:5px 2px;text-align:center;font-weight:700}
+.ot-grid-wrap td{padding:3px 2px;border-bottom:1px solid #f0f0f0;border-right:1px solid #f5f5f5}
+.ot-grid-nm{position:sticky;left:0;z-index:5;background:inherit;padding:5px 10px !important;
+  font-weight:600;min-width:120px;max-width:150px;overflow:hidden;
+  text-overflow:ellipsis;border-right:2px solid #e0e0e0 !important}
+.ot-grid-th-nm{position:sticky;left:0;z-index:6;background:#1a237e !important;min-width:120px;text-align:left !important;padding:7px 10px !important}
+/* Day timeline card */
+.ot-day-card{background:#fff;border-radius:10px;box-shadow:0 1px 5px rgba(0,0,0,.08);
+  margin-bottom:10px;overflow:hidden}
+.ot-day-hdr{padding:9px 14px;display:flex;justify-content:space-between;align-items:center}
+.ot-day-row{display:flex;justify-content:space-between;align-items:center;
+  padding:6px 14px;border-bottom:1px solid #f5f5f5;font-size:.83rem;gap:8px}
+.ot-day-row:last-child{border-bottom:none}
 
 /* Header Rows Sticky */
 thead tr:nth-child(1) th{height:var(--hdr1-h);top:0;z-index:110}
@@ -594,18 +620,26 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   </div>
 </div>
 <div class="page" id="page-tanca">
+  <div id="tcBoardView" style="padding:10px 10px 0">
 
-  <!-- TC BOARD VIEW -->
-  <div id="tcBoardView" style="padding:10px;">
-    <!-- Search/Filter bar -->
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-      <input type="month" id="otBoardMonth" class="form-input" style="flex:0 0 auto;padding:8px 10px;font-size:.9rem;" onchange="renderOtBoard()">
-      <input type="text" id="otBoardSearch" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." style="flex:1;min-width:120px;padding:8px 10px;font-size:.9rem" oninput="renderOtBoard()">
+    <!-- Toggle chế độ xem -->
+    <div style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #c5cae9;margin-bottom:10px">
+      <button id="btnOtGrid" class="ot-mode-btn active" onclick="setOtBoardMode('grid')">📅 Grid tháng</button>
+      <button id="btnOtDay"  class="ot-mode-btn"        onclick="setOtBoardMode('day')">📋 Theo ngày</button>
     </div>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <input type="month" id="otBoardMonth" class="form-input" style="flex:0 0 auto;padding:8px 10px;font-size:.9rem" onchange="renderOtBoard()">
+      <input type="text"  id="otBoardSearch" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." style="flex:1;min-width:120px;padding:8px 10px;font-size:.9rem" oninput="renderOtBoard()">
+    </div>
+
+    <!-- Stats bar -->
+    <div id="otStatsBar" style="display:none;gap:6px;margin-bottom:10px;flex-wrap:wrap"></div>
+
     <!-- Board content -->
     <div id="otBoardContent"></div>
   </div>
-
 </div>
 
 <!-- BOTTOM NAV (mobile) -->
@@ -909,6 +943,7 @@ function groupEmpsByDept(emps) {
 }
 
 let otType = 'full';
+let otBoardMode = 'grid'; // 'grid' | 'day'
 const NDAYS = 28;
 
 // ── HEADER ─────────────────────────────────
@@ -1471,108 +1506,213 @@ async function removeOvertime(id){
   renderOtBoard();
 }
 
-// OT BOARD LOGIC
+// ── OT BOARD – 2 CHẾ ĐỘ XEM ─────────────────
+function setOtBoardMode(mode){
+  otBoardMode = mode;
+  document.getElementById('btnOtGrid').classList.toggle('active', mode==='grid');
+  document.getElementById('btnOtDay').classList.toggle('active',  mode==='day');
+  renderOtBoard();
+}
+
 function renderOtBoard(){
-  const mVal = document.getElementById('otBoardMonth').value;
-  const searchQ = document.getElementById('otBoardSearch').value.trim().toLowerCase();
-  const contentEl = document.getElementById('otBoardContent');
+  const mVal     = document.getElementById('otBoardMonth').value;
+  const searchQ  = document.getElementById('otBoardSearch').value.trim().toLowerCase();
+  const contentEl= document.getElementById('otBoardContent');
   if(!mVal){ contentEl.innerHTML='<div style="text-align:center;padding:40px;color:#bbb">Chọn tháng để xem</div>'; return; }
 
-  const [y, m] = mVal.split('-');
-  const daysInMonth = new Date(parseInt(y), parseInt(m), 0).getDate();
-  const prefix = mVal + '-';
+  const [ys,ms]  = mVal.split('-');
+  const y = parseInt(ys), m = parseInt(ms);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const prefix   = mVal + '-';
 
-  const validOT = OVERTIME.filter(o => o.date && o.date.startsWith(prefix));
-  const empMap = {};
-  const allEM = [...(EMPS[1]||[]), ...(EMPS[2]||[]), ...(EMPS[3]||[]), ...(EMPS[4]||[])];
-  allEM.forEach(e => { empMap[e.id] = { id: e.id, name: e.name, dates: {} }; });
-  
+  // Build empMap + validOT
+  const validOT  = OVERTIME.filter(o => o.date && o.date.startsWith(prefix));
+  const empMeta  = {};
+  [...(EMPS[1]||[]),...(EMPS[2]||[]),...(EMPS[3]||[]),...(EMPS[4]||[])]
+    .forEach(e => { empMeta[e.id] = { kip:e.kip, name:e.name }; });
+
+  const empMap   = {};
   validOT.forEach(o => {
-     const eid = o.emp_id || '_';
-     if(!empMap[eid]) empMap[eid] = { id: eid, name: o.emp_name||'?', dates: {} };
-     if(!empMap[eid].dates[o.date]) empMap[eid].dates[o.date] = [];
-     empMap[eid].dates[o.date].push(o);
+    const eid = o.emp_id || '_';
+    if(!empMap[eid]) empMap[eid] = {
+      id: eid, name: o.emp_name||empMeta[eid]?.name||'?',
+      kip: empMeta[eid]?.kip||0, dates:{}
+    };
+    if(!empMap[eid].dates[o.date]) empMap[eid].dates[o.date]=[];
+    empMap[eid].dates[o.date].push(o);
   });
 
-  let empsArr = Object.values(empMap).filter(e => Object.keys(e.dates).length > 0);
-  if(searchQ) {
-    empsArr = empsArr.filter(e => {
-        return String(e.name||'').toLowerCase().includes(searchQ) || String(e.id||'').toLowerCase().includes(searchQ);
-    });
-  }
-  empsArr.sort((a,b) => String(a.name||'').localeCompare(String(b.name||'')));
+  let empsArr = Object.values(empMap).filter(e=>Object.keys(e.dates).length>0);
+  if(searchQ) empsArr = empsArr.filter(e=>
+    String(e.name||'').toLowerCase().includes(searchQ)||String(e.id||'').toLowerCase().includes(searchQ));
+  // Sort: kíp → tên
+  empsArr.sort((a,b)=>(a.kip-b.kip)||String(a.name).localeCompare(String(b.name)));
 
-  if(!empsArr.length) {
-    contentEl.innerHTML=`<div style="text-align:center;padding:50px 20px;color:#aaa;font-size:.9rem">📋 Không có dữ liệu tăng ca tháng này</div>`;
+  // Stats
+  let totalH = 0, totalDays = 0;
+  empsArr.forEach(e => {
+    totalDays += Object.keys(e.dates).length;
+    Object.values(e.dates).flat().forEach(o=>{ const t=resolveOtTimes(o); if(t.hours) totalH+=t.hours; });
+  });
+  const statsEl = document.getElementById('otStatsBar');
+  statsEl.style.display = 'flex';
+  statsEl.innerHTML = `
+    <div class="ot-stat-chip"><span class="val">${empsArr.length}</span>Nhân viên</div>
+    <div class="ot-stat-chip"><span class="val">${totalDays}</span>Ngày OT</div>
+    <div class="ot-stat-chip"><span class="val">${totalH%1===0?totalH:totalH.toFixed(1)}h</span>Tổng giờ</div>`;
+
+  if(!empsArr.length){
+    contentEl.innerHTML=`<div style="text-align:center;padding:50px 20px;color:#aaa">📋 Không có dữ liệu tăng ca tháng này</div>`;
     return;
   }
 
-  // Render as cards, each employee = 1 card
-  const OT_COLORS = {
-    S: { bg:'#fffde7', fg:'#f57f17', bd:'#ffe082', label:'Sáng' },
-    C: { bg:'#e8eaf6', fg:'#3949ab', bd:'#9fa8da', label:'Chiều' },
-    C1:{ bg:'#e3f2fd', fg:'#1565c0', bd:'#90caf9', label:'Ca 1' },
-    C2:{ bg:'#f3e5f5', fg:'#6a1b9a', bd:'#ce93d8', label:'Ca 2' },
-    C3:{ bg:'#e8f5e9', fg:'#2e7d32', bd:'#a5d6a7', label:'Ca 3' },
-    TC:{ bg:'#fff3e0', fg:'#e65100', bd:'#ffcc80', label:'TC' },
-  };
-  const getOtColor = shift => OT_COLORS[shift] || { bg:'#f5f5f5', fg:'#555', bd:'#ccc', label:shift||'TC' };
+  if(otBoardMode==='grid') _renderGrid(contentEl, empsArr, y, m, daysInMonth);
+  else                      _renderByDay(contentEl, validOT, empMeta, y, m, searchQ);
+}
 
-  let h = '';
-  empsArr.forEach((e, idx) => {
-    const sortedDates = Object.keys(e.dates).sort();
-    const totalDays = sortedDates.length;
-    const totalOTs = sortedDates.reduce((acc, d) => acc + e.dates[d].length, 0);
-    const rowBg = idx%2===0?'#fff':'#fafafa';
-    h += `
-    <div class="ot-board-card" style="background:${rowBg};border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:10px;overflow:hidden;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#283593;color:#fff">
-        <div>
-          <div style="font-weight:700;font-size:.95rem">${e.name}</div>
-          <div style="font-size:.72rem;opacity:.8">${e.id}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:.75rem;opacity:.9">${totalDays} ngày &bull; ${totalOTs} ca</div>
-        </div>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;">`;
-    
-    sortedDates.forEach(dk => {
+// ── MODE A: GRID TABLE ────────────────────────
+function _renderGrid(el, empsArr, y, m, days){
+  const DN2 = ['CN','T2','T3','T4','T5','T6','T7'];
+  const KIP_BG  = {1:'#1565c0',2:'#6a1b9a',3:'#2e7d32',0:'#00695c'};
+  const KIP_LBL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',0:'HC / Cố Định'};
+  // OT cell color by shift
+  const CELL_BG = {S:'#c8e6c9',C:'#ffe0b2',C1:'#b3e5fc',C2:'#e1bee7',C3:'#c8e6c9'};
+  const CELL_FG = {S:'#1b5e20',C:'#bf360c',C1:'#01579b',C2:'#4a148c',C3:'#1b5e20'};
+
+  let h = `<div class="ot-grid-wrap"><table><thead><tr>
+    <th class="ot-grid-th-nm" style="background:#1a237e;color:#fff;text-align:left">Nhân viên</th>`;
+  for(let d=1;d<=days;d++){
+    const dt = new Date(y,m-1,d);
+    const isW = dt.getDay()===0||dt.getDay()===6;
+    h += `<th style="background:${isW?'#546e7a':'#283593'};color:#fff;min-width:26px;width:26px;font-size:.63rem;line-height:1.3">${d}<br>${DN2[dt.getDay()]}</th>`;
+  }
+  h += `<th style="background:#1b5e20;color:#fff;min-width:44px;padding:6px 4px;font-size:.73rem">Σ giờ</th></tr></thead><tbody>`;
+
+  let lastKip = -1;
+  empsArr.forEach((e,idx) => {
+    if(e.kip !== lastKip){
+      lastKip = e.kip;
+      const bg = KIP_BG[e.kip]||'#455a64';
+      h += `<tr><td colspan="${days+2}" style="background:${bg};color:#fff;padding:4px 10px;font-weight:700;font-size:.73rem">▣ ${KIP_LBL[e.kip]||'Khác'}</td></tr>`;
+    }
+    // Tổng giờ nhân viên
+    let empH = 0;
+    Object.values(e.dates).flat().forEach(o=>{ const t=resolveOtTimes(o); if(t.hours) empH+=t.hours; });
+    const rowBg = idx%2===0?'#fff':'#f8f9ff';
+    h += `<tr style="background:${rowBg}"><td class="ot-grid-nm">${e.name}</td>`;
+
+    for(let d=1;d<=days;d++){
+      const dk = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dt = new Date(y,m-1,d);
+      const isW = dt.getDay()===0||dt.getDay()===6;
       const dayOts = e.dates[dk];
-      const d = new Date(dk + 'T00:00:00');
-      const dayNum = d.getDate();
-      const dayName = ['CN','T2','T3','T4','T5','T6','T7'][d.getDay()];
-      
-      dayOts.forEach(o => {
-        const isFull = !o.ot_type || o.ot_type === 'full';
-        const col = getOtColor(isFull ? o.shift : (o.shift||'TC'));
-        const noteClean = o.note ? o.note.replace(/^[\d.]+h(\s*–\s*)?/,'').trim() : '';
-        const noteHtml = noteClean ? `<div style="font-size:.62rem;color:#888;font-style:italic;margin-top:2px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${noteClean}</div>` : '';
-
+      const emptyBg = isW?'#f0f2f5':'inherit';
+      if(!dayOts){
+        h += `<td style="background:${emptyBg}"></td>`;
+      } else {
+        const o = dayOts[0];
+        const isFull = !o.ot_type||o.ot_type==='full';
         if(isFull){
-          h += `<div style="background:${col.bg};border:1px solid ${col.bd};border-radius:8px;padding:6px 10px;min-width:56px;text-align:center">
-            <div style="font-size:.72rem;color:#888;font-weight:600">${dayName} ${dayNum}</div>
-            <div style="font-weight:800;font-size:1rem;color:${col.fg};line-height:1.1">${col.label}</div>
-            ${noteHtml}
-          </div>`;
+          const bg2 = CELL_BG[o.shift]||'#ffe0b2';
+          const fg2 = CELL_FG[o.shift]||'#bf360c';
+          h += `<td style="background:${bg2};text-align:center"><span style="font-weight:800;font-size:.65rem;color:${fg2}">${o.shift||'TC'}</span></td>`;
         } else {
           const t = resolveOtTimes(o);
-          const hLbl = t.hours ? (t.hours % 1 === 0 ? t.hours + 'h' : t.hours + 'h') : '';
-          h += `<div style="background:#fff8f0;border:1.5px solid #ffb74d;border-radius:8px;padding:6px 10px;min-width:64px;text-align:center">
-            <div style="font-size:.72rem;color:#888;font-weight:600">${dayName} ${dayNum}</div>
-            <div style="font-weight:700;font-size:.8rem;color:#e65100;line-height:1.4">${t.start||'?'}</div>
-            <div style="color:#ffa726;font-size:.58rem;line-height:1">▼${hLbl?` <b>${hLbl}</b>`:''}</div>
-            <div style="font-weight:700;font-size:.8rem;color:#e65100;line-height:1">${t.end||'?'}</div>
-            ${noteHtml}
-          </div>`;
+          const hLbl = t.hours?(t.hours%1===0?t.hours+'h':t.hours.toFixed(1)+'h'):'⏱';
+          h += `<td style="background:#fff3e0;text-align:center"><span style="font-weight:700;font-size:.63rem;color:#e65100">${hLbl}</span></td>`;
         }
+      }
+    }
+    const hLbl = empH>0?(empH%1===0?empH+'h':empH.toFixed(1)+'h'):'—';
+    h += `<td style="text-align:center;font-weight:700;font-size:.78rem;color:${empH>0?'#2e7d32':'#bbb'};background:${empH>0?'#e8f5e9':'inherit'}">${hLbl}</td></tr>`;
+  });
+
+  // Chú thích
+  h += `</tbody></table></div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:2px 0;font-size:.7rem">
+    <span style="background:#c8e6c9;color:#1b5e20;padding:2px 8px;border-radius:6px;font-weight:700">S = Full Sáng</span>
+    <span style="background:#ffe0b2;color:#bf360c;padding:2px 8px;border-radius:6px;font-weight:700">C = Full Chiều</span>
+    <span style="background:#b3e5fc;color:#01579b;padding:2px 8px;border-radius:6px;font-weight:700">C1/C2/C3</span>
+    <span style="background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:6px;font-weight:700">2h = Theo giờ</span>
+  </div>`;
+  el.innerHTML = h;
+}
+
+// ── MODE D: THEO NGÀY (TIMELINE) ─────────────
+function _renderByDay(el, validOT, empMeta, y, m, searchQ){
+  const DN_FULL = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+  const KIP_FG  = {1:'var(--k1)',2:'var(--k2)',3:'var(--k3)',4:'var(--k4)'};
+  const KIP_BGL = {1:'var(--k1l)',2:'var(--k2l)',3:'var(--k3l)',4:'var(--k4l)'};
+  const todayDk = dKey(new Date());
+
+  // Lọc theo search
+  let filtered = validOT;
+  if(searchQ) filtered = filtered.filter(o=>
+    String(o.emp_name||'').toLowerCase().includes(searchQ)||String(o.emp_id||'').toLowerCase().includes(searchQ));
+
+  // Nhóm theo ngày
+  const byDate = {};
+  filtered.forEach(o=>{
+    if(!byDate[o.date]) byDate[o.date]=[];
+    byDate[o.date].push(o);
+  });
+  const sortedDates = Object.keys(byDate).sort();
+  if(!sortedDates.length){ el.innerHTML=`<div style="text-align:center;padding:50px;color:#aaa">Không có dữ liệu</div>`; return; }
+
+  let h = '';
+  sortedDates.forEach(dk=>{
+    const date = new Date(dk+'T00:00:00');
+    const dn   = DN_FULL[date.getDay()];
+    const isW  = date.getDay()===0||date.getDay()===6;
+    const isTd = dk===todayDk;
+    const hdrBg    = isTd?'#f9a825':(isW?'#546e7a':'#37474f');
+    const hdrColor = isTd?'#333':'#fff';
+    const dayOts   = byDate[dk];
+
+    // Nhóm theo kíp
+    const byKip = {};
+    dayOts.forEach(o=>{
+      const kip = empMeta[o.emp_id]?.kip||0;
+      if(!byKip[kip]) byKip[kip]=[];
+      byKip[kip].push(o);
+    });
+
+    h += `<div class="ot-day-card">
+      <div class="ot-day-hdr" style="background:${hdrBg};color:${hdrColor}">
+        <span style="font-weight:800;font-size:.9rem">${isTd?'🔴 Hôm nay — ':''} ${dn}, ${date.getDate()}/${m}/${y}</span>
+        <span style="font-size:.75rem;opacity:.85">${dayOts.length} người</span>
+      </div>
+      <div style="padding:4px 0">`;
+
+    Object.keys(byKip).sort().forEach(kip=>{
+      const kipN = parseInt(kip);
+      if(kipN>0){
+        const fg = KIP_FG[kipN]||'#555';
+        const bg = KIP_BGL[kipN]||'#f5f5f5';
+        h += `<div style="padding:4px 14px 2px"><span style="font-size:.68rem;font-weight:700;color:${fg};background:${bg};padding:2px 8px;border-radius:10px">Kíp ${kip}</span></div>`;
+      }
+      byKip[kip].forEach(o=>{
+        const isFull = !o.ot_type||o.ot_type==='full';
+        const noteClean = o.note?o.note.replace(/^[\d.]+h(\s*–\s*)?/,'').trim():'';
+        let otInfo = '';
+        if(isFull){
+          const SLBL2 = {S:'Ca Sáng',C:'Ca Chiều',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3'};
+          otInfo = `<span class="chip ${o.shift}" style="font-size:.68rem">${o.shift}</span> <span style="font-size:.78rem;color:#555">${SLBL2[o.shift]||o.shift}</span>`;
+        } else {
+          const t = resolveOtTimes(o);
+          const hLbl = t.hours?(t.hours%1===0?t.hours:t.hours.toFixed(1))+'h':'';
+          otInfo = `<span style="color:#e65100;font-weight:700;font-size:.82rem">⏱ ${t.start||'?'}→${t.end||'?'}${hLbl?' · '+hLbl:''}</span>`;
+        }
+        const noteSpan = noteClean?`<span style="font-size:.68rem;color:#aaa;font-style:italic;margin-left:4px">– ${noteClean}</span>`:'';
+        h += `<div class="ot-day-row">
+          <span style="font-weight:600;color:#333;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.emp_name||'?'}</span>
+          <span style="flex-shrink:0">${otInfo}${noteSpan}</span>
+        </div>`;
       });
     });
-    
     h += `</div></div>`;
   });
-  
-  contentEl.innerHTML = h;
+  el.innerHTML = h;
 }
 
 // ── ĐIỀU HƯỚNG ─────────────────────────────
