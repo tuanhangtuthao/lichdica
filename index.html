@@ -1868,9 +1868,7 @@ function _renderGrid(el, empsArr, y, m, days, empFull={}){
       const tdStyle   = `style="background:${shBg}${tdOutline}"`;
 
       if(!dayOts){
-        // Hiện chữ ca nhỏ nếu có màu
-        const shLbl = sh && sh!=='N' ? `<span style="font-size:.58rem;font-weight:700;color:${shFg};opacity:.7">${sh}</span>` : '';
-        h += `<td ${tdStyle}>${shLbl}</td>`;
+        h += `<td ${tdStyle}></td>`;
       } else {
         const o = dayOts[0];
         const isFull = !o.ot_type||o.ot_type==='full';
