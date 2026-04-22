@@ -105,7 +105,8 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 table{border-collapse:separate;border-spacing:0;font-size:var(--tbl-fz);width:max-content;min-width:100%;table-layout:fixed}
 th,td{padding:8px 4px;border:1px solid #e8e8e8;text-align:center;white-space:nowrap;border-top:none;border-left:none}
 th{background:#1a237e;color:#fff;font-weight:600;position:sticky;top:0;z-index:90}
-.d-c{width:var(--col-d);min-width:var(--col-d);position:relative}
+.d-c{width:var(--col-d);min-width:var(--col-d)}
+td.d-c{position:relative}
 /* Chấm đỏ OT trên ô lịch */
 .d-c.cell-ot::after{content:'';position:absolute;top:2px;right:2px;
   width:5px;height:5px;border-radius:50%;background:#e53935;display:block}
@@ -188,6 +189,7 @@ tr.kh.k1 td{background:var(--k1)}
 tr.kh.k2 td{background:var(--k2)}
 tr.kh.k3 td{background:var(--k3)}
 tr.kh.k4 td{background:var(--k4)}
+tr.kh.k5 td{background:#455a64}
 td.shHC{background:var(--hc-bg);color:var(--hc-fg);font-weight:700}
 td.shC1{background:#b2dfdb;color:#00695c;font-weight:700}
 td.shC2{background:#ffe082;color:#e65100;font-weight:700}
@@ -1139,7 +1141,7 @@ function renderTable(){
     const rotEmps = kip4Emps.filter(e => e.fixed_shift !== 'HC');
 
     if(hcEmps.length>0){
-      h += `<tr class="kh k4"><td colspan="${3+NDAYS}">▣ HÀNH CHÍNH · ${hcEmps.length} NV</td></tr>`;
+      h += `<tr class="kh k4"><td colspan="${3+NDAYS}"><span>▣ HÀNH CHÍNH · ${hcEmps.length} NV</span></td></tr>`;
       hcEmps.forEach(e => {
         const hcNameHtml = `<span class="name-edit" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca" style="color:#00695c">${e.name}</span>`;
         h += `<tr><td class="c1">${hcNameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
@@ -1152,7 +1154,7 @@ function renderTable(){
       });
     }
     if(rotEmps.length>0){
-      h += `<tr class="kh k3" style="background:#00695c"><td colspan="${3+NDAYS}">▣ CỐ ĐỊNH VÀ CA XOAY · ${rotEmps.length} NV</td></tr>`;
+      h += `<tr class="kh k5"><td colspan="${3+NDAYS}"><span>▣ CỐ ĐỊNH VÀ CA XOAY · ${rotEmps.length} NV</span></td></tr>`;
       rotEmps.forEach(e => {
         const isRot = e.kip === 4 && e.fixed_shift !== 'HC';
         const nameHtml = isRot ? `<span class="name-edit" onclick="openQuickEdit('${e.id}','${e.name}')" title="Phân ca nhanh">${e.name}</span>` : e.name;
