@@ -660,7 +660,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
           <input type="checkbox" id="qeOtToggle" onchange="toggleQeOt()"
             style="width:16px;height:16px;accent-color:#e53935;cursor:pointer">
-          <span style="font-size:.85rem;font-weight:700;color:#c62828">⏰ Có tăng ca ngày này</span>
+          <span style="font-size:.85rem;font-weight:700;color:#c62828">⏰ Có tăng ca</span>
         </label>
         <div id="qeOtFields" style="display:none;margin-top:10px">
           <div style="display:flex;gap:10px;margin-bottom:6px">
@@ -675,8 +675,8 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
               <input type="text" class="form-input" id="qeOtNote" placeholder="Vd: Hoàn thành đơn hàng...">
             </div>
           </div>
-          <div id="qeOtWarn" style="display:none;font-size:.72rem;color:#f57c00;padding:4px 8px;background:#fff8e1;border-radius:6px">
-            ⚠️ Tăng ca chỉ ghi được cho 1 ngày — vui lòng đặt Từ ngày = Đến ngày
+          <div id="qeOtInfo" style="display:none;font-size:.72rem;color:#1565c0;padding:4px 8px;background:#e3f2fd;border-radius:6px">
+            📅 Sẽ tạo tăng ca cho <strong id="qeOtDayCount">1</strong> ngày
           </div>
         </div>
       </div>
@@ -1496,7 +1496,7 @@ function _showQeModal() {
   document.getElementById('qeOtFields').style.display = 'none';
   document.getElementById('qeOtHours').value = '2';
   document.getElementById('qeOtNote').value = '';
-  document.getElementById('qeOtWarn').style.display = 'none';
+  document.getElementById('qeOtInfo').style.display = 'none';
   document.getElementById('btnSaveQE').innerText = '💾 Lưu lịch';
   document.getElementById('qEditModal').classList.add('show');
 }
@@ -1533,10 +1533,15 @@ function toggleQeOt() {
   if (on) updateQeOtWarning();
 }
 function updateQeOtWarning() {
+  if (!document.getElementById('qeOtToggle').checked) return;
   const from = document.getElementById('qeFrom').value;
   const to   = document.getElementById('qeTo').value;
-  const warn = document.getElementById('qeOtWarn');
-  if (warn) warn.style.display = (from && to && from !== to) ? 'block' : 'none';
+  const info = document.getElementById('qeOtInfo');
+  if (!info || !from || !to) return;
+  const d1 = new Date(from), d2 = new Date(to);
+  const days = Math.max(1, Math.round((d2 - d1) / 864e5) + 1);
+  document.getElementById('qeOtDayCount').textContent = days;
+  info.style.display = 'block';
 }
 
 async function saveQuickEdit() {
@@ -1550,7 +1555,6 @@ async function saveQuickEdit() {
   const otOn    = document.getElementById('qeOtToggle').checked;
   const otHours = parseFloat(document.getElementById('qeOtHours').value) || 0;
   const otNote  = document.getElementById('qeOtNote').value.trim();
-  if(otOn && from !== to) { alert('Tăng ca chỉ ghi được cho 1 ngày — vui lòng đặt Từ ngày = Đến ngày!'); return; }
   if(otOn && otHours <= 0){ alert('Số giờ tăng ca phải lớn hơn 0!'); return; }
 
   const btn = document.getElementById('btnSaveQE');
@@ -1578,24 +1582,30 @@ async function saveQuickEdit() {
     const eNm = allEmps().find(x=>x.id===curQeEmpId)?.name || curQeName;
     await sb.from('emp_schedule').insert([{emp_id:curQeEmpId, emp_name:eNm, start_date:from, end_date:to, shift}]);
 
-    // 3. Lưu tăng ca (nếu có)
-    if(otOn && SB_OK) {
-      const otRow = {
-        date: from,
-        emp_name: eNm,
-        emp_id: curQeEmpId,
-        note: otHours + 'h' + (otNote ? ' – ' + otNote : ''),
-        ot_type: 'partial',
-        shift: 'TC',
-        start_time: null,
-        end_time: null
-      };
-      const {data: otData, error: otErr} = await sb.from('overtime').insert([otRow]).select();
-      if(otErr) console.warn('Lưu tăng ca lỗi:', otErr.message);
-      else if(otData) OVERTIME = OVERTIME.concat(otData);
-    } else if(otOn && !SB_OK) {
-      OVERTIME.push({ id: Date.now(), date:from, emp_name:eNm, emp_id:curQeEmpId,
-        note: otHours+'h'+(otNote?' – '+otNote:''), ot_type:'partial', shift:'TC' });
+    // 3. Lưu tăng ca hàng loạt (nếu có)
+    if(otOn) {
+      const otNoteStr = otHours + 'h' + (otNote ? ' – ' + otNote : '');
+      // tạo danh sách từng ngày trong khoảng from→to
+      const otRows = [];
+      for(let d = new Date(from); d <= new Date(to); d.setDate(d.getDate()+1)) {
+        otRows.push({
+          date: dKey(new Date(d)),
+          emp_name: eNm,
+          emp_id: curQeEmpId,
+          note: otNoteStr,
+          ot_type: 'partial',
+          shift: 'TC',
+          start_time: null,
+          end_time: null
+        });
+      }
+      if(SB_OK) {
+        const {data: otData, error: otErr} = await sb.from('overtime').insert(otRows).select();
+        if(otErr) console.warn('Lưu tăng ca lỗi:', otErr.message);
+        else if(otData) OVERTIME = OVERTIME.concat(otData);
+      } else {
+        otRows.forEach((r, i) => OVERTIME.push({...r, id: Date.now()+i}));
+      }
     }
 
     // 4. Làm mới
