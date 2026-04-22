@@ -115,43 +115,75 @@ td.d-c{position:relative}
   cursor:pointer;transition:.15s;background:#e8eaf6;color:#5c6bc0}
 .ot-mode-btn.active{background:#1a237e;color:#fff}
 .ot-mode-btn:hover:not(.active){background:#c5cae9}
-/* Lọc theo ca */
-.ot-sf-btn{padding:5px 10px;border:1.5px solid #ccc;border-radius:20px;font-size:.75rem;
-  font-weight:700;cursor:pointer;background:#fff;color:#666;transition:.15s;white-space:nowrap}
-.ot-sf-btn.ca-btn{min-width:48px;text-align:center} /* Ca 1/2/3 bằng nhau */
-.ot-sf-btn:hover{border-color:#999}
+/* Lọc theo ca – pill style đồng nhất */
+.ot-sf-btn{padding:6px 14px;border:none;border-radius:20px;font-size:.75rem;
+  font-weight:700;cursor:pointer;background:#e8eaf6;color:#546e7a;transition:.15s;white-space:nowrap}
+.ot-sf-btn.ca-btn{min-width:52px;text-align:center}
+.ot-sf-btn:hover:not(.active){background:#cfd8dc;color:#263238}
+#otShiftFilter::-webkit-scrollbar{display:none}
 /* Cột hôm nay trong bảng lịch */
 th.today-h{background:#f9a825 !important;color:#222 !important;font-weight:800}
 th.wk{background:#546e7a !important;color:#fff !important}
-.ot-sf-btn.active{background:#1a237e;color:#fff;border-color:#1a237e}
-.ot-sf-btn.active.c1{background:#01579b;border-color:#01579b}
-.ot-sf-btn.active.c2{background:#6a1b9a;border-color:#6a1b9a}
-.ot-sf-btn.active.c3{background:#2e7d32;border-color:#2e7d32}
-.ot-sf-btn.active.s{background:#f57f17;border-color:#f57f17}
-.ot-sf-btn.active.c{background:#3949ab;border-color:#3949ab}
-.ot-sf-btn.active.hc{background:#00695c;border-color:#00695c}
-#otShiftFilter::-webkit-scrollbar{display:none}
-/* Stat chip */
-.ot-stat-chip{background:#fff;border:1px solid #e0e0e0;border-radius:8px;
-  padding:6px 12px;font-size:.78rem;text-align:center;flex:1;min-width:80px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.ot-stat-chip .val{font-size:1.1rem;font-weight:900;display:block;color:#1a237e}
+.ot-sf-btn.active{color:#fff}
+.ot-sf-btn.active[data-sf=""]{background:#1a237e}
+.ot-sf-btn.active[data-sf="C1"]{background:#01579b}
+.ot-sf-btn.active[data-sf="C2"]{background:#6a1b9a}
+.ot-sf-btn.active[data-sf="C3"]{background:#2e7d32}
+.ot-sf-btn.active[data-sf="S"]{background:#e65100}
+.ot-sf-btn.active[data-sf="C"]{background:#3949ab}
+.ot-sf-btn.active[data-sf="HC"]{background:#00695c}
+/* Stat chip – gradient + màu ngữ nghĩa */
+.ot-stat-chip{background:linear-gradient(135deg,#e8eaf6,#f3f4ff);border:1px solid #c5cae9;
+  border-radius:10px;padding:10px 8px;font-size:.78rem;text-align:center;flex:1;min-width:80px}
+.ot-stat-chip .val{font-size:1.25rem;font-weight:900;display:block;line-height:1.1;
+  color:#1a237e;margin-bottom:2px}
 /* Grid table */
 .ot-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;
   box-shadow:0 1px 6px rgba(0,0,0,.1)}
 .ot-grid-wrap table{border-collapse:collapse;white-space:nowrap;font-size:.73rem;background:#fff}
 .ot-grid-wrap th{padding:5px 2px;text-align:center;font-weight:700}
-.ot-grid-wrap td{padding:3px 2px;border-bottom:1px solid #f0f0f0;border-right:1px solid #f5f5f5}
+.ot-grid-wrap td{padding:3px 2px;border-bottom:1px solid #f0f0f0;border-right:1px solid #f5f5f5;text-align:center}
 .ot-grid-nm{position:sticky;left:0;z-index:5;background:inherit;padding:5px 10px !important;
   font-weight:600;min-width:120px;max-width:150px;overflow:hidden;
-  text-overflow:ellipsis;border-right:2px solid #e0e0e0 !important}
+  text-overflow:ellipsis;border-right:2px solid #e0e0e0 !important;text-align:left}
 .ot-grid-th-nm{position:sticky;left:0;z-index:6;background:#1a237e !important;min-width:120px;text-align:left !important;padding:7px 10px !important}
-/* Day timeline card */
+/* OT badge trong ô grid */
+.ot-badge{display:inline-flex;align-items:center;justify-content:center;
+  border-radius:4px;font-size:.65rem;font-weight:800;padding:2px 5px;min-width:24px;line-height:1.4}
+/* Timeline day card */
 .ot-day-card{background:#fff;border-radius:10px;box-shadow:0 1px 5px rgba(0,0,0,.08);
   margin-bottom:10px;overflow:hidden}
-.ot-day-hdr{padding:9px 14px;display:flex;justify-content:space-between;align-items:center}
-.ot-day-row{display:flex;justify-content:space-between;align-items:center;
-  padding:6px 14px;border-bottom:1px solid #f5f5f5;font-size:.83rem;gap:8px}
-.ot-day-row:last-child{border-bottom:none}
+.ot-day-hdr{padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.ot-day-cnt{font-size:.72rem;opacity:.9;background:rgba(255,255,255,.2);
+  padding:2px 8px;border-radius:10px}
+/* Kíp sub-header bar */
+.ot-kip-bar{padding:5px 14px;font-size:.7rem;font-weight:800;letter-spacing:.5px;color:#fff}
+.ot-kip-bar.k1{background:#1565c0}.ot-kip-bar.k2{background:#6a1b9a}
+.ot-kip-bar.k3{background:#2e7d32}.ot-kip-bar.k4{background:#00695c}.ot-kip-bar.k0{background:#455a64}
+/* Timeline employee row */
+.ot-tl-row{display:grid;grid-template-columns:1fr auto;align-items:start;
+  padding:8px 14px;border-bottom:1px solid #f5f5f5;background:#fff;gap:8px}
+.ot-tl-row:last-child{border-bottom:none}
+.ot-tl-row:hover{background:#f9fafe}
+.ot-tl-name{font-weight:600;font-size:.82rem;color:#1a237e;padding-top:1px}
+.ot-tl-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.ot-tl-time{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.ot-tl-txt{font-size:.78rem;font-weight:700;color:#333}
+.ot-tl-dur{background:#1a237e;color:#fff;border-radius:10px;font-size:.65rem;font-weight:800;padding:2px 7px}
+.ot-tl-type{font-size:.65rem;font-weight:800;border-radius:10px;padding:2px 8px;white-space:nowrap}
+.ot-tl-type.tc1{background:#b2dfdb;color:#004d40}
+.ot-tl-type.tc2{background:#ffe082;color:#e65100}
+.ot-tl-type.tc3{background:#ce93d8;color:#4a148c}
+.ot-tl-type.ts{background:#c8e6c9;color:#1b5e20}
+.ot-tl-type.tc{background:#ffe0b2;color:#bf360c}
+.ot-tl-type.thc{background:#e0f2f1;color:#00695c}
+.ot-tl-type.thr{background:#fce4ec;color:#c62828}
+.ot-tl-note{font-size:.68rem;color:#90a4ae;max-width:160px;text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Today pulsing dot */
+@keyframes ot-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.ot-td-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#fff;
+  margin-right:5px;animation:ot-pulse 1.5s infinite;vertical-align:middle}
 
 /* Header Rows Sticky */
 thead tr:nth-child(1) th{height:var(--hdr1-h);top:0;z-index:130}
@@ -1721,8 +1753,8 @@ function renderOtBoard(){
   statsEl.style.display = 'flex';
   statsEl.innerHTML = `
     <div class="ot-stat-chip"><span class="val">${empsArr.length}</span>Nhân viên</div>
-    <div class="ot-stat-chip"><span class="val">${totalDays}</span>Ngày OT</div>
-    <div class="ot-stat-chip"><span class="val">${totalH%1===0?totalH:totalH.toFixed(1)}h</span>Tổng giờ</div>`;
+    <div class="ot-stat-chip"><span class="val" style="color:#e65100">${totalDays}</span>Ngày OT</div>
+    <div class="ot-stat-chip"><span class="val" style="color:#2e7d32">${totalH%1===0?totalH:totalH.toFixed(1)}h</span>Tổng giờ</div>`;
 
   if(!empsArr.length){
     contentEl.innerHTML=`<div style="text-align:center;padding:50px 20px;color:#aaa">📋 Không có dữ liệu tăng ca tháng này</div>`;
@@ -1779,11 +1811,11 @@ function _renderGrid(el, empsArr, y, m, days){
         if(isFull){
           const bg2 = CELL_BG[rShift]||'#ffe0b2';
           const fg2 = CELL_FG[rShift]||'#bf360c';
-          h += `<td style="background:${bg2};text-align:center"><span style="font-weight:800;font-size:.65rem;color:${fg2}">${rShift||'TC'}</span></td>`;
+          h += `<td><span class="ot-badge" style="background:${bg2};color:${fg2}">${rShift||'TC'}</span></td>`;
         } else {
           const t = resolveOtTimes(o);
           const hLbl = t.hours?(t.hours%1===0?t.hours+'h':t.hours.toFixed(1)+'h'):'⏱';
-          h += `<td style="background:#fff3e0;text-align:center"><span style="font-weight:700;font-size:.63rem;color:#e65100">${hLbl}</span></td>`;
+          h += `<td><span class="ot-badge" style="background:#fce4ec;color:#c62828">${hLbl}</span></td>`;
         }
       }
     }
@@ -1791,13 +1823,15 @@ function _renderGrid(el, empsArr, y, m, days){
     h += `<td style="text-align:center;font-weight:700;font-size:.78rem;color:${empH>0?'#2e7d32':'#bbb'};background:${empH>0?'#e8f5e9':'inherit'}">${hLbl}</td></tr>`;
   });
 
-  // Chú thích
+  // Chú thích – chip màu
+  const legStyle = 'display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;font-size:.72rem;font-weight:700';
+  const dot = c => `<span style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block;flex-shrink:0"></span>`;
   h += `</tbody></table></div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding:2px 0;font-size:.7rem">
-    <span style="background:#c8e6c9;color:#1b5e20;padding:2px 8px;border-radius:6px;font-weight:700">S = Full Sáng</span>
-    <span style="background:#ffe0b2;color:#bf360c;padding:2px 8px;border-radius:6px;font-weight:700">C = Full Chiều</span>
-    <span style="background:#b3e5fc;color:#01579b;padding:2px 8px;border-radius:6px;font-weight:700">C1/C2/C3</span>
-    <span style="background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:6px;font-weight:700">2h = Theo giờ</span>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding:2px 0">
+    <span style="${legStyle};background:#c8e6c9;color:#1b5e20">${dot('#1b5e20')}Full Sáng</span>
+    <span style="${legStyle};background:#ffe0b2;color:#bf360c">${dot('#bf360c')}Full Chiều</span>
+    <span style="${legStyle};background:#e0f2f1;color:#00695c">${dot('#00695c')}Ca 1 / 2 / 3</span>
+    <span style="${legStyle};background:#fce4ec;color:#c62828">${dot('#c62828')}Theo giờ</span>
   </div>`;
   el.innerHTML = h;
 }
@@ -1823,15 +1857,19 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
   const sortedDates = Object.keys(byDate).sort();
   if(!sortedDates.length){ el.innerHTML=`<div style="text-align:center;padding:50px;color:#aaa">Không có dữ liệu</div>`; return; }
 
+  const KIP_LBL2 = {1:'KÍP 1',2:'KÍP 2',3:'KÍP 3',4:'HÀNH CHÍNH',0:'CỐ ĐỊNH / KHÁC'};
+  const TYPE_CLS = {S:'ts',C:'tc',C1:'tc1',C2:'tc2',C3:'tc3',HC:'thc',HC1:'thc',HC2:'thc'};
+  const TYPE_LBL = {S:'Full Sáng',C:'Full Chiều',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',HC:'Hành Chính',HC1:'Hành Chính',HC2:'Hành Chính'};
+  const SF_ORD2  = {C1:0,C2:1,C3:2,S:3,C:4,HC:5};
+
   let h = '';
   sortedDates.forEach(dk=>{
     const date = new Date(dk+'T00:00:00');
     const dn   = DN_FULL[date.getDay()];
     const isW  = date.getDay()===0||date.getDay()===6;
     const isTd = dk===todayDk;
-    const hdrBg    = isTd?'#f9a825':(isW?'#546e7a':'#37474f');
-    const hdrColor = isTd?'#333':'#fff';
-    const dayOts   = byDate[dk];
+    const hdrBg = isTd?'linear-gradient(90deg,#e65100,#f57c00)':(isW?'#546e7a':'#37474f');
+    const dayOts = byDate[dk];
 
     // Nhóm theo kíp
     const byKip = {};
@@ -1841,43 +1879,44 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
       byKip[kip].push(o);
     });
 
+    const tdDot = isTd?`<span class="ot-td-dot"></span>`:'';
+    const tdPfx = isTd?'Hôm nay — ':'';
     h += `<div class="ot-day-card">
-      <div class="ot-day-hdr" style="background:${hdrBg};color:${hdrColor}">
-        <span style="font-weight:800;font-size:.9rem">${isTd?'🔴 Hôm nay — ':''} ${dn}, ${date.getDate()}/${m}/${y}</span>
-        <span style="font-size:.75rem;opacity:.85">${dayOts.length} người</span>
-      </div>
-      <div style="padding:4px 0">`;
+      <div class="ot-day-hdr" style="background:${hdrBg};color:#fff">
+        <span style="font-weight:800;font-size:.9rem;display:flex;align-items:center">${tdDot}${tdPfx}${dn}, ${date.getDate()}/${m}/${y}</span>
+        <span class="ot-day-cnt">${dayOts.length} người</span>
+      </div>`;
 
-    const SF_ORD2 = {C1:0,C2:1,C3:2,S:3,C:4,HC:5};
     Object.keys(byKip).sort().forEach(kip=>{
       const kipN = parseInt(kip);
-      if(kipN>0){
-        const fg = KIP_FG[kipN]||'#555';
-        const bg = KIP_BGL[kipN]||'#f5f5f5';
-        h += `<div style="padding:4px 14px 2px"><span style="font-size:.68rem;font-weight:700;color:${fg};background:${bg};padding:2px 8px;border-radius:10px">Kíp ${kip}</span></div>`;
-      }
-      // Sắp theo thứ tự ca trong ngày (dùng resolveOtShift)
+      h += `<div class="ot-kip-bar k${kipN}">${KIP_LBL2[kipN]||'KÍP '+kip}</div>`;
       const sorted = [...byKip[kip]].sort((a,b)=>((SF_ORD2[resolveOtShift(a)]??9)-(SF_ORD2[resolveOtShift(b)]??9)));
       sorted.forEach(o=>{
         const isFull = !o.ot_type||o.ot_type==='full';
         const noteClean = o.note?o.note.replace(/^[\d.]+h(\s*–\s*)?/,'').trim():'';
-        let otInfo = '';
+        const noteHtml = noteClean?`<div class="ot-tl-note">${noteClean}</div>`:'';
+        let timeHtml = '';
         if(isFull){
-          const SLBL2 = {S:'Ca Sáng',C:'Ca Chiều',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3'};
-          otInfo = `<span class="chip ${o.shift}" style="font-size:.68rem">${o.shift}</span> <span style="font-size:.78rem;color:#555">${SLBL2[o.shift]||o.shift}</span>`;
+          const rSh = resolveOtShift(o);
+          const cls = TYPE_CLS[rSh]||'thr';
+          const lbl = TYPE_LBL[rSh]||rSh;
+          timeHtml = `<div class="ot-tl-time"><span class="ot-tl-type ${cls}">${lbl}</span></div>`;
         } else {
-          const t = resolveOtTimes(o);
+          const t  = resolveOtTimes(o);
           const hLbl = t.hours?(t.hours%1===0?t.hours:t.hours.toFixed(1))+'h':'';
-          otInfo = `<span style="color:#e65100;font-weight:700;font-size:.82rem">⏱ ${t.start||'?'}→${t.end||'?'}${hLbl?' · '+hLbl:''}</span>`;
+          timeHtml = `<div class="ot-tl-time">
+            <span class="ot-tl-txt">${t.start||'?'} – ${t.end||'?'}</span>
+            ${hLbl?`<span class="ot-tl-dur">${hLbl}</span>`:''}
+            <span class="ot-tl-type thr">Theo giờ</span>
+          </div>`;
         }
-        const noteSpan = noteClean?`<span style="font-size:.68rem;color:#aaa;font-style:italic;margin-left:4px">– ${noteClean}</span>`:'';
-        h += `<div class="ot-day-row">
-          <span style="font-weight:600;color:#333;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.emp_name||'?'}</span>
-          <span style="flex-shrink:0">${otInfo}${noteSpan}</span>
+        h += `<div class="ot-tl-row">
+          <div class="ot-tl-name">${o.emp_name||'?'}</div>
+          <div class="ot-tl-right">${timeHtml}${noteHtml}</div>
         </div>`;
       });
     });
-    h += `</div></div>`;
+    h += `</div>`;
   });
   el.innerHTML = h;
 }
