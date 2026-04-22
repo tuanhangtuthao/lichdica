@@ -523,7 +523,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
           <div style="flex:1;min-width:120px"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Đến ngày (tuỳ chọn)</div><input type="date" class="form-input" id="tcDateTo" style="width:100%"></div>
           <div class="ot-type-toggle" style="display:flex;gap:4px"><button class="ot-type-btn active" id="btnFullCa" onclick="setOtType('full')" style="padding:10px 12px;font-size:.85rem;cursor:pointer;border:1px solid #1a237e;background:#1a237e;color:#fff;border-radius:8px">Full Ca</button><button class="ot-type-btn" id="btnByHour" onclick="setOtType('hour')" style="padding:10px 12px;font-size:.85rem;cursor:pointer;border:1px solid #ccc;background:#fff;color:#555;border-radius:8px">Theo Giờ</button></div>
         </div>
-        <div id="tcFullRow" class="form-row"><select class="form-select" id="tcShift" style="flex:1"><option value="S">☀️ Ca Sáng (S)</option><option value="C">🌙 Ca Chiều (C)</option><option value="C1">① Ca 1</option><option value="C2">② Ca 2</option><option value="C3">③ Ca 3</option></select></div>
+        <div id="tcFullRow" class="form-row"><select class="form-select" id="tcShift" style="flex:1"><option value="C1">① Ca 1 (14:00–18:00)</option><option value="C2">② Ca 2 (10:00–14:00)</option><option value="C3">③ Ca 3 (18:00–22:00)</option><option value="S">☀️ Full Ca Sáng (nghỉ làm bù)</option><option value="C">🌙 Full Ca Chiều (nghỉ làm bù)</option></select></div>
         <div id="tcHourRow" class="form-row" style="display:none;align-items:flex-end;gap:8px">
           <div style="flex:1"><div style="font-size:.7rem;color:#999;margin-bottom:3px">Giờ bắt đầu</div><input type="time" class="form-input" id="tcStart" style="width:100%" oninput="calcHours()"></div>
           <span style="padding-bottom:8px;color:#bbb;font-size:1.2rem">→</span>
@@ -649,8 +649,8 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
       <button class="ot-sf-btn c1"     data-sf="C1" onclick="setOtShiftF(this,'C1')">① Ca 1</button>
       <button class="ot-sf-btn c2"     data-sf="C2" onclick="setOtShiftF(this,'C2')">② Ca 2</button>
       <button class="ot-sf-btn c3"     data-sf="C3" onclick="setOtShiftF(this,'C3')">③ Ca 3</button>
-      <button class="ot-sf-btn s"      data-sf="S"  onclick="setOtShiftF(this,'S')">☀️ Sáng</button>
-      <button class="ot-sf-btn c"      data-sf="C"  onclick="setOtShiftF(this,'C')">🌙 Chiều</button>
+      <button class="ot-sf-btn s"      data-sf="S"  onclick="setOtShiftF(this,'S')">☀️ Full Sáng</button>
+      <button class="ot-sf-btn c"      data-sf="C"  onclick="setOtShiftF(this,'C')">🌙 Full Chiều</button>
     </div>
 
     <!-- Stats bar -->
@@ -934,17 +934,20 @@ function resolveOtTimes(o) {
   return { start, end, hours };
 }
 
-// Suy ra ca (C1/C2/C3/S/C) từ giờ bắt đầu tăng ca
-// Ca 1: 14:00–18:00 | Ca 2: 10:00–14:00 | Ca 3: 18:00–22:00
+// Suy ra ca từ bản ghi OT:
+// - Full shift (ot_type='full'): dùng o.shift (S hoặc C → làm bù cả ca)
+// - Tăng ca theo giờ: suy từ start_time → Ca 1(14-18h) / Ca 2(10-14h) / Ca 3(18-22h)
 function resolveOtShift(o) {
-  // Nếu đã lưu shift hợp lệ thì dùng luôn
-  if(o.shift && ['C1','C2','C3','S','C'].includes(o.shift)) return o.shift;
-  // Tự suy từ start_time
+  const isFull = !o.ot_type || o.ot_type === 'full';
+  // Full ca: S hoặc C (nghỉ làm bù cho kíp khác)
+  if(isFull && o.shift && ['S','C'].includes(o.shift)) return o.shift;
+  // Tăng ca giờ: nếu đã lưu C1/C2/C3 dùng luôn
+  if(o.shift && ['C1','C2','C3'].includes(o.shift)) return o.shift;
+  // Tự suy từ start_time (14h→C1, 10h→C2, 18h→C3)
   const t = resolveOtTimes(o);
-  const start = t.start;
-  if(!start) return o.shift || '';
-  const [h] = start.split(':').map(Number);
-  const mins = h * 60 + parseInt((start.split(':')[1])||0);
+  if(!t.start) return o.shift || '';
+  const [h, m2] = t.start.split(':').map(Number);
+  const mins = h * 60 + (m2||0);
   if(mins >= 14*60 && mins < 18*60) return 'C1';
   if(mins >= 10*60 && mins < 14*60) return 'C2';
   if(mins >= 18*60 && mins < 22*60) return 'C3';
