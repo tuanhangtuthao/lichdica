@@ -114,6 +114,16 @@ th{background:#1a237e;color:#fff;font-weight:600;position:sticky;top:0;z-index:9
   cursor:pointer;transition:.15s;background:#e8eaf6;color:#5c6bc0}
 .ot-mode-btn.active{background:#1a237e;color:#fff}
 .ot-mode-btn:hover:not(.active){background:#c5cae9}
+/* Lọc theo ca */
+.ot-sf-btn{padding:5px 12px;border:1.5px solid #ccc;border-radius:20px;font-size:.75rem;
+  font-weight:700;cursor:pointer;background:#fff;color:#666;transition:.15s;white-space:nowrap}
+.ot-sf-btn:hover{border-color:#999}
+.ot-sf-btn.active{background:#1a237e;color:#fff;border-color:#1a237e}
+.ot-sf-btn.active.c1{background:#01579b;border-color:#01579b}
+.ot-sf-btn.active.c2{background:#6a1b9a;border-color:#6a1b9a}
+.ot-sf-btn.active.c3{background:#2e7d32;border-color:#2e7d32}
+.ot-sf-btn.active.s{background:#f57f17;border-color:#f57f17}
+.ot-sf-btn.active.c{background:#3949ab;border-color:#3949ab}
 /* Stat chip */
 .ot-stat-chip{background:#fff;border:1px solid #e0e0e0;border-radius:8px;
   padding:6px 12px;font-size:.78rem;text-align:center;flex:1;min-width:80px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
@@ -629,9 +639,18 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     </div>
 
     <!-- Filter bar -->
-    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
       <input type="month" id="otBoardMonth" class="form-input" style="flex:0 0 auto;padding:8px 10px;font-size:.9rem" onchange="renderOtBoard()">
       <input type="text"  id="otBoardSearch" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." style="flex:1;min-width:120px;padding:8px 10px;font-size:.9rem" oninput="renderOtBoard()">
+    </div>
+    <!-- Lọc theo ca -->
+    <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap" id="otShiftFilter">
+      <button class="ot-sf-btn active" data-sf="" onclick="setOtShiftF(this,'')">Tất cả</button>
+      <button class="ot-sf-btn c1"     data-sf="C1" onclick="setOtShiftF(this,'C1')">① Ca 1</button>
+      <button class="ot-sf-btn c2"     data-sf="C2" onclick="setOtShiftF(this,'C2')">② Ca 2</button>
+      <button class="ot-sf-btn c3"     data-sf="C3" onclick="setOtShiftF(this,'C3')">③ Ca 3</button>
+      <button class="ot-sf-btn s"      data-sf="S"  onclick="setOtShiftF(this,'S')">☀️ Sáng</button>
+      <button class="ot-sf-btn c"      data-sf="C"  onclick="setOtShiftF(this,'C')">🌙 Chiều</button>
     </div>
 
     <!-- Stats bar -->
@@ -943,7 +962,8 @@ function groupEmpsByDept(emps) {
 }
 
 let otType = 'full';
-let otBoardMode = 'grid'; // 'grid' | 'day'
+let otBoardMode  = 'grid'; // 'grid' | 'day'
+let otBoardShiftF = '';    // '' = all, 'C1','C2','C3','S','C'
 const NDAYS = 28;
 
 // ── HEADER ─────────────────────────────────
@@ -1513,6 +1533,12 @@ function setOtBoardMode(mode){
   document.getElementById('btnOtDay').classList.toggle('active',  mode==='day');
   renderOtBoard();
 }
+function setOtShiftF(btn, sf){
+  otBoardShiftF = sf;
+  document.querySelectorAll('#otShiftFilter .ot-sf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderOtBoard();
+}
 
 function renderOtBoard(){
   const mVal     = document.getElementById('otBoardMonth').value;
@@ -1525,8 +1551,11 @@ function renderOtBoard(){
   const daysInMonth = new Date(y, m, 0).getDate();
   const prefix   = mVal + '-';
 
-  // Build empMap + validOT
-  const validOT  = OVERTIME.filter(o => o.date && o.date.startsWith(prefix));
+  // Build empMap + validOT (áp dụng lọc ca)
+  const SHIFT_ORD = {C1:0,C2:1,C3:2,S:3,C:4,HC:5};
+  let validOT = OVERTIME.filter(o => o.date && o.date.startsWith(prefix));
+  if(otBoardShiftF) validOT = validOT.filter(o => o.shift === otBoardShiftF);
+
   const empMeta  = {};
   [...(EMPS[1]||[]),...(EMPS[2]||[]),...(EMPS[3]||[]),...(EMPS[4]||[])]
     .forEach(e => { empMeta[e.id] = { kip:e.kip, name:e.name }; });
@@ -1536,17 +1565,28 @@ function renderOtBoard(){
     const eid = o.emp_id || '_';
     if(!empMap[eid]) empMap[eid] = {
       id: eid, name: o.emp_name||empMeta[eid]?.name||'?',
-      kip: empMeta[eid]?.kip||0, dates:{}
+      kip: empMeta[eid]?.kip||0, dates:{}, shifts:new Set()
     };
     if(!empMap[eid].dates[o.date]) empMap[eid].dates[o.date]=[];
     empMap[eid].dates[o.date].push(o);
+    empMap[eid].shifts.add(o.shift);
   });
 
   let empsArr = Object.values(empMap).filter(e=>Object.keys(e.dates).length>0);
   if(searchQ) empsArr = empsArr.filter(e=>
     String(e.name||'').toLowerCase().includes(searchQ)||String(e.id||'').toLowerCase().includes(searchQ));
-  // Sort: kíp → tên
-  empsArr.sort((a,b)=>(a.kip-b.kip)||String(a.name).localeCompare(String(b.name)));
+
+  // Sort: kíp → ca (shift đầu tiên của NV) → tên
+  empsArr.forEach(e => {
+    const allShifts = Object.values(e.dates).flat().map(o=>o.shift);
+    const mainShift = allShifts.sort((a,b)=>
+      (SHIFT_ORD[a]??9)-(SHIFT_ORD[b]??9))[0] || '';
+    e._mainShift = mainShift;
+  });
+  empsArr.sort((a,b)=>
+    (a.kip-b.kip) ||
+    ((SHIFT_ORD[a._mainShift]??9)-(SHIFT_ORD[b._mainShift]??9)) ||
+    String(a.name).localeCompare(String(b.name)));
 
   // Stats
   let totalH = 0, totalDays = 0;
@@ -1684,6 +1724,7 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
       </div>
       <div style="padding:4px 0">`;
 
+    const SF_ORD2 = {C1:0,C2:1,C3:2,S:3,C:4,HC:5};
     Object.keys(byKip).sort().forEach(kip=>{
       const kipN = parseInt(kip);
       if(kipN>0){
@@ -1691,7 +1732,9 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
         const bg = KIP_BGL[kipN]||'#f5f5f5';
         h += `<div style="padding:4px 14px 2px"><span style="font-size:.68rem;font-weight:700;color:${fg};background:${bg};padding:2px 8px;border-radius:10px">Kíp ${kip}</span></div>`;
       }
-      byKip[kip].forEach(o=>{
+      // Sắp theo thứ tự ca trong ngày
+      const sorted = [...byKip[kip]].sort((a,b)=>((SF_ORD2[a.shift]??9)-(SF_ORD2[b.shift]??9)));
+      sorted.forEach(o=>{
         const isFull = !o.ot_type||o.ot_type==='full';
         const noteClean = o.note?o.note.replace(/^[\d.]+h(\s*–\s*)?/,'').trim():'';
         let otInfo = '';
