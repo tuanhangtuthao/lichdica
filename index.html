@@ -105,7 +105,10 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 table{border-collapse:separate;border-spacing:0;font-size:var(--tbl-fz);width:max-content;min-width:100%;table-layout:fixed}
 th,td{padding:8px 4px;border:1px solid #e8e8e8;text-align:center;white-space:nowrap;border-top:none;border-left:none}
 th{background:#1a237e;color:#fff;font-weight:600;position:sticky;top:0;z-index:90}
-.d-c{width:var(--col-d);min-width:var(--col-d)}
+.d-c{width:var(--col-d);min-width:var(--col-d);position:relative}
+/* Chấm đỏ OT trên ô lịch */
+.d-c.cell-ot::after{content:'';position:absolute;top:2px;right:2px;
+  width:5px;height:5px;border-radius:50%;background:#e53935;display:block}
 
 /* Header Rows Sticky */
 thead tr:nth-child(1) th{height:var(--hdr1-h);top:0;z-index:110}
@@ -186,11 +189,28 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 .sum-kip-name{font-size:.9rem;font-weight:700;line-height:1}
 .sum-day-status{font-size:.7rem;font-weight:600;opacity:.9;letter-spacing:.2px}
 .sum-row{display:flex;justify-content:space-between;align-items:center;
-  padding:7px 14px;border-bottom:1px solid #f0f0f0;font-size:.82rem}
+  padding:7px 14px;border-bottom:1px solid #f0f0f0;font-size:.82rem;gap:6px}
 .sum-row:last-child{border-bottom:none}
-.sum-row .name{font-weight:600;color:#333}
+.sum-row .name{font-weight:600;color:#333;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sum-row.leader .name{color:#1a237e}
-.role-tag{font-size:.7rem;color:#888;background:#f5f5f5;padding:2px 7px;border-radius:10px}
+.role-tag{font-size:.7rem;color:#888;background:#f5f5f5;padding:2px 7px;border-radius:10px;flex-shrink:0}
+/* Bộ phận sub-header */
+.sum-dept-hd{padding:4px 14px;font-size:.67rem;font-weight:700;letter-spacing:.6px;
+  text-transform:uppercase;color:#9e9e9e;background:#f8f9ff;border-top:1px solid #edf0fb;
+  border-bottom:1px solid #edf0fb}
+/* OT badge nhỏ trên từng nhân viên */
+.ot-sm{font-size:.67rem;font-weight:700;background:#fff3e0;color:#e65100;
+  padding:2px 6px;border-radius:8px;white-space:nowrap;flex-shrink:0;line-height:1.4}
+/* Banner tổng hợp tăng ca hôm nay */
+.ot-today-bar{margin:0 0 10px;padding:10px 14px;
+  background:linear-gradient(90deg,#c62828,#e53935);color:#fff;border-radius:10px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:.82rem;font-weight:700;cursor:pointer;
+  box-shadow:0 2px 8px rgba(229,57,53,.3);user-select:none}
+.ot-today-bar:hover{background:linear-gradient(90deg,#b71c1c,#d32f2f)}
+.ot-today-bar .ot-bar-left{display:flex;align-items:center;gap:8px}
+.ot-today-bar .ot-bar-num{font-size:1.3rem;font-weight:900;line-height:1}
+.ot-today-bar .ot-bar-arrow{font-size:.8rem;opacity:.8}
 
 .chip{display:inline-block;padding:2px 7px;border-radius:10px;font-weight:700;font-size:10.5px}
 .chip.S{background:var(--s-bg);color:var(--s-fg)}
@@ -443,6 +463,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 <div class="page" id="page-summary">
   <div class="summary-section">
     <div id="holBanner"></div>
+    <div id="otTodayBanner"></div>
     <div class="sum-grid" id="sumGrid"></div>
   </div>
 </div>
@@ -858,7 +879,35 @@ function resolveOtTimes(o) {
     const diff = ((h2*60+m2)-(h1*60+m1))/60; if(diff>0) hours=diff;
   }
   return { start, end, hours };
-} // [{id,emp_id,emp_name,start_date,end_date,shift}]
+}
+
+// Lấy tất cả OT của 1 nhân viên vào 1 ngày cụ thể
+function getEmpOtOnDate(empId, dk) {
+  return OVERTIME.filter(o => o.emp_id === empId && o.date === dk);
+}
+// Tạo badge OT nhỏ hiển thị trên dòng nhân viên
+function makeOtSmBadge(ots) {
+  if (!ots || !ots.length) return '';
+  const o = ots[0];
+  if (o.ot_type === 'full') {
+    return `<span class="ot-sm">⏰ Full ca</span>`;
+  }
+  const t = resolveOtTimes(o);
+  const hLbl = t.hours ? ` ${t.hours}h` : '';
+  return `<span class="ot-sm">⏱ ${t.start||'?'}→${t.end||'?'}${hLbl}</span>`;
+}
+// Nhóm nhân viên theo bộ phận (role), trưởng ca lên đầu
+function groupEmpsByDept(emps) {
+  const leaders = emps.filter(e => e.role === 'Trưởng ca');
+  const others  = emps.filter(e => e.role !== 'Trưởng ca');
+  const deptMap = {};
+  others.forEach(e => {
+    if (!deptMap[e.role]) deptMap[e.role] = [];
+    deptMap[e.role].push(e);
+  });
+  return { leaders, deptMap };
+}
+
 let otType = 'full';
 const NDAYS = 28;
 
@@ -903,7 +952,8 @@ function renderTable(){
       h += `<tr><td class="c1">${nameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
       dates.forEach(d => {
         const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
-        h += `<td class="sh${s}${tc} d-c" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+        const hasOt = OVERTIME.some(o=>o.emp_id===e.id&&o.date===dKey(d));
+        h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
       });
       h += '</tr>';
     });
@@ -919,7 +969,8 @@ function renderTable(){
         h += `<tr><td class="c1">${e.name}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
         dates.forEach(d => {
           const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
-          h += `<td class="sh${s}${tc} d-c" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+          const hasOt = OVERTIME.some(o=>o.emp_id===e.id&&o.date===dKey(d));
+          h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
         });
         h += '</tr>';
       });
@@ -932,7 +983,8 @@ function renderTable(){
         h += `<tr><td class="c1">${nameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
         dates.forEach(d => {
           const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
-          h += `<td class="sh${s}${tc} d-c" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
+          const hasOt = OVERTIME.some(o=>o.emp_id===e.id&&o.date===dKey(d));
+          h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[s]||s)}">${s}</td>`;
         });
         h += '</tr>';
       });
@@ -944,10 +996,30 @@ function renderTable(){
 // ── TAB 2: HÔM NAY ────────────────────────
 function renderSummary(){
   const today = new Date(); today.setHours(0,0,0,0);
+  const dk = dKey(today);
   const hl = isHol(today);
   document.getElementById('holBanner').innerHTML = hl
     ? `<div class="hol-banner">🎌 Hôm nay nghỉ lễ: ${hl.name}</div>` : '';
 
+  // ── Banner tăng ca hôm nay ──
+  const todayOts = OVERTIME.filter(o => o.date === dk);
+  const otEmpIds = [...new Set(todayOts.map(o => o.emp_id))];
+  const otCount  = otEmpIds.length;
+  let totalHours = 0;
+  todayOts.forEach(o => { const t=resolveOtTimes(o); if(t.hours) totalHours+=t.hours; });
+  const totalHLbl = totalHours > 0
+    ? ` · ${totalHours % 1 === 0 ? totalHours : totalHours.toFixed(1)} giờ` : '';
+  document.getElementById('otTodayBanner').innerHTML = otCount > 0
+    ? `<div class="ot-today-bar" onclick="showTab('tanca')">
+        <div class="ot-bar-left">
+          <span class="ot-bar-num">${otCount}</span>
+          <span>người tăng ca hôm nay${totalHLbl}</span>
+        </div>
+        <span class="ot-bar-arrow">Xem chi tiết →</span>
+      </div>`
+    : '';
+
+  // ── Render kíp cards ──
   let sg = '';
   for(let k=1;k<=3;k++){
     const s = dShift(k,today);
@@ -955,12 +1027,42 @@ function renderSummary(){
     const bsLbl = bs.type==='work'
       ? `📅 Ngày làm ${bs.day}/${bs.total}`
       : `💤 Ngày nghỉ ${bs.day}/${bs.total}`;
-    sg += `<div class="sum-card"><div class="sum-head k${k}"><div class="sum-kip-label"><span class="sum-kip-name">Kíp ${k}</span><span class="sum-day-status">${bsLbl}</span></div><span class="sum-shift-badge">${SICON[s]} ${SLBL(s)}</span></div><div class="sum-body">`;
-    (EMPS[k]||[]).forEach((e,i) => {
-      sg += `<div class="sum-row${i===0?' leader':''}"><span class="name">${i===0?'👑 ':''}${e.name}</span><span class="role-tag">${e.role}</span></div>`;
+    const kipEmps = EMPS[k] || [];
+    const { leaders, deptMap } = groupEmpsByDept(kipEmps);
+    const depts = Object.keys(deptMap);
+
+    sg += `<div class="sum-card"><div class="sum-head k${k}">
+      <div class="sum-kip-label"><span class="sum-kip-name">Kíp ${k}</span><span class="sum-day-status">${bsLbl}</span></div>
+      <span class="sum-shift-badge">${SICON[s]} ${SLBL(s)}</span>
+    </div><div class="sum-body">`;
+
+    // Trưởng ca lên đầu
+    leaders.forEach(e => {
+      const ots = getEmpOtOnDate(e.id, dk);
+      const otBadge = makeOtSmBadge(ots);
+      sg += `<div class="sum-row leader">
+        <span class="name">👑 ${e.name}</span>
+        <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${e.role}</span></span>
+      </div>`;
     });
+
+    // Các bộ phận nhóm lại
+    depts.forEach(dept => {
+      sg += `<div class="sum-dept-hd">${dept}</div>`;
+      deptMap[dept].forEach(e => {
+        const ots = getEmpOtOnDate(e.id, dk);
+        const otBadge = makeOtSmBadge(ots);
+        sg += `<div class="sum-row">
+          <span class="name">${e.name}</span>
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}</span>
+        </div>`;
+      });
+    });
+
     sg += '</div></div>';
   }
+
+  // Hành chính & Cố định
   if((EMPS[4]||[]).length>0){
     const hcE = (EMPS[4]||[]).filter(e=>e.fixed_shift==='HC');
     const cdE = (EMPS[4]||[]).filter(e=>e.fixed_shift!=='HC');
@@ -968,7 +1070,10 @@ function renderSummary(){
       sg += `<div class="sum-card"><div class="sum-head k4">🏢 Hành Chính<span class="sum-shift-badge">${hcE.length} NV</span></div><div class="sum-body">`;
       hcE.forEach(e => {
         const s=empShift(e,today);
-        sg += `<div class="sum-row"><span class="name">${e.name}</span><span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></div>`;
+        const ots = getEmpOtOnDate(e.id, dk);
+        const otBadge = makeOtSmBadge(ots);
+        sg += `<div class="sum-row"><span class="name">${e.name}</span>
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></span></div>`;
       });
       sg += '</div></div>';
     }
@@ -976,7 +1081,10 @@ function renderSummary(){
       sg += `<div class="sum-card"><div class="sum-head" style="background:#00695c">🔄 Cố Định / Ca Xoay<span class="sum-shift-badge">${cdE.length} NV</span></div><div class="sum-body">`;
       cdE.forEach(e => {
         const s=empShift(e,today);
-        sg += `<div class="sum-row"><span class="name">${e.name}</span><span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></div>`;
+        const ots = getEmpOtOnDate(e.id, dk);
+        const otBadge = makeOtSmBadge(ots);
+        sg += `<div class="sum-row"><span class="name">${e.name}</span>
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></span></div>`;
       });
       sg += '</div></div>';
     }
