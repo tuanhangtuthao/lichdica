@@ -1078,13 +1078,25 @@ function renderSummary(){
       sg += '</div></div>';
     }
     if(cdE.length>0){
+      // Thứ tự ca: S → C1 → C2 → C3 → C → HC → N → UN
+      const SHIFT_ORD = {S:0,C1:1,C2:2,C3:3,C:4,HC:5,N:6,L:7,UN:8};
+      const cdeSorted = [...cdE].sort((a,b)=>{
+        const sa=empShift(a,today), sb=empShift(b,today);
+        return (SHIFT_ORD[sa]??9)-(SHIFT_ORD[sb]??9);
+      });
       sg += `<div class="sum-card"><div class="sum-head" style="background:#00695c">🔄 Cố Định / Ca Xoay<span class="sum-shift-badge">${cdE.length} NV</span></div><div class="sum-body">`;
-      cdE.forEach(e => {
+      let lastShift = null;
+      cdeSorted.forEach(e => {
         const s=empShift(e,today);
+        // Sub-header khi đổi ca
+        if(s !== lastShift){
+          lastShift = s;
+          sg += `<div class="sum-dept-hd">${SICON[s]||''} ${SLBL(s)}</div>`;
+        }
         const ots = getEmpOtOnDate(e.id, dk);
         const otBadge = makeOtSmBadge(ots);
         sg += `<div class="sum-row"><span class="name">${e.name}</span>
-          <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></span></div>`;
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}</span></div>`;
       });
       sg += '</div></div>';
     }
