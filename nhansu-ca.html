@@ -101,14 +101,14 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 /* View mode */
 .mc-name{font-size:.9rem;font-weight:700;color:#1a1a1a;line-height:1.2;
   min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mc-note{font-size:.65rem;color:#888;font-style:italic;margin-top:2px;min-height:12px}
+.mc-note{font-size:.78rem;color:#555;font-style:italic;margin-top:2px;min-height:14px;font-weight:600}
 
 /* Edit mode inputs */
 .mc-name-input,.mc-note-input{
   width:100%;border:none;outline:none;background:transparent;
   font-family:inherit;padding:0;line-height:1.2}
 .mc-name-input{font-size:.9rem;font-weight:700;color:#1a1a1a;min-height:22px}
-.mc-note-input{font-size:.65rem;color:#888;font-style:italic;margin-top:2px;min-height:16px}
+.mc-note-input{font-size:.78rem;color:#555;font-style:italic;margin-top:2px;min-height:18px;font-weight:600}
 .mc-name-input::placeholder{color:#bbb;font-weight:400;font-style:normal}
 .mc-note-input::placeholder{color:#ccc}
 
@@ -132,12 +132,15 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 
 /* ── PRINT ── */
 @media print{
-  .hdr,.ctrl-bar,.edit-banner,.save-float,.toast{display:none!important}
-  .floor-wrap{padding:4px;overflow:visible}
-  .floor{gap:10px}
-  body{background:#fff}
-  .mc-cell{page-break-inside:avoid}
-  .floor-divider{background:#aaa}
+  .hdr,.ctrl-bar,.edit-banner,.floor-edit-banner,.save-float,.toast{display:none!important}
+  body{background:#eef0f4!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .floor-wrap{padding:8px;overflow:visible;min-height:0}
+  .floor{gap:20px}
+  .floor-divider{background:linear-gradient(180deg,transparent,#c5cae9 15%,#c5cae9 85%,transparent)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .mc-cell{page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .mc-cell.filled{background:var(--accent-l)!important;border-color:var(--accent)!important}
+  .mc-code{color:var(--accent)!important}
+  .section-lbl{color:#9e9e9e!important}
 }
 
 /* ── MOBILE ── */
