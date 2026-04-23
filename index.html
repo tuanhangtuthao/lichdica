@@ -519,7 +519,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   <a href="xin-nghi.html" class="tab tab-rating" title="Tạo đơn xin nghỉ online">🏖️ Xin Nghỉ</a>
   <a href="rating.html" class="tab tab-rating" title="Đánh giá nhân viên">🏆 Đánh Giá</a>
   <a href="nhansu-ca.html" class="tab tab-rating" style="color:#2e7d32!important" title="Nhân sự trong ca">👷 Nhân Sự Ca</a>
-  <div class="tab"        onclick="showTab('settings')">⚙️ Quản Lý</div>
+  <div class="tab" style="position:relative" onclick="showTab('settings')">⚙️ Quản Lý<span id="settingsBadgeTop" style="display:none;position:absolute;top:6px;right:6px;background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span></div>
 </div>
 
 <!-- TAB 1: LỊCH CA -->
@@ -717,8 +717,9 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   <button class="bnav" onclick="showTab('tanca')">
     <span class="bicon">⏰</span><span class="blabel">Tăng Ca</span>
   </button>
-  <button class="bnav" onclick="showTab('settings')">
+  <button class="bnav" onclick="showTab('settings')" style="position:relative">
     <span class="bicon">⚙️</span><span class="blabel">Quản Lý</span>
+    <span id="settingsBadgeBot" style="display:none;position:absolute;top:5px;right:12px;background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span>
   </button>
 </nav>
 
@@ -2110,11 +2111,15 @@ function _goTab(tab){
 
 function renderLeaveReqs() {
   const list = document.getElementById('leaveReqList');
+  const cnt = LEAVE_REQS.length;
+  // Badge trong tab Duyệt Đơn
   const badge = document.getElementById('leaveBadge');
-  if (badge) {
-    badge.textContent = LEAVE_REQS.length;
-    badge.style.display = LEAVE_REQS.length > 0 ? 'inline-block' : 'none';
-  }
+  if (badge) { badge.textContent = cnt; badge.style.display = cnt > 0 ? 'inline-block' : 'none'; }
+  // Badge trên tab Quản Lý (top + bottom nav)
+  ['settingsBadgeTop','settingsBadgeBot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = cnt; el.style.display = cnt > 0 ? 'inline-block' : 'none'; }
+  });
   if (!list) return;
   
   if (LEAVE_REQS.length === 0) {
