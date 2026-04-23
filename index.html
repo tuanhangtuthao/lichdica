@@ -10,6 +10,7 @@
   --s-bg:#c8e6c9;--s-fg:#1b5e20;
   --c-bg:#ffe0b2;--c-fg:#bf360c;
   --n-bg:#ffcdd2;--n-fg:#b71c1c;
+  --np-bg:#bbdefb;--np-fg:#0d47a1;
   --h-bg:#e1bee7;--h-fg:#6a1b9a;
   --k1:#1565c0;--k1l:#e3f2fd;
   --k2:#6a1b9a;--k2l:#f3e5f5;
@@ -217,6 +218,7 @@ td:first-child, th:first-child{border-left:1px solid #e8e8e8}
 td.shS{background:var(--s-bg);color:var(--s-fg);font-weight:700}
 td.shC{background:var(--c-bg);color:var(--c-fg);font-weight:700}
 td.shN{background:var(--n-bg);color:var(--n-fg);font-weight:700}
+td.shNP{background:var(--np-bg);color:var(--np-fg);font-weight:700}
 td.shL{background:var(--h-bg);color:var(--h-fg);font-weight:700}
 td.today-c{outline:2px solid #f9a825;outline-offset:-2px;background-color:rgba(249,168,37,.13) !important}
 tr.kh.k1 td{background:var(--k1)}
@@ -237,6 +239,7 @@ tbody tr:nth-child(even) td.c3{background-color:#f1f3f5}
 tbody tr td.shS{background-color:var(--s-bg)!important}
 tbody tr td.shC{background-color:var(--c-bg)!important}
 tbody tr td.shN{background-color:var(--n-bg)!important}
+tbody tr td.shNP{background-color:var(--np-bg)!important}
 tbody tr td.shL{background-color:var(--h-bg)!important}
 tbody tr td.shHC{background-color:var(--hc-bg)!important}
 tbody tr td.shC1{background-color:#b2dfdb!important}
@@ -297,6 +300,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 .chip.S{background:var(--s-bg);color:var(--s-fg)}
 .chip.C{background:var(--c-bg);color:var(--c-fg)}
 .chip.N{background:var(--n-bg);color:var(--n-fg)}
+.chip.NP{background:var(--np-bg);color:var(--np-fg)}
 .chip.L{background:var(--h-bg);color:var(--h-fg)}
 .chip.HC{background:var(--hc-bg);color:var(--hc-fg)}
 .chip.C1{background:#b2dfdb;color:#00695c}
@@ -646,7 +650,8 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
                 <option value="C1">Ca 1</option>
                 <option value="C2">Ca 2</option>
                 <option value="C3">Ca 3</option>
-                <option value="N">Nghỉ</option>
+                <option value="NP">Nghỉ Phép (NP)</option>
+                <option value="N">Nghỉ (không lương/việc riêng)</option>
               </select>
             </div>
             <button class="btn btn-pri" style="align-self:flex-end" onclick="addEmpSched()">+ Thêm</button>
@@ -749,7 +754,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 <div class="qmodal-overlay" id="kipOtModal" onclick="if(event.target===this)closeKipOt()">
   <div class="qmodal-box">
     <div class="qmodal-head" style="background:#b71c1c">
-      <span>⏰ Đăng Ký Tăng Ca</span>
+      <span>⏰ Đăng Ký Tăng Ca / Phân Ca Nghỉ</span>
       <button onclick="closeKipOt()" style="background:none;border:none;color:#fff;font-size:1.4rem;line-height:1;cursor:pointer">✕</button>
     </div>
     <div class="qmodal-body">
@@ -767,8 +772,15 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
           <input type="date" class="form-input" id="kipOtTo" style="width:100%" onchange="updateKipOtInfo()">
         </div>
       </div>
-      <!-- Toggle loại tăng ca -->
-      <div id="kipOtTypeToggle" style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #ffcdd2;margin-bottom:12px">
+      <!-- Toggle Mode: Tăng ca / Nghỉ phép -->
+      <div id="kipOtModeWrap" style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #1a237e;margin-bottom:12px">
+        <button id="kipOtBtnModeOT" onclick="setKipOtMode('ot')" style="flex:1;padding:8px;border:none;font-size:.85rem;font-weight:700;cursor:pointer;background:#1a237e;color:#fff">⏰ Tăng Ca</button>
+        <button id="kipOtBtnModeOff" onclick="setKipOtMode('off')" style="flex:1;padding:8px;border:none;font-size:.85rem;font-weight:700;cursor:pointer;background:#e8eaf6;color:#1a237e">🏖️ Xin Nghỉ</button>
+      </div>
+
+      <div id="kipOtOtArea">
+        <!-- Toggle loại tăng ca -->
+        <div id="kipOtTypeToggle" style="display:flex;border-radius:8px;overflow:hidden;border:1.5px solid #ffcdd2;margin-bottom:12px">
         <button id="kipOtBtnHour" onclick="setKipOtType('hour')"
           style="flex:1;padding:8px;border:none;font-size:.8rem;font-weight:700;cursor:pointer;background:#e53935;color:#fff">
           ⏱ Theo giờ
@@ -818,6 +830,15 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
           </div>
         </div>
       </div>
+      </div>
+      <div id="kipOtOffFields" style="display:none;margin-bottom:14px">
+        <label style="display:block;font-size:.72rem;color:#777;margin-bottom:4px">Chọn lý do nghỉ</label>
+        <select class="form-select" id="kipOtOffShift" style="width:100%;font-weight:700;font-size:1rem">
+          <option value="NP">🏖️ Nghỉ Phép (NP)</option>
+          <option value="N">🏠 Nghỉ / Xóa ca (N)</option>
+        </select>
+        <div style="font-size:.75rem;color:#d32f2f;margin-top:6px;font-style:italic">Lưu ý: Thao tác này sẽ phân ngày nghỉ, ghi đè lên Lịch ca làm việc chính thức mặc định.</div>
+      </div>
       <div id="kipOtInfo" style="display:none;font-size:.72rem;color:#1565c0;padding:4px 8px;background:#e3f2fd;border-radius:6px">
         📅 Sẽ tạo tăng ca cho <strong id="kipOtDayCount">1</strong> ngày
       </div>
@@ -857,7 +878,8 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
           <option value="C1">① Ca 1</option>
           <option value="C2">② Ca 2</option>
           <option value="C3">③ Ca 3</option>
-          <option value="N">🏠 Nghỉ</option>
+          <option value="NP">🏖️ Nghỉ Phép (NP)</option>
+          <option value="N">🏠 Nghỉ (N)</option>
         </select>
       </div>
       <!-- ── TĂNG CA SECTION ── -->
@@ -1008,9 +1030,9 @@ const DN    = ['CN','T2','T3','T4','T5','T6','T7'];
 const DFUL  = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
 const MN    = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const SNAME = {S:'Ca Sáng (6h-18h)',C:'Ca Chiều (18h-6h hôm sau)',N:'Nghỉ',L:'Nghỉ Lễ',
-               HC:'Hành Chính (7:30–16:30)',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',UN:'Chưa phân ca'};
-const SICON = {S:'☀️',C:'🌙',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③'};
-const SLBL  = s => ({S:'Sáng',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3'}[s]||'Nghỉ');
+               HC:'Hành Chính (7:30–16:30)',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',UN:'Chưa phân ca',NP:'Nghỉ Phép'};
+const SICON = {S:'☀️',C:'🌙',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③',NP:'🏖️'};
+const SLBL  = s => ({S:'Sáng',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',NP:'Nghỉ Phép'}[s]||'Nghỉ');
 // Tính ca cho từng nhân viên (hỗ trợ ca cố định)
 function empShift(e, d) {
   if (isHol(d)) return 'L';
@@ -1303,8 +1325,8 @@ function renderSummary(){
       sg += '</div></div>';
     }
     if(cdE.length>0){
-      // Thứ tự ca: S → C1 → C2 → C3 → C → HC → N → UN
-      const SHIFT_ORD = {S:0,C1:1,C2:2,C3:3,C:4,HC:5,N:6,L:7,UN:8};
+      // Thứ tự ca: S → C1 → C2 → C3 → C → HC → N → NP → UN
+      const SHIFT_ORD = {S:0,C1:1,C2:2,C3:3,C:4,HC:5,N:6,NP:7,L:8,UN:9};
       const cdeSorted = [...cdE].sort((a,b)=>{
         const sa=empShift(a,today), sb=empShift(b,today);
         return (SHIFT_ORD[sa]??9)-(SHIFT_ORD[sb]??9);
@@ -1437,7 +1459,7 @@ function buildPsEmpSelect(){
   sel.value=cur||'';
 }
 function renderEmpSched(){
-  const CLBL={C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',N:'Nghỉ'};
+  const CLBL={C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',N:'Nghỉ',NP:'Nghỉ Phép'};
   // Build a lookup map: id → name
   const nameMap={};
   allEmps().forEach(e=>nameMap[e.id]=e.name);
@@ -2118,6 +2140,7 @@ function closeQuickEdit() { document.getElementById('qEditModal').classList.remo
 let curKipOtId = '', curKipOtName = '';
 let kipOtMode = 'hour'; // 'hour' | 'full'
 let kipOtHcMode = false; // true = HC: chỉ theo giờ, không có Full Ca
+let kipOtMainMode = 'ot'; // 'ot' | 'off'
 
 function openKipOt(id, name, hcMode = false) {
   curKipOtId = id; curKipOtName = name; kipOtHcMode = hcMode;
@@ -2144,9 +2167,24 @@ function _showKipOtModal() {
   const toggleRow = document.getElementById('kipOtTypeToggle');
   if (toggleRow) toggleRow.style.display = kipOtHcMode ? 'none' : 'flex';
   setKipOtType('hour');
+  setKipOtMode('ot');
   document.getElementById('kipOtModal').classList.add('show');
 }
 function closeKipOt() { document.getElementById('kipOtModal').classList.remove('show'); }
+
+function setKipOtMode(mode) {
+  kipOtMainMode = mode;
+  document.getElementById('kipOtBtnModeOT').style.cssText = mode==='ot' ? 
+    'flex:1;padding:8px;border:none;font-size:.85rem;font-weight:700;cursor:pointer;background:#1a237e;color:#fff' :
+    'flex:1;padding:8px;border:none;font-size:.85rem;font-weight:700;cursor:pointer;background:#e8eaf6;color:#1a237e';
+  document.getElementById('kipOtBtnModeOff').style.cssText = mode==='off' ? 
+    'flex:1;padding:8px;border:none;font-size:.85rem;font-weight:700;cursor:pointer;background:#1a237e;color:#fff' :
+    'flex:1;padding:8px;border:none;font-size:.85rem;font-weight:700;cursor:pointer;background:#e8eaf6;color:#1a237e';
+  
+  document.getElementById('kipOtOtArea').style.display = mode==='ot' ? 'block' : 'none';
+  document.getElementById('kipOtOffFields').style.display = mode==='off' ? 'block' : 'none';
+  document.getElementById('btnSaveKipOt').innerHTML = mode==='ot' ? '⏰ Lưu tăng ca' : '💾 Xác nhận phân nghỉ';
+}
 
 function setKipOtType(mode) {
   kipOtMode = mode;
@@ -2172,6 +2210,54 @@ async function saveKipOt() {
   const from = document.getElementById('kipOtFrom').value;
   const to   = document.getElementById('kipOtTo').value;
   if(!from || !to || to < from) { alert('Ngày không hợp lệ!'); return; }
+
+  if (kipOtMainMode === 'off') {
+    try {
+      const shift = document.getElementById('kipOtOffShift').value;
+      const emp_id = curKipOtId;
+      const emp_name = allEmps().find(x=>x.id===emp_id)?.name || curKipOtName;
+
+      const ov = EMP_SCHED.filter(x => x.emp_id === emp_id && x.start_date <= to && x.end_date >= from);
+      for(const r of ov) {
+        if(r.start_date < from && r.end_date > to) {
+          const r1={...r, end_date:dKey(addD(new Date(from),-1))}, r2={...r, start_date:dKey(addD(new Date(to),1))};
+          if(SB_OK) {
+            await sb.from('emp_schedule').delete().eq('id', r.id);
+            delete r1.id; delete r2.id;
+            await sb.from('emp_schedule').insert([r1, r2]);
+          } else {
+             EMP_SCHED = EMP_SCHED.filter(x=>x.id!==r.id);
+             EMP_SCHED.push({...r1, id:Date.now()});
+             EMP_SCHED.push({...r2, id:Date.now()+1});
+          }
+        } else if(r.start_date < from) {
+          if(SB_OK) await sb.from('emp_schedule').update({end_date:dKey(addD(new Date(from),-1))}).eq('id', r.id);
+        } else if(r.end_date > to) {
+          if(SB_OK) await sb.from('emp_schedule').update({start_date:dKey(addD(new Date(to),1))}).eq('id', r.id);
+        } else {
+          if(SB_OK) await sb.from('emp_schedule').delete().eq('id', r.id);
+        }
+      }
+
+      const row = {emp_id, emp_name, start_date:from, end_date:to, shift};
+      if(SB_OK) {
+        await sb.from('emp_schedule').insert(row);
+        const {data:esData} = await sb.from('emp_schedule').select('*').order('start_date');
+        EMP_SCHED = esData || [];
+      } else {
+        EMP_SCHED = EMP_SCHED.filter(x=> !(x.emp_id===emp_id && x.start_date>=from && x.end_date<=to));
+        EMP_SCHED.push({...row, id:Date.now()});
+      }
+
+      renderAll();
+      closeKipOt();
+    } catch(err) {
+      alert('Lỗi: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.innerText = '💾 Xác nhận phân nghỉ';
+    }
+    return;
+  }
 
   const eNm = allEmps().find(x=>x.id===curKipOtId)?.name || curKipOtName;
   const otRows = [];
