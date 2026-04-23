@@ -130,6 +130,13 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   box-shadow:0 4px 14px rgba(0,0,0,.25);transition:.3s}
 .toast.show{display:flex}
 
+/* ── PRINT HEADER ── */
+.print-hdr{display:none}
+@media print{
+  .print-hdr{display:block;text-align:center;padding:10px 0 14px;border-bottom:3px solid #1a237e;margin-bottom:12px}
+  .print-hdr .ph-title{font-size:1.6rem;font-weight:900;color:#1a237e;letter-spacing:.5px}
+  .print-hdr .ph-date{font-size:1.1rem;font-weight:800;color:#333;margin-top:4px}
+}
 /* ── PRINT ── */
 @media print{
   .hdr,.ctrl-bar,.edit-banner,.floor-edit-banner,.save-float,.toast{display:none!important}
@@ -245,6 +252,12 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   <button class="btn btn-edit" id="editBtn" onclick="toggleEdit()">✏️ Gán NV</button>
 </div>
 
+<!-- PRINT HEADER (chỉ hiện khi in) -->
+<div class="print-hdr" id="printHdr">
+  <div class="ph-title" id="printTitle">NHÂN SỰ CA SÁNG</div>
+  <div class="ph-date" id="printDate">Ngày: </div>
+</div>
+
 <!-- FACTORY FLOOR -->
 <div class="floor-wrap">
   <div class="floor" id="floor"></div>
@@ -342,6 +355,15 @@ function applyKipTheme(){
   r.style.setProperty('--accent-d',c.ad);
   document.getElementById('mainHdr').style.background=
     `linear-gradient(135deg,${c.ad},${c.a})`;
+  // Cập nhật tiêu đề in
+  const shiftLbl = curShift==='S' ? 'CA SÁNG' : 'CA TỐI';
+  const t = document.getElementById('printTitle');
+  const d = document.getElementById('printDate');
+  if(t) t.textContent = `NHÂN SỰ ${shiftLbl} – KÍP ${curKip}`;
+  if(d && curDate){
+    const dt = new Date(curDate+'T00:00:00');
+    d.textContent = `Ngày: ${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+  }
 }
 function setShift(s){
   curShift = s;
