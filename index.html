@@ -194,13 +194,14 @@ thead tr:nth-child(2) th{height:var(--hdr2-h);top:var(--hdr1-h);z-index:125}
 tr.kh td{color:#fff;font-weight:700;text-align:left;padding:7px 10px;font-size:11.5px}
 
 /* Left Columns Sticky */
-.c1{position:sticky;left:0;z-index:30;min-width:var(--col1-w);width:var(--col1-w);text-align:left;border-left:1px solid #e8e8e8}
-.c2{position:sticky;left:var(--col1-w);z-index:30;min-width:var(--col2-w);width:var(--col2-w);border-left:1px solid #e8e8e8}
-.c3{position:sticky;left:calc(var(--col1-w) + var(--col2-w));z-index:30;min-width:var(--col3-w);width:var(--col3-w);text-align:left;border-left:1px solid #e8e8e8}
+.c1{min-width:var(--col1-w);width:var(--col1-w);text-align:left;border-left:1px solid #e8e8e8}
+.c2{min-width:var(--col2-w);width:var(--col2-w);border-left:1px solid #e8e8e8}
+.c3{position:sticky;left:0;z-index:30;min-width:var(--col3-w);width:var(--col3-w);text-align:left;border-left:1px solid #e8e8e8}
 
-th.c1, th.c2, th.c3{z-index:140;background:#37474f}
-thead tr:nth-child(1) th.c1, thead tr:nth-child(1) th.c2, thead tr:nth-child(1) th.c3{z-index:145}
-thead tr:nth-child(2) th.c1, thead tr:nth-child(2) th.c2, thead tr:nth-child(2) th.c3{z-index:142}
+th.c1, th.c2{background:#37474f}
+th.c3{z-index:140;background:#37474f}
+thead tr:nth-child(1) th.c3{z-index:145}
+thead tr:nth-child(2) th.c3{z-index:142}
 
 td.c1, td.c2, td.c3{background:#fafafa}
 td.c3{border-right:2px solid #c5cae9}
@@ -209,7 +210,7 @@ tbody tr.kh td.c1, tbody tr.kh td.c2, tbody tr.kh td.c3{background:inherit !impo
 tr.kh td{background:#1a237e}
 
 /* Month & Kip labels sticky scroll */
-tr.kh td span, .month-label{position:sticky;left:calc(var(--col1-w) + var(--col2-w) + var(--col3-w) + 10px);display:inline-block;white-space:nowrap}
+tr.kh td span, .month-label{position:sticky;left:calc(var(--col3-w) + 10px);display:inline-block;white-space:nowrap}
 
 /* Fix borders */
 tr:first-child td, tr:first-child th{border-top:1px solid #e8e8e8}
@@ -429,7 +430,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   .search-row{padding:0 24px 10px}
   .kip-row{padding:0 24px 10px}
   .legend{padding:0 24px 10px}
-  .c1{min-width:var(--col1-w)}.c2{left:var(--col1-w)}.c3{left:calc(var(--col1-w) + var(--col2-w))}
+  .c1{min-width:var(--col1-w)}.c2{}.c3{left:0}
   thead tr:nth-child(1) th{top:0}
   thead tr:nth-child(2) th{top:var(--hdr1-h)}
   tr.kh td{top:calc(var(--hdr1-h) + var(--hdr2-h))}
@@ -504,7 +505,6 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     <div class="sub" id="todayLabel"></div>
   </div>
   <div class="hdr-right" style="display:flex!important;align-items:center;gap:8px">
-    <span style="font-size:.7rem;opacity:.8;text-align:right">Làm 4 ngày · Nghỉ 2 ngày<br>Sáng / Chiều luân phiên</span>
     <a href="xin-nghi.html" class="btn-rating" style="background:rgba(255,255,255,.25)" title="Tạo đơn xin nghỉ online">🏖️ Xin Nghỉ</a>
     <a href="rating.html" class="btn-rating" title="Đánh giá nhân viên">🏆</a>
     <a href="nhansu-ca.html" class="btn-rating" title="Nhân sự trong ca">👷</a>
