@@ -760,33 +760,33 @@ async function saveAll(){
   const btn=document.getElementById('editBtn');
   btn.disabled=true;btn.textContent='⏳ Đang lưu...';
 
-  // Lấy tất cả mã máy từ FACTORY_DATA mới
+  // Gom tất cả mã máy
   const allCodes = [];
   FACTORY_DATA.forEach(z => {
     z.grid.forEach(row => {
-      row.forEach(item => { 
-         const code = (item && typeof item==='object')? item.c : item;
-         if(code) allCodes.push(code); 
+      row.forEach(item => {
+        const code = (item && typeof item==='object') ? item.c : item;
+        if(code) allCodes.push(code);
       });
     });
   });
 
-  for(const code of allCodes){
-    const d=ROSTER[code]||{worker_name:'',note:'',id:null};
-    const row={kip:curKip,date:curDate,machine_code:code,
-      worker_name:d.worker_name.trim(),note:d.note.trim()};
-    if(SB_OK){
-      try{
-        const {data,error}=await sb.from('shift_roster')
-          .upsert(row,{onConflict:'kip,date,machine_code'}).select();
-        if(!error&&data&&data[0]){
-          ROSTER[code]=ROSTER[code]||{};
-          ROSTER[code].id=data[0].id;
-          ROSTER[code].worker_name=data[0].worker_name;
-          ROSTER[code].note=data[0].note;
-        }
-      }catch(e){console.warn(e);}
-    }
+  if(SB_OK){
+    try{
+      // 1 request duy nhất thay vì N request riêng lẻ
+      const rows = allCodes.map(code => {
+        const d = ROSTER[code]||{worker_name:'',note:''};
+        return {kip:curKip, date:curDate, machine_code:code,
+                worker_name:d.worker_name.trim(), note:d.note.trim()};
+      });
+      const {data,error} = await sb.from('shift_roster')
+        .upsert(rows, {onConflict:'kip,date,machine_code'}).select();
+      if(error) throw error;
+      // Cập nhật lại ROSTER với id mới
+      (data||[]).forEach(r => {
+        ROSTER[r.machine_code] = {worker_name:r.worker_name||'', note:r.note||'', id:r.id};
+      });
+    }catch(e){ console.warn(e); alert('Lỗi lưu: ' + e.message); }
   }
 
   editMode=false;
