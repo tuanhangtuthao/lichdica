@@ -128,6 +128,7 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 .kb.k2{background:var(--k2l);color:var(--k2);border-color:var(--k2)}
 .kb.k3{background:var(--k3l);color:var(--k3);border-color:var(--k3)}
 .kb.k4{background:var(--k4l);color:var(--k4);border-color:var(--k4)}
+.kb.k5{background:#eceff1;color:#455a64;border-color:#455a64}
 .kb.off{opacity:.35}
 
 /* LEGEND */
@@ -574,7 +575,8 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     <button class="kb k1"  onclick="setKip(1)">Kíp 1</button>
     <button class="kb k2"  onclick="setKip(2)">Kíp 2</button>
     <button class="kb k3"  onclick="setKip(3)">Kíp 3</button>
-    <button class="kb k4"  onclick="setKip(4)">HC / Cố Định</button>
+    <button class="kb k4"  onclick="setKip(4)">Hành Chính</button>
+    <button class="kb k5"  onclick="setKip(5)">Cố Định</button>
   </div>
   <div class="legend">
     <span style="font-weight:700;color:#555">Chú thích:</span>
@@ -1273,10 +1275,10 @@ function renderTable(){
       h += '</tr>';
     });
   }
-  if(kipF===0||kipF===4){
+  if(kipF===0||kipF===4||kipF===5){
     const kip4Emps = (EMPS[4]||[]).filter(e=>!q||e.name.toLowerCase().includes(q)||e.id.includes(q));
-    const hcEmps = kip4Emps.filter(e => e.fixed_shift === 'HC');
-    const rotEmps = kip4Emps.filter(e => e.fixed_shift !== 'HC');
+    const hcEmps  = kipF===5 ? [] : kip4Emps.filter(e => e.fixed_shift === 'HC');
+    const rotEmps = kipF===4 ? [] : kip4Emps.filter(e => e.fixed_shift !== 'HC');
 
     if(hcEmps.length>0){
       h += `<tr class="kh k4"><td colspan="${3+NDAYS}"><span>▣ HÀNH CHÍNH · ${hcEmps.length} NV</span></td></tr>`;
@@ -2138,7 +2140,7 @@ function setKip(k){
   kipF=k;
   document.querySelectorAll('.kb').forEach(b=>b.classList.remove('off'));
   if(k!==0){
-    const cls = k===1?'k1':k===2?'k2':k===3?'k3':'k4';
+    const cls = k===1?'k1':k===2?'k2':k===3?'k3':k===4?'k4':'k5';
     document.querySelectorAll('.kb').forEach(b=>{
       if(!b.classList.contains(cls)&&!b.classList.contains('all')) b.classList.add('off');
     });
