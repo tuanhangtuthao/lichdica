@@ -565,8 +565,8 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 <!-- TAB 4: CÀI ĐẶT -->
 <div class="page" id="page-settings">
   <div style="display:flex;position:sticky;top:var(--nav-h);z-index:10;box-shadow:0 2px 4px rgba(0,0,0,.05);overflow-x:auto">
-    <button id="sAccOT"    onclick="showSettingsGroup('ot')"    style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#e8eaf6;color:#1a237e;transition:.15s;line-height:1.5">⏰<br>Tăng Ca</button>
-    <button id="sAccLeave" onclick="showSettingsGroup('leave')" style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5;position:relative">🏖️<br>Duyệt Đơn<span id="leaveBadge" style="display:none;position:absolute;top:3px;right:4px;background:#e53935;color:white;border-radius:10px;padding:1px 5px;font-size:9px">0</span></button>
+    <button id="sAccOT"    onclick="showSettingsGroup('ot')"    style="display:none;flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#e8eaf6;color:#1a237e;transition:.15s;line-height:1.5">⏰<br>Tăng Ca</button>
+    <button id="sAccLeave" onclick="showSettingsGroup('leave')" style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#e8eaf6;color:#1a237e;border-left:1px solid #eee;transition:.15s;line-height:1.5;position:relative">🏖️<br>Duyệt Đơn<span id="leaveBadge" style="display:none;position:absolute;top:3px;right:4px;background:#e53935;color:white;border-radius:10px;padding:1px 5px;font-size:9px">0</span></button>
     <button id="sAccEmp"   onclick="showSettingsGroup('emp')"   style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">👤<br>Nhân Viên</button>
     <button id="sAccSched" onclick="showSettingsGroup('sched')" style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">🔄<br>Phân Ca</button>
     <button id="sAccHol"   onclick="showSettingsGroup('hol')"   style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">📅<br>Ngày Lễ</button>
@@ -2130,7 +2130,7 @@ function _goTab(tab){
   document.getElementById('page-'+tab).classList.add('active');
   if(tab==='summary')  renderSummary();
   if(tab==='tanca')    { renderOtBoard(); }
-  if(tab==='settings'){ buildEmpSelect(); try{renderOvertime();}catch(_){} renderHolList(); buildPsEmpSelect(); renderEmpSched(); renderEmpMg(); renderLeaveReqs(); }
+  if(tab==='settings'){ buildEmpSelect(); renderHolList(); buildPsEmpSelect(); renderEmpSched(); renderEmpMg(); renderLeaveReqs(); showSettingsGroup('leave'); }
 }
 
 function renderLeaveReqs() {
