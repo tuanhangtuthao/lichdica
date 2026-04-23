@@ -447,6 +447,10 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     padding:0!important;width:100%!important;
     grid-column:1/-1!important;
   }
+  /* OT và Leave chỉ có 1 cột nội dung → dùng flex column thay grid */
+  #sGroupOT, #sGroupLeave {
+    display:flex!important;flex-direction:column!important;gap:0!important;
+  }
   #sGroupOT .settings-card, #sGroupLeave .settings-card,
   #sGroupEmp .settings-card,
   #sGroupSched .settings-card, #sGroupHol .settings-card,
