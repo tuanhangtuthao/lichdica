@@ -773,19 +773,28 @@ async function saveAll(){
 
   if(SB_OK){
     try{
-      // 1 request duy nhất thay vì N request riêng lẻ
-      const rows = allCodes.map(code => {
-        const d = ROSTER[code]||{worker_name:'',note:''};
-        return {kip:curKip, date:curDate, machine_code:code,
-                worker_name:d.worker_name.trim(), note:d.note.trim()};
-      });
-      const {data,error} = await sb.from('shift_roster')
-        .upsert(rows, {onConflict:'kip,date,machine_code'}).select();
-      if(error) throw error;
-      // Cập nhật lại ROSTER với id mới
-      (data||[]).forEach(r => {
-        ROSTER[r.machine_code] = {worker_name:r.worker_name||'', note:r.note||'', id:r.id};
-      });
+      // Bước 1: Xóa toàn bộ record ngày+kíp hiện tại
+      const {error:delErr} = await sb.from('shift_roster')
+        .delete().eq('kip',curKip).eq('date',curDate);
+      if(delErr) throw delErr;
+
+      // Bước 2: Insert lại toàn bộ (chỉ các ô có tên)
+      const rows = allCodes
+        .map(code => {
+          const d = ROSTER[code]||{worker_name:'',note:''};
+          return {kip:curKip, date:curDate, machine_code:code,
+                  worker_name:d.worker_name.trim(), note:d.note.trim()};
+        })
+        .filter(r => r.worker_name !== ''); // chỉ lưu ô có điền tên
+
+      if(rows.length > 0){
+        const {data,error:insErr} = await sb.from('shift_roster').insert(rows).select();
+        if(insErr) throw insErr;
+        // Cập nhật id mới vào ROSTER
+        (data||[]).forEach(r => {
+          ROSTER[r.machine_code] = {worker_name:r.worker_name||'', note:r.note||'', id:r.id};
+        });
+      }
     }catch(e){ console.warn(e); alert('Lỗi lưu: ' + e.message); }
   }
 
