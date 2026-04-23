@@ -1015,15 +1015,27 @@ const SLBL  = s => ({S:'Sáng',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:
 function empShift(e, d) {
   if (isHol(d)) return 'L';
   const isSun = d.getDay() === 0;
+
+  // 1. Kiểm tra ưu tiên lịch tay (Phân ca/Nghỉ đè) cho MỌI nhân viên
+  const dk = dKey(d);
+  const overrides = EMP_SCHED.filter(s => s.emp_id === e.id && s.start_date <= dk && dk <= s.end_date);
+  if (overrides.length > 0) {
+    // Ưu tiên dòng phân ca xếp sau cùng (id lớn nhất)
+    overrides.sort((a, b) => b.id - a.id);
+    return overrides[0].shift;
+  }
+
+  // 2. Chế độ Cố Định
   if (e.fixed_shift === 'HC') return isSun ? 'N' : 'HC';
   if (e.fixed_shift === 'S')  return isSun ? 'N' : 'S';
   if (e.fixed_shift === 'C')  return isSun ? 'N' : 'C';
+  
+  // 3. Chế độ Ca Xoay (mặc định chưa gán lịch -> UN/N)
   if (e.kip === 4) {
-    const dk = dKey(d);
-    const entry = EMP_SCHED.find(s => s.emp_id === e.id && s.start_date <= dk && dk <= s.end_date);
-    if (entry) return entry.shift;
     return isSun ? 'N' : 'UN';
   }
+  
+  // 4. Các Kíp thường
   return getShift(e.kip, d);
 }
 const GRP_LABEL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',4:'Hành Chính / Cố Định'};
@@ -1415,10 +1427,11 @@ function renderEmpMg(){
 function buildPsEmpSelect(){
   const sel=document.getElementById('psEmp');
   const cur=sel.value;
-  sel.innerHTML='<option value="">-- Chọn nhân viên Ca Xoay --</option>';
-  (EMPS[4]||[]).filter(e=>e.fixed_shift!=='HC').forEach(e=>{
+  sel.innerHTML='<option value="">-- Chọn nhân viên (để gán ca/nghỉ đè) --</option>';
+  allEmps().forEach(e=>{
     const opt=document.createElement('option');
-    opt.value=e.id; opt.textContent=`${e.id} – ${e.name}`;
+    const kipLabel = e.kip === 4 ? (e.fixed_shift ? 'Cố định' : 'Ca Xoay') : `Kíp ${e.kip}`;
+    opt.value=e.id; opt.textContent=`[${kipLabel}] ${e.id} – ${e.name}`;
     sel.appendChild(opt);
   });
   sel.value=cur||'';
@@ -1451,15 +1464,48 @@ async function addEmpSched(){
   if(!emp_id||!start_date){alert('Chọn nhân viên và ngày bắt đầu!');return;}
   if(end_date<start_date){alert('Ngày kết thúc phải sau ngày bắt đầu!');return;}
   const emp_name=(allEmps().find(e=>e.id===emp_id)||{}).name||emp_id;
-  const row={emp_id,emp_name,start_date,end_date,shift};
-  if(SB_OK){
-    const {data,error}=await sb.from('emp_schedule').insert(row).select();
-    if(error){alert('Lỗi: '+error.message);return;}
-    EMP_SCHED.push(data[0]);
-  } else {
-    EMP_SCHED.push({...row,id:Date.now()});
+  
+  const btn = event.target || document.querySelector('#sGroupSched .btn-pri');
+  if(btn) { btn.disabled=true; btn.textContent='Đang lưu...'; }
+
+  try {
+    // 1. Dọn dẹp chồng lấn lịch ca cũ
+    const ov = EMP_SCHED.filter(x => x.emp_id === emp_id && x.start_date <= end_date && x.end_date >= start_date);
+    for(const r of ov) {
+      if(r.start_date < start_date && r.end_date > end_date) {
+        const r1={...r, end_date:dKey(addD(new Date(start_date),-1))}, r2={...r, start_date:dKey(addD(new Date(end_date),1))};
+        if(SB_OK) {
+          await sb.from('emp_schedule').delete().eq('id', r.id);
+          delete r1.id; delete r2.id;
+          await sb.from('emp_schedule').insert([r1, r2]);
+        }
+      } else if(r.start_date < start_date) {
+        if(SB_OK) await sb.from('emp_schedule').update({end_date:dKey(addD(new Date(start_date),-1))}).eq('id', r.id);
+      } else if(r.end_date > end_date) {
+        if(SB_OK) await sb.from('emp_schedule').update({start_date:dKey(addD(new Date(end_date),1))}).eq('id', r.id);
+      } else {
+        if(SB_OK) await sb.from('emp_schedule').delete().eq('id', r.id);
+      }
+    }
+
+    // 2. Thêm lịch mới
+    const row={emp_id,emp_name,start_date,end_date,shift};
+    if(SB_OK){
+      await sb.from('emp_schedule').insert(row);
+      const {data:esData} = await sb.from('emp_schedule').select('*').order('start_date');
+      EMP_SCHED = esData || [];
+    } else {
+      EMP_SCHED.push({...row,id:Date.now()});
+    }
+    
+    renderAll();
+    renderEmpSched();
+    alert('Thêm phân ca / nghỉ đè thành công!');
+  } catch(e) {
+    alert('Lỗi khi lưu phân ca: ' + e.message);
+  } finally {
+    if(btn) { btn.disabled=false; btn.textContent='+ Thêm'; }
   }
-  renderEmpSched(); renderAll();
 }
 async function removeEmpSched(id){
   if(!confirm('Xóa phân ca này?'))return;
