@@ -62,11 +62,45 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
   box-shadow:0 -2px 10px rgba(0,0,0,.08)}
 .bot-nav .bnav{flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;cursor:pointer;padding:6px 4px;border:none;
-  background:none;color:#888;transition:.15s;font-family:inherit}
+  background:none;color:#888;transition:.15s;font-family:inherit;position:relative}
 .bot-nav .bnav .bicon{font-size:1.3rem;line-height:1}
 .bot-nav .bnav .blabel{font-size:.63rem;font-weight:600;white-space:nowrap}
 .bot-nav .bnav.active{color:var(--k1)}
 .bot-nav .bnav.active .bicon{transform:scale(1.1)}
+/* Nút Thêm */
+.bot-nav .bnav.more .bicon{font-size:1.1rem;background:#1a237e;color:#fff;
+  border-radius:50%;width:34px;height:34px;display:flex;align-items:center;
+  justify-content:center;box-shadow:0 3px 8px rgba(26,35,126,.4);transition:.2s}
+.bot-nav .bnav.more.open .bicon{background:#455a64;transform:rotate(45deg)}
+/* Bottom sheet overlay */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:210;
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet-overlay.show{opacity:1;pointer-events:all}
+/* Bottom sheet */
+.more-sheet{position:fixed;bottom:0;left:0;right:0;z-index:220;background:#fff;
+  border-radius:20px 20px 0 0;padding:12px 16px 32px;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1.2,.5,1)}
+.more-sheet.show{transform:translateY(0)}
+.more-sheet-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px}
+.more-sheet-title{font-size:.72rem;font-weight:700;color:#aaa;text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:12px}
+.more-sheet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.more-sheet-item{display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:14px 8px;border-radius:14px;cursor:pointer;background:#f5f7ff;
+  border:1.5px solid transparent;transition:.15s;text-decoration:none;color:inherit}
+.more-sheet-item:active{background:#e8eaf6;border-color:#c5cae9}
+.more-sheet-item .msi-icon{font-size:1.55rem;line-height:1}
+.more-sheet-item .msi-label{font-size:.72rem;font-weight:700;color:#333;text-align:center}
+.more-sheet-item .msi-sub{font-size:.63rem;color:#999;text-align:center}
+.more-sheet-divider{height:1px;background:#f0f0f0;margin:4px 0 12px}
+.more-sheet-admin{display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:#fff8e1;border-radius:12px;cursor:pointer;border:1.5px solid #ffe082}
+.more-sheet-admin:active{background:#fff3cd}
+.more-sheet-admin .msa-icon{font-size:1.35rem}
+.more-sheet-admin .msa-body .msa-label{font-size:.83rem;font-weight:700;color:#e65100}
+.more-sheet-admin .msa-body .msa-sub{font-size:.7rem;color:#999}
+.more-sheet-admin .msa-arrow{margin-left:auto;color:#bbb;font-size:1.1rem}
+.msa-cnt{background:#e53935;color:#fff;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:5px}
 
 /* PAGES */
 .page{display:none;padding-bottom:calc(var(--nav-h) + 8px);height:100%;overflow-y:auto}
@@ -717,11 +751,49 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   <button class="bnav" onclick="showTab('tanca')">
     <span class="bicon">⏰</span><span class="blabel">Tăng Ca</span>
   </button>
-  <button class="bnav" onclick="showTab('settings')" style="position:relative">
+  <button class="bnav" onclick="showTab('settings')">
     <span class="bicon">⚙️</span><span class="blabel">Quản Lý</span>
-    <span id="settingsBadgeBot" style="display:none;position:absolute;top:5px;right:12px;background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span>
+    <span id="settingsBadgeBot" style="display:none;position:absolute;top:5px;right:calc(50% - 18px);background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span>
+  </button>
+  <button class="bnav more" id="btnMore" onclick="toggleMoreSheet()">
+    <span class="bicon">＋</span><span class="blabel">Thêm</span>
   </button>
 </nav>
+
+<!-- BOTTOM SHEET OVERLAY -->
+<div class="sheet-overlay" id="moreOverlay" onclick="closeMoreSheet()"></div>
+
+<!-- BOTTOM SHEET: THÊM -->
+<div class="more-sheet" id="moreSheet">
+  <div class="more-sheet-handle"></div>
+  <div class="more-sheet-title">Tính năng khác</div>
+  <div class="more-sheet-grid">
+    <a href="xin-nghi.html" class="more-sheet-item">
+      <span class="msi-icon">🏖️</span>
+      <span class="msi-label">Xin Nghỉ</span>
+      <span class="msi-sub">Tạo đơn online</span>
+    </a>
+    <a href="rating.html" class="more-sheet-item">
+      <span class="msi-icon">🏆</span>
+      <span class="msi-label">Đánh Giá</span>
+      <span class="msi-sub">Nhân viên</span>
+    </a>
+    <a href="nhansu-ca.html" class="more-sheet-item">
+      <span class="msi-icon">👷</span>
+      <span class="msi-label">Nhân Sự Ca</span>
+      <span class="msi-sub">Trong ca hôm nay</span>
+    </a>
+  </div>
+  <div class="more-sheet-divider"></div>
+  <div class="more-sheet-admin" onclick="closeMoreSheet();showTab('settings')">
+    <span class="msa-icon">⚙️</span>
+    <div class="msa-body">
+      <div class="msa-label">Quản Lý <span class="msa-cnt" id="msaAdminBadge" style="display:none">0</span></div>
+      <div class="msa-sub">Duyệt đơn · Phân ca · Nhân viên</div>
+    </div>
+    <span class="msa-arrow">›</span>
+  </div>
+</div>
 
 <!-- QUICK EDIT – PASSWORD GATE -->
 <div class="qmodal-overlay" id="qePwModal" onclick="if(event.target===this)closeQePw()">
@@ -2080,8 +2152,29 @@ const SETTINGS_PASS = '741852';
 let unlocked = false;
 
 
+function toggleMoreSheet(){
+  document.getElementById('moreSheet').classList.contains('show') ? closeMoreSheet() : openMoreSheet();
+}
+function openMoreSheet(){
+  document.getElementById('moreSheet').classList.add('show');
+  document.getElementById('moreOverlay').classList.add('show');
+  document.getElementById('btnMore').classList.add('open');
+}
+function closeMoreSheet(){
+  document.getElementById('moreSheet').classList.remove('show');
+  document.getElementById('moreOverlay').classList.remove('show');
+  document.getElementById('btnMore').classList.remove('open');
+}
+// Swipe down để đóng sheet
+(function(){
+  let sy=0;
+  document.getElementById('moreSheet').addEventListener('touchstart',e=>sy=e.touches[0].clientY,{passive:true});
+  document.getElementById('moreSheet').addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy>60)closeMoreSheet();},{passive:true});
+})();
+
 function showTab(tab){
   if(tab==='settings'&&!unlocked){ openPw(); return; }
+  closeMoreSheet();
   _goTab(tab);
 }
 function showSettingsGroup(g) {
@@ -2115,8 +2208,8 @@ function renderLeaveReqs() {
   // Badge trong tab Duyệt Đơn
   const badge = document.getElementById('leaveBadge');
   if (badge) { badge.textContent = cnt; badge.style.display = cnt > 0 ? 'inline-block' : 'none'; }
-  // Badge trên tab Quản Lý (top + bottom nav)
-  ['settingsBadgeTop','settingsBadgeBot'].forEach(id => {
+  // Badge trên tab Quản Lý (top + bottom nav + sheet admin)
+  ['settingsBadgeTop','settingsBadgeBot','msaAdminBadge'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.textContent = cnt; el.style.display = cnt > 0 ? 'inline-block' : 'none'; }
   });
