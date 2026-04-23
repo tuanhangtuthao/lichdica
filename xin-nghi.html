@@ -16,8 +16,11 @@
   .form-label{display:block;font-size:.8rem;color:#555;font-weight:700;margin-bottom:6px}
   .form-input{width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.95rem;background:#fafafa;transition:.2s;outline:none}
   .form-input:focus{border-color:#1a237e;background:#fff;box-shadow:0 0 0 3px rgba(26,35,126,.1)}
-  .date-row{display:flex;gap:12px}
+  .date-row{display:flex;flex-direction:column;gap:0}
   .date-row .form-group{flex:1}
+  @media(min-width:400px){
+    .date-row{flex-direction:row;gap:12px}
+  }
   .btn-submit{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(90deg,#1a237e,#3949ab);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s;margin-top:10px;box-shadow:0 4px 15px rgba(26,35,126,.3)}
   .btn-submit:active{transform:scale(0.97)}
   .btn-submit:disabled{background:#b0bec5;box-shadow:none;cursor:not-allowed}
