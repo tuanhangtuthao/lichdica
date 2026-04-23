@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Đăng Ký Nghỉ Phép</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:'Segoe UI',sans-serif}
+  body{background:linear-gradient(135deg,#f0f2f5,#e8eaf6);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px}
+  .hdr{width:100%;max-width:400px;text-align:center;padding:10px 0 20px}
+  .hdr h1{font-size:1.4rem;color:#1a237e;margin-bottom:4px}
+  .hdr p{font-size:.85rem;color:#666}
+  .card{background:#fff;width:100%;max-width:400px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:24px;position:relative;overflow:hidden}
+  .top-accent{position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#1a237e,#3949ab)}
+  .form-group{margin-bottom:16px}
+  .form-label{display:block;font-size:.8rem;color:#555;font-weight:700;margin-bottom:6px}
+  .form-input{width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.95rem;background:#fafafa;transition:.2s;outline:none}
+  .form-input:focus{border-color:#1a237e;background:#fff;box-shadow:0 0 0 3px rgba(26,35,126,.1)}
+  .date-row{display:flex;gap:12px}
+  .date-row .form-group{flex:1}
+  .btn-submit{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(90deg,#1a237e,#3949ab);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s;margin-top:10px;box-shadow:0 4px 15px rgba(26,35,126,.3)}
+  .btn-submit:active{transform:scale(0.97)}
+  .btn-submit:disabled{background:#b0bec5;box-shadow:none;cursor:not-allowed}
+  .msg-box{margin-top:16px;padding:12px;border-radius:10px;font-size:.85rem;text-align:center;display:none;font-weight:600}
+  .msg-success{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9}
+  .msg-error{background:#ffebee;color:#c62828;border:1px solid #ffcdd2}
+  #loader{display:none;align-items:center;justify-content:center;gap:8px}
+  .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>🏖️ Đơn Xin Nghỉ Phép</h1>
+  <p>Điền thông tin để gửi yêu cầu nghỉ đến quản lý</p>
+</div>
+
+<div class="card">
+  <div class="top-accent"></div>
+  
+  <div class="form-group">
+    <label class="form-label">Tên hoặc Mã số nhân viên</label>
+    <input type="text" class="form-input" id="empSearch" list="empDatalist" placeholder="Nhập để tìm kiếm..." onchange="onEmpChange()" autocomplete="off">
+    <datalist id="empDatalist"></datalist>
+  </div>
+
+  <!-- Trường ẩn chỉ dùng để theo dõi MSNV chính xác -->
+  <input type="hidden" id="empIdVal">
+  <input type="hidden" id="empNameVal">
+
+  <div class="date-row">
+    <div class="form-group">
+      <label class="form-label">Từ ngày</label>
+      <input type="date" class="form-input" id="dtFrom" onchange="syncDate()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Đến ngày</label>
+      <input type="date" class="form-input" id="dtTo">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Lý do cụ thể</label>
+    <textarea class="form-input" id="reason" rows="3" placeholder="Ví dụ: Về quê có việc gia đình..."></textarea>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
+    <span id="btnText">Gửi Đơn Xin Nghỉ</span>
+    <div id="loader"><div class="spinner"></div> Đang gửi...</div>
+  </button>
+
+  <div id="msgBox" class="msg-box"></div>
+</div>
+
+<div style="margin-top:20px;font-size:.8rem;color:#888;text-align:center">
+  <a href="index.html" style="color:#5c6bc0;text-decoration:none;font-weight:600">← Quay lại Lịch Ca</a><br><br>
+  © Lịch Đi Ca Phân Xưởng 1
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+let allEmps = [];
+
+// Thiết lập mặc định ngày hôm nay
+window.onload = async () => {
+  const d = new Date();
+  const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('dtFrom').value = ds;
+  document.getElementById('dtTo').value = ds;
+
+  try {
+    const { data, error } = await sb.from('employees').select('id, name, role, kip');
+    if(data) {
+      allEmps = data;
+      const dl = document.getElementById('empDatalist');
+      dl.innerHTML = allEmps.map(e => `<option value="${e.id} - ${e.name}"></option>`).join('');
+    }
+  } catch(e) { console.error('Lỗi tải danh sách', e); }
+};
+
+function onEmpChange() {
+  const v = document.getElementById('empSearch').value;
+  const match = v.match(/^(\w+)\s+-\s+(.+)$/);
+  if (match) {
+    document.getElementById('empIdVal').value = match[1];
+    document.getElementById('empNameVal').value = match[2];
+  } else {
+    document.getElementById('empIdVal').value = '';
+    document.getElementById('empNameVal').value = '';
+  }
+}
+
+function syncDate() {
+  const df = document.getElementById('dtFrom').value;
+  const dt = document.getElementById('dtTo').value;
+  if (df && (!dt || dt < df)) {
+    document.getElementById('dtTo').value = df;
+  }
+}
+
+function showMsg(msg, isErr=false) {
+  const mb = document.getElementById('msgBox');
+  mb.textContent = msg;
+  mb.className = 'msg-box ' + (isErr ? 'msg-error' : 'msg-success');
+  mb.style.display = 'block';
+}
+
+async function submitForm() {
+  const empSearch = document.getElementById('empSearch').value.trim();
+  const empId = document.getElementById('empIdVal').value || empSearch;
+  const empName = document.getElementById('empNameVal').value || empSearch;
+  const dFrom = document.getElementById('dtFrom').value;
+  const dTo = document.getElementById('dtTo').value;
+  const reason = document.getElementById('reason').value.trim();
+
+  if(!empSearch) { showMsg('Vui lòng chọn hoặc nhập Tên nhân viên!', true); return; }
+  if(!dFrom || !dTo) { showMsg('Vui lòng chọn ngày nghỉ!', true); return; }
+  if(dTo < dFrom) { showMsg('Ngày rà soát không hợp lệ!', true); return; }
+  if(!reason) { showMsg('Vui lòng ghi rõ lý do nghỉ.', true); return; }
+
+  const btn = document.getElementById('btnSubmit');
+  document.getElementById('btnText').style.display = 'none';
+  document.getElementById('loader').style.display = 'flex';
+  btn.disabled = true;
+  document.getElementById('msgBox').style.display = 'none';
+
+  try {
+    const { error } = await sb.from('leave_requests').insert({
+      emp_id: empId,
+      emp_name: empName,
+      start_date: dFrom,
+      end_date: dTo,
+      reason: reason,
+      status: 'pending'
+    });
+    
+    if(error) throw new Error(error.message);
+    
+    showMsg('Gửi đơn xin nghỉ thành công! Chờ Quản lý duyệt.');
+    document.getElementById('reason').value = '';
+  } catch(e) {
+    showMsg('Lỗi: ' + e.message, true);
+  } finally {
+    document.getElementById('btnText').style.display = 'inline';
+    document.getElementById('loader').style.display = 'none';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

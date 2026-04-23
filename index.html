@@ -498,6 +498,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   </div>
   <div class="hdr-right" style="display:flex!important;align-items:center;gap:8px">
     <span style="font-size:.7rem;opacity:.8;text-align:right">Làm 4 ngày · Nghỉ 2 ngày<br>Sáng / Chiều luân phiên</span>
+    <a href="xin-nghi.html" class="btn-rating" style="background:rgba(255,255,255,.25)" title="Tạo đơn xin nghỉ online">🏖️ Xin Nghỉ</a>
     <a href="rating.html" class="btn-rating" title="Đánh giá nhân viên">🏆</a>
     <a href="nhansu-ca.html" class="btn-rating" title="Nhân sự trong ca">👷</a>
   </div>
@@ -509,6 +510,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   <div class="tab"        onclick="showTab('summary')">📊 Hôm Nay</div>
   <div class="tab"        onclick="showTab('tanca')">⏰ Tăng Ca</div>
   <div class="tab"        onclick="showTab('settings')">⚙️ Cài Đặt</div>
+  <a href="xin-nghi.html" class="tab tab-rating" title="Tạo đơn xin nghỉ online">🏖️ Xin Nghỉ</a>
   <a href="rating.html" class="tab tab-rating" title="Đánh giá nhân viên">🏆 Đánh Giá</a>
   <a href="nhansu-ca.html" class="tab tab-rating" style="color:#2e7d32!important" title="Nhân sự trong ca">👷 Nhân Sự Ca</a>
 </div>
@@ -555,11 +557,12 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 
 <!-- TAB 4: CÀI ĐẶT -->
 <div class="page" id="page-settings">
-  <div style="display:flex;position:sticky;top:var(--nav-h);z-index:10;box-shadow:0 2px 4px rgba(0,0,0,.05)">
-    <button id="sAccOT"    onclick="showSettingsGroup('ot')"    style="flex:1;padding:10px 4px;font-size:.72rem;font-weight:700;border:none;cursor:pointer;background:#e8eaf6;color:#1a237e;transition:.15s;line-height:1.5">⏰<br>Tăng Ca</button>
-    <button id="sAccEmp"   onclick="showSettingsGroup('emp')"   style="flex:1;padding:10px 4px;font-size:.72rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">👤<br>Nhân Viên</button>
-    <button id="sAccSched" onclick="showSettingsGroup('sched')" style="flex:1;padding:10px 4px;font-size:.72rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">🔄<br>Phân Ca</button>
-    <button id="sAccHol"   onclick="showSettingsGroup('hol')"   style="flex:1;padding:10px 4px;font-size:.72rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">📅<br>Ngày Lễ</button>
+  <div style="display:flex;position:sticky;top:var(--nav-h);z-index:10;box-shadow:0 2px 4px rgba(0,0,0,.05);overflow-x:auto">
+    <button id="sAccOT"    onclick="showSettingsGroup('ot')"    style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#e8eaf6;color:#1a237e;transition:.15s;line-height:1.5">⏰<br>Tăng Ca</button>
+    <button id="sAccLeave" onclick="showSettingsGroup('leave')" style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5;position:relative">🏖️<br>Duyệt Đơn<span id="leaveBadge" style="display:none;position:absolute;top:3px;right:4px;background:#e53935;color:white;border-radius:10px;padding:1px 5px;font-size:9px">0</span></button>
+    <button id="sAccEmp"   onclick="showSettingsGroup('emp')"   style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">👤<br>Nhân Viên</button>
+    <button id="sAccSched" onclick="showSettingsGroup('sched')" style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">🔄<br>Phân Ca</button>
+    <button id="sAccHol"   onclick="showSettingsGroup('hol')"   style="flex:1;min-width:65px;padding:10px 2px;font-size:.7rem;font-weight:700;border:none;cursor:pointer;background:#fff;color:#777;border-left:1px solid #eee;transition:.15s;line-height:1.5">📅<br>Ngày Lễ</button>
   </div>
   <div id="sGroupOT" class="settings-wrap" style="margin:0;border-radius:0">
     <div class="settings-card" style="border-radius:0;margin:0;box-shadow:none;border-bottom:1px solid #e8eaf6">
@@ -585,6 +588,14 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
         <input type="month" id="otMonthFilter" class="form-input" style="width:140px;padding:6px 10px" onchange="renderOvertime()">
       </div>
       <div class="ot-wrap" id="overtimeList" style="max-height:280px;overflow-y:auto"></div>
+    </div>
+  </div>
+  <div id="sGroupLeave" class="settings-wrap" style="display:none;margin:0;border-radius:0">
+    <div class="settings-card full" style="border-radius:0;margin:0;box-shadow:none">
+      <div class="s-section-head" style="background:linear-gradient(90deg,#0277bd,#01579b);color:#fff;border-radius:0;padding:11px 14px;font-size:.88rem;font-weight:700">🏖️ Đơn Xin Nghỉ Mới</div>
+      <div class="settings-body" style="padding:0">
+        <ul id="leaveReqList" class="emp-list-manage" style="max-height:450px;padding:0"></ul>
+      </div>
     </div>
   </div>
   <div id="sGroupEmp" class="settings-wrap" style="display:none;margin:0;border-radius:0">
@@ -1017,6 +1028,8 @@ async function loadData() {
     OVERTIME = otData || [];
     const {data:esData} = await sb.from('emp_schedule').select('*').order('start_date');
     EMP_SCHED = esData || [];
+    const {data:reqData} = await sb.from('leave_requests').select('*').eq('status','pending').order('created_at',{ascending:false});
+    LEAVE_REQS = reqData || [];
   } catch(e) {
     console.warn('Lỗi Supabase:', e.message, '– dùng dữ liệu mặc định');
     const d=cp(DEF_EMPS);
@@ -1074,6 +1087,7 @@ function allEmps(){ const a=[]; [1,2,3,4].forEach(k=>(EMPS[k]||[]).forEach(e=>a.
 let startDate, searchQ='', kipF=0, lookQ='', activeTab='schedule';
 let OVERTIME = [];
 let EMP_SCHED = [];
+let LEAVE_REQS = [];
 
 // ── GIỜ TĂNG CA MẶC ĐỊNH THEO CA ──────────
 const OT_START = { C1:'14:00', C2:'10:00', C3:'18:00', S:'14:00', C:'22:00', HC1:'06:00', HC2:'17:00' };
@@ -2088,9 +2102,9 @@ function showTab(tab){
   _goTab(tab);
 }
 function showSettingsGroup(g) {
-  ['ot','emp','sched','hol'].forEach(x => {
-    document.getElementById('sGroup' + (x==='ot'?'OT':x==='emp'?'Emp':x==='sched'?'Sched':'Hol')).style.display = (x === g) ? 'flex' : 'none';
-    const btn = document.getElementById('sAcc' + (x==='ot'?'OT':x==='emp'?'Emp':x==='sched'?'Sched':'Hol'));
+  ['ot','leave','emp','sched','hol'].forEach(x => {
+    document.getElementById('sGroup' + (x==='ot'?'OT':x==='leave'?'Leave':x==='emp'?'Emp':x==='sched'?'Sched':'Hol')).style.display = (x === g) ? 'flex' : 'none';
+    const btn = document.getElementById('sAcc' + (x==='ot'?'OT':x==='leave'?'Leave':x==='emp'?'Emp':x==='sched'?'Sched':'Hol'));
     if(x === g) {
       btn.style.background = '#e8eaf6'; btn.style.color = '#1a237e';
     } else {
@@ -2099,6 +2113,7 @@ function showSettingsGroup(g) {
   });
   if(g === 'emp') renderEmpMg();
   if(g === 'ot') renderOvertime();
+  if(g === 'leave') renderLeaveReqs();
 }
 function _goTab(tab){
   activeTab=tab;
@@ -2108,7 +2123,86 @@ function _goTab(tab){
   document.getElementById('page-'+tab).classList.add('active');
   if(tab==='summary')  renderSummary();
   if(tab==='tanca')    { renderOtBoard(); }
-  if(tab==='settings'){ buildEmpSelect(); try{renderOvertime();}catch(_){} renderHolList(); buildPsEmpSelect(); renderEmpSched(); renderEmpMg(); }
+  if(tab==='settings'){ buildEmpSelect(); try{renderOvertime();}catch(_){} renderHolList(); buildPsEmpSelect(); renderEmpSched(); renderEmpMg(); renderLeaveReqs(); }
+}
+
+function renderLeaveReqs() {
+  const list = document.getElementById('leaveReqList');
+  const badge = document.getElementById('leaveBadge');
+  if (badge) {
+    badge.textContent = LEAVE_REQS.length;
+    badge.style.display = LEAVE_REQS.length > 0 ? 'inline-block' : 'none';
+  }
+  if (!list) return;
+  
+  if (LEAVE_REQS.length === 0) {
+    list.innerHTML = '<li style="color:#aaa;padding:24px;text-align:center;font-size:.85rem">Không có đơn xin nghỉ nào đăng chờ duyệt.</li>';
+    return;
+  }
+  
+  list.innerHTML = LEAVE_REQS.map(r => `
+    <li class="emp-manage-item" style="padding:16px;flex-direction:column;align-items:flex-start;border-bottom:6px solid #f0f2f5">
+      <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:8px">
+        <span style="font-weight:700;color:#1a237e;font-size:.9rem">${r.emp_name} <span style="color:#777;font-weight:400;font-size:.75rem">(${r.emp_id})</span></span>
+        <span style="font-size:.7rem;color:#777;background:#f5f5f5;padding:2px 6px;border-radius:4px">${new Date(r.created_at).toLocaleDateString('vi-VN')}</span>
+      </div>
+      <div style="font-size:.85rem;margin-bottom:8px;color:#333">📅 Tới nghỉ: <b style="color:#d32f2f">${fmtD(new Date(r.start_date))}</b> ➔ <b style="color:#d32f2f">${fmtD(new Date(r.end_date))}</b></div>
+      <div style="font-size:.85rem;color:#444;background:#fff8e1;padding:8px 12px;border-radius:8px;width:100%;border-left:3px solid #ffb300"><b>Lý do:</b> ${r.reason}</div>
+      <div style="display:flex;gap:10px;margin-top:14px;width:100%">
+        <button class="btn btn-pri" style="flex:1;background:#2e7d32" onclick="approveLeave('${r.id}')">✅ Phê duyệt</button>
+        <button class="btn btn-sec" style="flex:1;color:#c62828;border-color:#ffcdd2;background:#ffebee" onclick="rejectLeave('${r.id}')">❌ Nhắc nhở/Từ chối</button>
+      </div>
+    </li>
+  `).join('');
+}
+
+async function approveLeave(id) {
+  if (!confirm('Chấp thuận cho nhân viên này nghỉ phép? Hệ thống sẽ cập nhật và xóa lịch làm việc vào những ngày này thành dạng Nghỉ Phép (NP).')) return;
+  const req = LEAVE_REQS.find(x => x.id === id);
+  if (!req) return;
+  try {
+    if(SB_OK) await sb.from('leave_requests').update({status: 'approved'}).eq('id', id);
+    
+    // Tự động Cập Nhật Lịch qua emp_schedule (shift = NP)
+    const from = req.start_date, to = req.end_date;
+    const ov = EMP_SCHED.filter(x => x.emp_id === req.emp_id && x.start_date <= to && x.end_date >= from);
+    for(const r of ov) {
+      if(r.start_date < from && r.end_date > to) {
+        const r1={...r, end_date:dKey(addD(new Date(from),-1))}, r2={...r, start_date:dKey(addD(new Date(to),1))};
+        if(SB_OK) {
+          await sb.from('emp_schedule').delete().eq('id', r.id);
+          delete r1.id; delete r2.id;
+          await sb.from('emp_schedule').insert([r1, r2]);
+        }
+      } else if(r.start_date < from) {
+        if(SB_OK) await sb.from('emp_schedule').update({end_date:dKey(addD(new Date(from),-1))}).eq('id', r.id);
+      } else if(r.end_date > to) {
+        if(SB_OK) await sb.from('emp_schedule').update({start_date:dKey(addD(new Date(to),1))}).eq('id', r.id);
+      } else {
+        if(SB_OK) await sb.from('emp_schedule').delete().eq('id', r.id);
+      }
+    }
+    if(SB_OK) {
+      await sb.from('emp_schedule').insert({emp_id: req.emp_id, emp_name: req.emp_name, start_date: req.start_date, end_date: req.end_date, shift: 'NP'});
+    }
+    await loadData();
+    renderAll();
+    if(activeTab==='settings') renderLeaveReqs();
+    alert('Đã phê duyệt thành công!');
+  } catch(e) {
+    alert('Lỗi: ' + e.message);
+  }
+}
+
+async function rejectLeave(id) {
+  if (!confirm('Từ chối đơn xin nghỉ này do sai sót hoặc vi phạm?')) return;
+  try {
+    if(SB_OK) await sb.from('leave_requests').update({status: 'rejected'}).eq('id', id);
+    await loadData();
+    if(activeTab==='settings') renderLeaveReqs();
+  } catch(e) {
+    alert('Lỗi: ' + e.message);
+  }
 }
 
 // ── QUICK EDIT LOGIC ────────────────────
