@@ -21,10 +21,10 @@
   --hdr-h:52px;
   --radius:10px;
   --shadow:0 2px 10px rgba(0,0,0,.09);
-   --col1-w:110px; --col2-w:46px; --col3-w:65px;
-   --col-d:34px;
+   --col1-w:110px; --col2-w:46px; --col3-w:80px;
+   --col-d:36px;
    --hdr1-h:36px; --hdr2-h:38px;
-   --tbl-fz: 10.5px;
+   --tbl-fz: 11px;
  }
 @media(min-width:768px){
   :root{ --col1-w:150px; --col2-w:60px; --col3-w:120px; --col-d:42px; --tbl-fz: 13px; }
@@ -194,29 +194,23 @@ thead tr:nth-child(2) th{height:var(--hdr2-h);top:var(--hdr1-h);z-index:125}
 tr.kh td{color:#fff;font-weight:700;text-align:left;padding:7px 10px;font-size:11.5px}
 
 /* Left Columns Sticky */
-.c1{min-width:var(--col1-w);width:var(--col1-w);text-align:left;border-left:1px solid #e8e8e8}
+.c1{position:sticky;left:0;z-index:30;min-width:var(--col1-w);width:var(--col1-w);text-align:left;border-left:1px solid #e8e8e8}
 .c2{min-width:var(--col2-w);width:var(--col2-w);border-left:1px solid #e8e8e8}
-.c3{position:sticky;left:0;z-index:30;min-width:var(--col3-w);width:var(--col3-w);text-align:left;border-left:1px solid #e8e8e8}
+.c3{min-width:var(--col3-w);width:var(--col3-w);text-align:left;border-left:1px solid #e8e8e8}
 
-th.c1, th.c2{background:#37474f}
-th.c3{z-index:140;background:#37474f}
-thead tr:nth-child(1) th.c3{z-index:145}
-thead tr:nth-child(2) th.c3{z-index:142}
+th.c1{z-index:140;background:#37474f}
+thead tr:nth-child(1) th.c1{z-index:145}
+thead tr:nth-child(2) th.c1{z-index:142}
+th.c2, th.c3{background:#37474f}
 
 td.c1, td.c2, td.c3{background:#fafafa}
-td.c3{border-right:2px solid #c5cae9}
+td.c1{border-right:2px solid #c5cae9}
 tbody tr:nth-child(even) td.c1, tbody tr:nth-child(even) td.c2, tbody tr:nth-child(even) td.c3{background:#f1f3f5}
 tbody tr.kh td.c1, tbody tr.kh td.c2, tbody tr.kh td.c3{background:inherit !important;border-right:none}
 tr.kh td{background:#1a237e}
 
 /* Month & Kip labels sticky scroll */
-tr.kh td span, .month-label{position:sticky;left:calc(var(--col3-w) + 10px);display:inline-block;white-space:nowrap}
-/* Mobile: ẩn STT và MSNV, chỉ giữ Họ Tên sticky */
-@media(max-width:767px){
-  .c1,.c2{display:none}
-  .c3{left:0}
-  tr.kh td span, .month-label{left:calc(var(--col3-w) + 6px)}
-}
+tr.kh td span, .month-label{position:sticky;left:calc(var(--col1-w) + 10px);display:inline-block;white-space:nowrap}
 
 /* Fix borders */
 tr:first-child td, tr:first-child th{border-top:1px solid #e8e8e8}
@@ -436,7 +430,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   .search-row{padding:0 24px 10px}
   .kip-row{padding:0 24px 10px}
   .legend{padding:0 24px 10px}
-  .c1{min-width:var(--col1-w)}.c2{}.c3{left:0}
+  .c1{min-width:var(--col1-w);left:0}.c2{}.c3{}
   thead tr:nth-child(1) th{top:0}
   thead tr:nth-child(2) th{top:var(--hdr1-h)}
   tr.kh td{top:calc(var(--hdr1-h) + var(--hdr2-h))}
