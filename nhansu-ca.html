@@ -424,6 +424,15 @@ function applyKipTheme(){
     d.textContent = `Ngày: ${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
   }
 }
+function refreshEmpDatalist(){
+  const dl = document.getElementById('empList');
+  dl.innerHTML = '';
+  getQaEmps().forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.name;
+    dl.appendChild(o);
+  });
+}
 function setShift(s){
   curShift = s;
   loadRoster();
@@ -449,7 +458,8 @@ async function loadRoster(){
   }
 
   applyKipTheme();
-  
+  refreshEmpDatalist();
+
   ROSTER={};
   if(SB_OK&&curDate){
     try{
