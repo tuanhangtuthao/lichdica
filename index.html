@@ -443,17 +443,20 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   /* Settings accordion groups: always full width */
   #page-settings { padding:0!important; }
   #page-settings > div:first-child { width:100%; }
-  #sGroupOT, #sGroupEmp, #sGroupSched, #sGroupHol {
+  #sGroupOT, #sGroupLeave, #sGroupEmp, #sGroupSched, #sGroupHol {
     padding:0!important;width:100%!important;
     grid-column:1/-1!important;
   }
-  #sGroupOT .settings-card, #sGroupEmp .settings-card,
+  #sGroupOT .settings-card, #sGroupLeave .settings-card,
+  #sGroupEmp .settings-card,
   #sGroupSched .settings-card, #sGroupHol .settings-card,
-  #sGroupEmp .settings-card.full, #sGroupSched .settings-card.full {
+  #sGroupEmp .settings-card.full, #sGroupSched .settings-card.full,
+  #sGroupLeave .settings-card.full {
     border-radius:0!important;margin:0!important;box-shadow:none!important;
     width:100%!important;max-width:100%!important;
   }
-  #sGroupOT .settings-body, #sGroupEmp .settings-body,
+  #sGroupOT .settings-body, #sGroupLeave .settings-body,
+  #sGroupEmp .settings-body,
   #sGroupSched .settings-body, #sGroupHol .settings-body {
     padding:16px 24px;
   }
