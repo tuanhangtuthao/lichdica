@@ -21,10 +21,10 @@
   --hdr-h:52px;
   --radius:10px;
   --shadow:0 2px 10px rgba(0,0,0,.09);
-   --col1-w:110px; --col2-w:46px; --col3-w:80px;
-   --col-d:36px;
+   --col1-w:110px; --col2-w:46px; --col3-w:65px;
+   --col-d:34px;
    --hdr1-h:36px; --hdr2-h:38px;
-   --tbl-fz: 11px;
+   --tbl-fz: 10.5px;
  }
 @media(min-width:768px){
   :root{ --col1-w:150px; --col2-w:60px; --col3-w:120px; --col-d:42px; --tbl-fz: 13px; }
@@ -197,6 +197,12 @@ tr.kh td{color:#fff;font-weight:700;text-align:left;padding:7px 10px;font-size:1
 .c1{min-width:var(--col1-w);width:var(--col1-w);text-align:left;border-left:1px solid #e8e8e8}
 .c2{min-width:var(--col2-w);width:var(--col2-w);border-left:1px solid #e8e8e8}
 .c3{position:sticky;left:0;z-index:30;min-width:var(--col3-w);width:var(--col3-w);text-align:left;border-left:1px solid #e8e8e8}
+/* Mobile: ẩn STT và MSNV, chỉ giữ Họ Tên sticky */
+@media(max-width:767px){
+  .c1,.c2{display:none}
+  .c3{left:0}
+  tr.kh td span, .month-label{left:calc(var(--col3-w) + 6px)}
+}
 
 th.c1, th.c2{background:#37474f}
 th.c3{z-index:140;background:#37474f}
