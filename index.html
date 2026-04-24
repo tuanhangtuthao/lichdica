@@ -2641,6 +2641,7 @@ function renderAll(){
     set('otMonthFilter', currMonth);
     set('otBoardMonth', currMonth);
     await loadData();
+    updateLeaveBadge();
   } catch(e) {
     console.error('Init error:', e);
   } finally {
