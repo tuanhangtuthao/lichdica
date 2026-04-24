@@ -2205,16 +2205,8 @@ function _goTab(tab){
 }
 
 function renderLeaveReqs() {
+  updateLeaveBadge();
   const list = document.getElementById('leaveReqList');
-  const cnt = LEAVE_REQS.length;
-  // Badge trong tab Duyệt Đơn
-  const badge = document.getElementById('leaveBadge');
-  if (badge) { badge.textContent = cnt; badge.style.display = cnt > 0 ? 'inline-block' : 'none'; }
-  // Badge trên tab Quản Lý (top + bottom nav + sheet admin)
-  ['settingsBadgeTop','settingsBadgeBot','msaAdminBadge'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.textContent = cnt; el.style.display = cnt > 0 ? 'inline-block' : 'none'; }
-  });
   if (!list) return;
   
   if (LEAVE_REQS.length === 0) {
@@ -2618,10 +2610,20 @@ function checkPw(){
   }
 }
 
+// ── BADGE ĐƠN XIN NGHỈ ─────────────────────
+function updateLeaveBadge(){
+  const cnt = (LEAVE_REQS||[]).length;
+  ['settingsBadgeTop','settingsBadgeBot','msaAdminBadge','leaveBadge'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent=cnt;el.style.display=cnt>0?'inline-block':'none';}
+  });
+}
+
 // ── RENDER ALL ─────────────────────────────
 function renderAll(){
   renderTable();
   if(activeTab==='summary') renderSummary();
+  updateLeaveBadge();
 }
 
 // ── KHỞI ĐỘNG ──────────────────────────────
