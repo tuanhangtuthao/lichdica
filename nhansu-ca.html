@@ -960,7 +960,7 @@ async function saveAll(){
       const rows = allCells
         .map(({cellId, code}) => {
           const d = ROSTER[cellId] || ROSTER[code] || {worker_name:'',note:''};
-          return {kip:curKip, date:curDate, machine_code:code, cell_id:cellId,
+          return {kip:curKip, date:curDate, machine_code:code,
                   worker_name:d.worker_name.trim(), note:d.note.trim()};
         })
         .filter(r => r.worker_name !== ''); // chỉ lưu ô có điền tên
