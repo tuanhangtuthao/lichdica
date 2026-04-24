@@ -321,6 +321,20 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 /* OT badge nhỏ trên từng nhân viên */
 .ot-sm{font-size:.67rem;font-weight:700;background:#fff3e0;color:#e65100;
   padding:2px 6px;border-radius:8px;white-space:nowrap;flex-shrink:0;line-height:1.4}
+/* ── ATTENDANCE CHIP ── */
+.att-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;
+  font-size:.7rem;font-weight:700;white-space:nowrap;flex-shrink:0;line-height:1.5;
+  transition:.15s;cursor:pointer;border:none;user-select:none}
+.att-chip.w {background:#e8f5e9;color:#1b5e20}
+.att-chip.w:active{background:#c8e6c9}
+.att-chip.np{background:#fff3e0;color:#e65100;cursor:default}
+.att-chip.vm{background:#ffebee;color:#c62828}
+.att-chip.vm:active{background:#ffcdd2}
+.att-chip.loading{opacity:.5;pointer-events:none}
+/* Dòng tổng điểm danh */
+.att-summary{font-size:.72rem;padding:6px 14px;background:#f8f9ff;
+  border-top:1px solid #edf0fb;color:#666;display:flex;gap:12px;flex-wrap:wrap}
+.att-summary span{font-weight:700}
 /* Banner tổng hợp tăng ca hôm nay */
 .ot-today-bar{margin:0 0 10px;padding:10px 14px;
   background:linear-gradient(90deg,#c62828,#e53935);color:#fff;border-radius:10px;
@@ -1101,9 +1115,9 @@ const DN    = ['CN','T2','T3','T4','T5','T6','T7'];
 const DFUL  = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
 const MN    = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const SNAME = {S:'Ca Sáng (6h-18h)',C:'Ca Chiều (18h-6h hôm sau)',N:'Nghỉ',L:'Nghỉ Lễ',
-               HC:'Hành Chính (7:30–16:30)',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',UN:'Chưa phân ca',NP:'Nghỉ Phép'};
-const SICON = {S:'☀️',C:'🌙',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③',NP:'🏖️'};
-const SLBL  = s => ({S:'Sáng',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',NP:'Nghỉ Phép'}[s]||'Nghỉ');
+               HC:'Hành Chính (7:30–16:30)',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',UN:'Chưa phân ca',NP:'Nghỉ Phép',VM:'Vắng Mặt'};
+const SICON = {S:'☀️',C:'🌙',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③',NP:'🏖️',VM:'🔴'};
+const SLBL  = s => ({S:'Sáng',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',NP:'Nghỉ Phép',VM:'Vắng Mặt'}[s]||'Nghỉ');
 // Tính ca cho từng nhân viên (hỗ trợ ca cố định)
 function empShift(e, d) {
   if (isHol(d)) return 'L';
@@ -1355,13 +1369,21 @@ function renderSummary(){
       <span class="sum-shift-badge">${SICON[s]} ${SLBL(s)}</span>
     </div><div class="sum-body">`;
 
+    // Đếm điểm danh cho cả kíp
+    let cntW=0, cntNP=0, cntVM=0;
+    kipEmps.forEach(e => {
+      const st = getAttStatus(e.id, dk);
+      if(st==='NP') cntNP++; else if(st==='VM') cntVM++; else cntW++;
+    });
+
     // Trưởng ca lên đầu
     leaders.forEach(e => {
       const ots = getEmpOtOnDate(e.id, dk);
       const otBadge = makeOtSmBadge(ots);
+      const attSt = getAttStatus(e.id, dk);
       sg += `<div class="sum-row leader">
         <span class="name">👑 ${e.name}</span>
-        <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${e.role}</span></span>
+        <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${e.role}</span>${attChipHtml(e.id,e.name,dk,attSt)}</span>
       </div>`;
     });
 
@@ -1371,14 +1393,19 @@ function renderSummary(){
       deptMap[dept].forEach(e => {
         const ots = getEmpOtOnDate(e.id, dk);
         const otBadge = makeOtSmBadge(ots);
+        const attSt = getAttStatus(e.id, dk);
         sg += `<div class="sum-row">
           <span class="name">${e.name}</span>
-          <span style="display:flex;align-items:center;gap:5px">${otBadge}</span>
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}${attChipHtml(e.id,e.name,dk,attSt)}</span>
         </div>`;
       });
     });
 
-    sg += '</div></div>';
+    sg += `</div><div class="att-summary">
+      <span style="color:#1b5e20">✅ ${cntW} đi làm</span>
+      ${cntNP?`<span style="color:#e65100">🏖️ ${cntNP} nghỉ phép</span>`:''}
+      ${cntVM?`<span style="color:#c62828">🔴 ${cntVM} vắng mặt</span>`:''}
+    </div></div>`;
   }
 
   // Hành chính & Cố định
@@ -1386,18 +1413,22 @@ function renderSummary(){
     const hcE = (EMPS[4]||[]).filter(e=>e.fixed_shift==='HC');
     const cdE = (EMPS[4]||[]).filter(e=>e.fixed_shift!=='HC');
     if(hcE.length>0){
+      let hcW=0,hcNP=0,hcVM=0;
+      hcE.forEach(e=>{const st=getAttStatus(e.id,dk);if(st==='NP')hcNP++;else if(st==='VM')hcVM++;else hcW++;});
       sg += `<div class="sum-card"><div class="sum-head k4">🏢 Hành Chính<span class="sum-shift-badge">${hcE.length} NV</span></div><div class="sum-body">`;
       hcE.forEach(e => {
         const s=empShift(e,today);
         const ots = getEmpOtOnDate(e.id, dk);
         const otBadge = makeOtSmBadge(ots);
+        const attSt = getAttStatus(e.id, dk);
         sg += `<div class="sum-row"><span class="name" style="cursor:pointer;color:#00695c" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca">${e.name}</span>
-          <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span></span></div>`;
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span>${attChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
-      sg += '</div></div>';
+      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${hcW} đi làm</span>${hcNP?`<span style="color:#e65100">🏖️ ${hcNP} nghỉ phép</span>`:''}${hcVM?`<span style="color:#c62828">🔴 ${hcVM} vắng mặt</span>`:''}</div></div>`;
     }
     if(cdE.length>0){
-      // Thứ tự ca: S → C1 → C2 → C3 → C → HC → N → NP → UN
+      let cdW=0,cdNP=0,cdVM=0;
+      cdE.forEach(e=>{const st=getAttStatus(e.id,dk);if(st==='NP')cdNP++;else if(st==='VM')cdVM++;else cdW++;});
       const SHIFT_ORD = {S:0,C1:1,C2:2,C3:3,C:4,HC:5,N:6,NP:7,L:8,UN:9};
       const cdeSorted = [...cdE].sort((a,b)=>{
         const sa=empShift(a,today), sb=empShift(b,today);
@@ -1407,17 +1438,14 @@ function renderSummary(){
       let lastShift = null;
       cdeSorted.forEach(e => {
         const s=empShift(e,today);
-        // Sub-header khi đổi ca
-        if(s !== lastShift){
-          lastShift = s;
-          sg += `<div class="sum-dept-hd">${SICON[s]||''} ${SLBL(s)}</div>`;
-        }
+        if(s !== lastShift){ lastShift=s; sg += `<div class="sum-dept-hd">${SICON[s]||''} ${SLBL(s)}</div>`; }
         const ots = getEmpOtOnDate(e.id, dk);
         const otBadge = makeOtSmBadge(ots);
+        const attSt = getAttStatus(e.id, dk);
         sg += `<div class="sum-row"><span class="name">${e.name}</span>
-          <span style="display:flex;align-items:center;gap:5px">${otBadge}</span></div>`;
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}${attChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
-      sg += '</div></div>';
+      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${cdW} đi làm</span>${cdNP?`<span style="color:#e65100">🏖️ ${cdNP} nghỉ phép</span>`:''}${cdVM?`<span style="color:#c62828">🔴 ${cdVM} vắng mặt</span>`:''}</div></div>`;
     }
   }
   document.getElementById('sumGrid').innerHTML = sg;
@@ -2609,6 +2637,48 @@ function checkPw(){
     inp.value='';
     setTimeout(()=>inp.classList.remove('error'),400);
   }
+}
+
+// ── ATTENDANCE (ĐIỂM DANH) ─────────────────
+function getAttStatus(empId, dk){
+  const rows = EMP_SCHED.filter(s => s.emp_id === empId && s.start_date <= dk && dk <= s.end_date)
+                         .sort((a,b) => b.id - a.id);
+  if(!rows.length) return 'W';
+  const sh = rows[0].shift;
+  return (sh === 'NP' || sh === 'VM') ? sh : 'W';
+}
+
+function attChipHtml(empId, empName, dk, status){
+  const safe = empName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  if(status === 'NP') return `<span class="att-chip np" title="Nghỉ phép đã duyệt">🏖️ Nghỉ Phép</span>`;
+  if(status === 'VM') return `<span class="att-chip vm" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đổi lại Đi Làm">🔴 Vắng Mặt</span>`;
+  return `<span class="att-chip w" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đánh dấu Vắng Mặt">✅ Đi Làm</span>`;
+}
+
+async function toggleVangMat(empId, empName, dk){
+  const status = getAttStatus(empId, dk);
+  if(status === 'NP') return;
+
+  if(status === 'VM'){
+    // Xóa entry VM
+    const entry = EMP_SCHED.find(s => s.emp_id === empId && s.start_date === dk && s.end_date === dk && s.shift === 'VM');
+    if(entry && SB_OK){
+      const {error} = await sb.from('emp_schedule').delete().eq('id', entry.id);
+      if(error){ alert('Lỗi: ' + error.message); return; }
+    }
+    EMP_SCHED = EMP_SCHED.filter(s => !(s.emp_id === empId && s.start_date === dk && s.end_date === dk && s.shift === 'VM'));
+  } else {
+    // Thêm entry VM
+    const row = {emp_id:empId, emp_name:empName, start_date:dk, end_date:dk, shift:'VM'};
+    if(SB_OK){
+      const {data, error} = await sb.from('emp_schedule').insert(row).select().single();
+      if(error){ alert('Lỗi: ' + error.message); return; }
+      EMP_SCHED.push(data || row);
+    } else {
+      EMP_SCHED.push({...row, id: Date.now()});
+    }
+  }
+  renderSummary();
 }
 
 // ── BADGE ĐƠN XIN NGHỈ ─────────────────────
