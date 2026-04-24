@@ -371,7 +371,7 @@ let layoutEditMode = false;
 // STATE & LOGIC CA KÍP
 // ══════════════════════════════════════════════════════════
 let curShift='S', curKip=1, curDate='', editMode=false;
-let ROSTER={}; // { machineCode: {worker_name, note, id} }
+let ROSTER={}; // { cellId ("zIdx_rIdx_cIdx"): {worker_name, note, id, machine_code} }
 
 const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
 const REF   = new Date(2026, 3, 12);
@@ -466,7 +466,9 @@ async function loadRoster(){
       const {data}=await sb.from('shift_roster').select('*')
         .eq('kip',curKip).eq('date',curDate);
       (data||[]).forEach(r=>{
-        ROSTER[r.machine_code]={worker_name:r.worker_name||'',note:r.note||'',id:r.id};
+        // Dùng cell_id nếu có (mã mới), fallback về machine_code (dữ liệu cũ)
+        const key = r.cell_id || r.machine_code;
+        ROSTER[key]={worker_name:r.worker_name||'',note:r.note||'',id:r.id,machine_code:r.machine_code};
       });
     }catch(e){console.warn(e);}
   }
@@ -557,7 +559,8 @@ function searchEmp(){
       cell.style.zIndex = '1';
       return;
     }
-    const nm = (ROSTER[cell.dataset.code]?.worker_name || '').toLowerCase();
+    const rKey = cell.dataset.cellId || cell.dataset.code;
+    const nm = (ROSTER[rKey]?.worker_name || '').toLowerCase();
     if(nm.includes(q) && nm !== ''){
       cell.style.opacity = '1';
       cell.style.filter = 'none';
@@ -765,9 +768,10 @@ function addZone(){
 }
 
 function buildCell(code, color, zIdx, rIdx, cIdx){
-  const d=ROSTER[code]||{worker_name:'',note:''};
+  const cellId = `${zIdx}_${rIdx}_${cIdx}`;
+  const d = ROSTER[cellId] || ROSTER[code] || {worker_name:'',note:''};
   const cell=document.createElement('div');
-  cell.style.position = 'relative'; 
+  cell.style.position = 'relative';
 
   // TRƯỜNG HỢP 1: Đang sửa sơ đồ máy móc
   if(layoutEditMode){
@@ -817,11 +821,12 @@ function buildCell(code, color, zIdx, rIdx, cIdx){
   const qaClass = (editMode && quickEmp) ? ' qa-ready' : '';
   cell.className=`mc-cell${hasFill?' filled':''}${editMode?' edit-mode':''}${qaClass}`;
   cell.dataset.code=code;
+  cell.dataset.cellId=cellId;
 
   // Click gán nhanh
   cell.addEventListener('click', () => {
     if(!editMode || !quickEmp) return;
-    onInput(code, 'worker_name', quickEmp.name);
+    onInput(cellId, code, 'worker_name', quickEmp.name);
     // Cập nhật input nếu đang hiện
     const inp = cell.querySelector('.mc-name-input');
     if(inp) inp.value = quickEmp.name;
@@ -847,13 +852,13 @@ function buildCell(code, color, zIdx, rIdx, cIdx){
     ni.placeholder='Họ tên...';ni.value=d.worker_name;
     ni.setAttribute('list','empList');
     ni.autocomplete='off';
-    ni.oninput=e=>onInput(code,'worker_name',e.target.value);
+    ni.oninput=e=>onInput(cellId,code,'worker_name',e.target.value);
     cell.appendChild(ni);
 
     const nti=document.createElement('input');
     nti.type='text';nti.className='mc-note-input';
     nti.placeholder='Ghi chú (gá tay, TA…)';nti.value=d.note;
-    nti.oninput=e=>onInput(code,'note',e.target.value);
+    nti.oninput=e=>onInput(cellId,code,'note',e.target.value);
     cell.appendChild(nti);
   } else {
     const nv=document.createElement('div');
@@ -900,12 +905,11 @@ function cancelEdit(){
   loadRoster();
 }
 
-function onInput(code,field,val){
-  if(!ROSTER[code]) ROSTER[code]={worker_name:'',note:'',id:null};
-  ROSTER[code][field]=val;
-  // Sửa lỗi Selector khi mã máy chứa ký tự đặc biệt
-  const cell=document.querySelector(`.mc-cell[data-code="${CSS.escape(code)}"]`);
-  if(cell) cell.classList.toggle('filled',!!ROSTER[code].worker_name);
+function onInput(cellId,code,field,val){
+  if(!ROSTER[cellId]) ROSTER[cellId]={worker_name:'',note:'',id:null,machine_code:code};
+  ROSTER[cellId][field]=val;
+  const cell=document.querySelector(`.mc-cell[data-cell-id="${CSS.escape(cellId)}"]`);
+  if(cell) cell.classList.toggle('filled',!!ROSTER[cellId].worker_name);
 }
 
 // ── LAYOUT EDIT MODE ──────────────────────────────────────
@@ -934,13 +938,13 @@ async function saveAll(){
   const btn=document.getElementById('editBtn');
   btn.disabled=true;btn.textContent='⏳ Đang lưu...';
 
-  // Gom tất cả mã máy
-  const allCodes = [];
-  FACTORY_DATA.forEach(z => {
-    z.grid.forEach(row => {
-      row.forEach(item => {
+  // Gom tất cả ô theo vị trí (zIdx_rIdx_cIdx) để tránh trùng mã máy
+  const allCells = [];
+  FACTORY_DATA.forEach((z, zIdx) => {
+    z.grid.forEach((row, rIdx) => {
+      row.forEach((item, cIdx) => {
         const code = (item && typeof item==='object') ? item.c : item;
-        if(code) allCodes.push(code);
+        if(code) allCells.push({cellId:`${zIdx}_${rIdx}_${cIdx}`, code});
       });
     });
   });
@@ -953,10 +957,10 @@ async function saveAll(){
       if(delErr) throw delErr;
 
       // Bước 2: Insert lại toàn bộ (chỉ các ô có tên)
-      const rows = allCodes
-        .map(code => {
-          const d = ROSTER[code]||{worker_name:'',note:''};
-          return {kip:curKip, date:curDate, machine_code:code,
+      const rows = allCells
+        .map(({cellId, code}) => {
+          const d = ROSTER[cellId] || ROSTER[code] || {worker_name:'',note:''};
+          return {kip:curKip, date:curDate, machine_code:code, cell_id:cellId,
                   worker_name:d.worker_name.trim(), note:d.note.trim()};
         })
         .filter(r => r.worker_name !== ''); // chỉ lưu ô có điền tên
@@ -966,7 +970,8 @@ async function saveAll(){
         if(insErr) throw insErr;
         // Cập nhật id mới vào ROSTER
         (data||[]).forEach(r => {
-          ROSTER[r.machine_code] = {worker_name:r.worker_name||'', note:r.note||'', id:r.id};
+          const key = r.cell_id || r.machine_code;
+          ROSTER[key] = {worker_name:r.worker_name||'', note:r.note||'', id:r.id, machine_code:r.machine_code};
         });
       }
     }catch(e){ console.warn(e); alert('Lỗi lưu: ' + e.message); }
@@ -998,7 +1003,10 @@ async function copyPrev(){
     alert(`Không có dữ liệu ngày ${fmtD(d)}!`);return;
   }
   ROSTER={};
-  data.forEach(r=>{ROSTER[r.machine_code]={worker_name:r.worker_name||'',note:r.note||'',id:null};});
+  data.forEach(r=>{
+    const key = r.cell_id || r.machine_code;
+    ROSTER[key]={worker_name:r.worker_name||'',note:r.note||'',id:null,machine_code:r.machine_code};
+  });
   startEdit();
   showToast(`📋 Đã copy từ ${fmtD(d)}`);
 }
