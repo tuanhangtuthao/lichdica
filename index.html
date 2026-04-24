@@ -1422,7 +1422,7 @@ function renderSummary(){
         const otBadge = makeOtSmBadge(ots);
         const attSt = getAttStatus(e.id, dk);
         sg += `<div class="sum-row"><span class="name" style="cursor:pointer;color:#00695c" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca">${e.name}</span>
-          <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${SICON[s]||''} ${SLBL(s)}</span>${attChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}${attChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
       sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${hcW} đi làm</span>${hcNP?`<span style="color:#e65100">🏖️ ${hcNP} nghỉ phép</span>`:''}${hcVM?`<span style="color:#c62828">🔴 ${hcVM} vắng mặt</span>`:''}</div></div>`;
     }
