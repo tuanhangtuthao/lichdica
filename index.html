@@ -104,7 +104,7 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 
 /* PAGES */
 .page{display:none;padding-bottom:calc(var(--nav-h) + 8px);height:100%;overflow-y:auto}
-.page.active{display:block}
+.page.active{display:block;height:calc(100vh - var(--hdr-h) - var(--nav-h));padding-bottom:0;overflow-y:auto}
 #page-schedule.active{display:flex;flex-direction:column;height:calc(100vh - var(--hdr-h) - var(--nav-h));padding-bottom:0;overflow:hidden}
 #page-schedule .tbl-wrap{flex:1;overflow:auto;padding-bottom:8px}
 
