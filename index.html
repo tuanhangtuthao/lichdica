@@ -334,6 +334,14 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 /* Dòng tổng điểm danh */
 .att-summary{font-size:.72rem;padding:6px 14px;background:#f8f9ff;
   border-top:1px solid #edf0fb;color:#666;display:flex;gap:12px;flex-wrap:wrap}
+/* ── OT PERFORMED CHIP ── */
+.ot-perf-chip{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:12px;
+  font-size:.7rem;font-weight:700;cursor:pointer;transition:.15s;white-space:nowrap;
+  border:none;user-select:none;line-height:1.5}
+.ot-perf-chip.yes{background:#e8f5e9;color:#1b5e20}
+.ot-perf-chip.yes:active{background:#c8e6c9}
+.ot-perf-chip.no{background:#ffebee;color:#c62828}
+.ot-perf-chip.no:active{background:#ffcdd2}
 .att-summary span{font-weight:700}
 /* Banner tổng hợp tăng ca hôm nay */
 .ot-today-bar{margin:0 0 10px;padding:10px 14px;
@@ -1778,12 +1786,17 @@ function renderOvertime(){
         badge=`<span class="chip" style="background:#e3f2fd;color:#1565c0;font-size:.75rem">⏱ ${t.start||'?'}→${t.end||'?'}${hLbl?' ('+hLbl+')':''}</span>`;
       }
       const noteClean = o.note ? o.note.replace(/^[\d.]+h(\s*–\s*)?/,'').trim() : '';
+      const perfmed = o.performed !== false; // default true nếu không có giá trị
+      const perfChip = perfmed
+        ? `<span class="ot-perf-chip yes" onclick="toggleOtPerformed(${o.id},true)" title="Bấm để đánh dấu không làm">✅ Có làm</span>`
+        : `<span class="ot-perf-chip no" onclick="toggleOtPerformed(${o.id},false)" title="Bấm để đánh dấu có làm">❌ Không làm</span>`;
       html+=`<div class="ot-item">
         ${badge}
         <div class="ot-info">
           <div class="ot-name">${o.emp_name}${o.emp_id?` <span style="color:#999;font-weight:400">(${o.emp_id})</span>`:''}</div>
           ${noteClean?`<div class="ot-note">📝 ${noteClean}</div>`:''}
         </div>
+        ${perfChip}
         <button class="del-btn" onclick="removeOvertime(${o.id})">✕</button>
       </div>`;
     });
@@ -1850,6 +1863,18 @@ async function removeOvertime(id){
   OVERTIME=OVERTIME.filter(o=>o.id!==id);
   renderOvertime();
   renderOtBoard();
+}
+
+async function toggleOtPerformed(id, currentStatus){
+  const newStatus = !currentStatus; // toggle
+  if(SB_OK){
+    const {error} = await sb.from('overtime').update({performed: newStatus}).eq('id', id);
+    if(error){alert('Lỗi: '+error.message);return;}
+  }
+  // Cập nhật OVERTIME array
+  const ot = OVERTIME.find(o => o.id === id);
+  if(ot) ot.performed = newStatus;
+  renderOvertime();
 }
 
 // ── OT BOARD – 2 CHẾ ĐỘ XEM ─────────────────
