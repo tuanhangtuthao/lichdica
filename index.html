@@ -2201,14 +2201,18 @@ function _renderGrid(el, empsArr, y, m, days, empFull={}){
         const o = dayOts[0];
         const isFull = !o.ot_type||o.ot_type==='full';
         const rShift = resolveOtShift(o);
+        const perfmed = o.performed !== false; // default true
         if(isFull){
           const cbg = CELL_BG[rShift]||'#ffe0b2';
           const cfg = CELL_FG[rShift]||'#bf360c';
-          h += `<td ${tdStyle}><span class="ot-badge" style="background:${cbg};color:${cfg}">${rShift||'TC'}</span></td>`;
+          h += `<td ${tdStyle}><span class="ot-badge" style="background:${cbg};color:${cfg};cursor:pointer" onclick="toggleOtPerformed(${o.id},${perfmed}); renderOtBoard()">${rShift||'TC'}</span></td>`;
         } else {
           const t   = resolveOtTimes(o);
           const hLbl= t.hours?(t.hours%1===0?t.hours+'h':t.hours.toFixed(1)+'h'):'⏱';
-          h += `<td ${tdStyle}><span class="ot-badge" style="background:#fce4ec;color:#c62828">${hLbl}</span></td>`;
+          // Màu dựa trên trạng thái performed: xanh=có làm, đỏ=không làm
+          const badgeBg = perfmed ? '#c8e6c9' : '#ffcdd2';
+          const badgeFg = perfmed ? '#1b5e20' : '#c62828';
+          h += `<td ${tdStyle}><span class="ot-badge" style="background:${badgeBg};color:${badgeFg};cursor:pointer" onclick="toggleOtPerformed(${o.id},${perfmed}); renderOtBoard()">${hLbl}</span></td>`;
         }
       }
     }
