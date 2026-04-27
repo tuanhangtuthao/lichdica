@@ -1246,7 +1246,7 @@ function groupEmpsByDept(emps) {
 let otType = 'full';
 let otBoardMode  = 'grid'; // 'grid' | 'day'
 let otBoardShiftF = '';    // '' = all, 'C1','C2','C3','S','C'
-const NDAYS = 28;
+const NDAYS = 17;
 
 // ── HEADER ─────────────────────────────────
 function initLabel(){
@@ -1547,8 +1547,9 @@ function renderEmpMg(){
   document.getElementById('empMgList').innerHTML = allEmps().map(e=>`
     <li class="emp-manage-item" style="padding:7px 14px">
       <span class="emp-manage-kip k${e.kip}">${grpLabel(e)}</span>
-      <span class="emp-manage-name">${e.name}</span>
-      <span class="emp-manage-meta">${e.id} · ${e.role}</span>
+      <input type="text" class="emp-name-edit" value="${e.name}" onblur="saveEmpField('${e.id}','name',this.value)" style="flex:1;min-width:100px;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem">
+      <input type="text" class="emp-role-edit" value="${e.role||''}" onblur="saveEmpField('${e.id}','role',this.value)" style="min-width:80px;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem" placeholder="Vai trò">
+      <span style="font-size:.72rem;color:#999">${e.id}</span>
       <button class="del-btn" onclick="removeEmp(${e.kip},'${e.id}')">✕</button>
     </li>`).join('') || '<li style="color:#aaa;padding:10px 14px;font-size:.82rem">Chưa có nhân viên.</li>';
 }
@@ -1686,6 +1687,26 @@ async function addEmp(){
   document.getElementById('eRl').value='';
   renderEmpMg(); renderAll();
 }
+async function saveEmpField(empId, field, value){
+  const emp = allEmps().find(e => e.id === empId);
+  if(!emp) return;
+
+  const oldVal = emp[field];
+  if(oldVal === value) return; // no change
+
+  emp[field] = value;
+  if(SB_OK){
+    const upd = {[field]: value};
+    const {error} = await sb.from('employees').update(upd).eq('id', empId);
+    if(error){
+      alert('Lỗi: '+error.message);
+      emp[field] = oldVal; // revert
+      renderEmpMg();
+      return;
+    }
+  }
+}
+
 async function removeEmp(kip,id){
   if(!confirm('Xóa nhân viên này?')) return;
   const {error} = await sb.from('employees').delete().eq('id',id);
@@ -2185,8 +2206,8 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
 function nav(w){ startDate=addD(startDate,w*7); renderTable(); }
 function goToday(){
   const t=new Date(); t.setHours(0,0,0,0);
-  const dow=t.getDay(), toMon=dow===0?-6:-(dow-1);
-  startDate=addD(t,toMon-7); renderTable();
+  startDate=addD(t, -2); // 2 days before today
+  renderTable();
 }
 function setSearch(v){ searchQ=v; renderTable(); }
 function setLookupQ(v){ lookQ=v; renderLookup(); }
