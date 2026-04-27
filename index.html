@@ -1246,6 +1246,7 @@ function groupEmpsByDept(emps) {
 let otType = 'full';
 let otBoardMode  = 'grid'; // 'grid' | 'day'
 let otBoardShiftF = '';    // '' = all, 'C1','C2','C3','S','C'
+let editingEmpId = null;   // Track which employee is being edited
 const NDAYS = 17;
 
 // ── HEADER ─────────────────────────────────
@@ -1544,14 +1545,45 @@ function renderEmpMg(){
   const grpLabel = e => e.kip===4
     ? ({HC:'HC',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',S:'Sáng',C:'Chiều'}[e.fixed_shift]||'HC')
     : `Kíp ${e.kip}`;
-  document.getElementById('empMgList').innerHTML = allEmps().map(e=>`
-    <li class="emp-manage-item" style="padding:7px 14px">
-      <span class="emp-manage-kip k${e.kip}">${grpLabel(e)}</span>
-      <input type="text" class="emp-name-edit" value="${e.name}" onblur="saveEmpField('${e.id}','name',this.value)" style="flex:1;min-width:100px;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem">
-      <input type="text" class="emp-role-edit" value="${e.role||''}" onblur="saveEmpField('${e.id}','role',this.value)" style="min-width:80px;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem" placeholder="Vai trò">
-      <span style="font-size:.72rem;color:#999">${e.id}</span>
-      <button class="del-btn" onclick="removeEmp(${e.kip},'${e.id}')">✕</button>
-    </li>`).join('') || '<li style="color:#aaa;padding:10px 14px;font-size:.82rem">Chưa có nhân viên.</li>';
+  document.getElementById('empMgList').innerHTML = allEmps().map(e=>{
+    const isEditing = editingEmpId === e.id;
+    if(isEditing){
+      return `<li class="emp-manage-item" style="padding:7px 14px;border:2px solid #ff9800;border-radius:4px;background:#fff3e0">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label style="flex:1;font-size:.75rem;color:#666">Kíp:</label>
+          <select id="edit-kip-${e.id}" style="flex:1;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem">
+            <option value="1" ${e.kip===1?'selected':''}>Kíp 1</option>
+            <option value="2" ${e.kip===2?'selected':''}>Kíp 2</option>
+            <option value="3" ${e.kip===3?'selected':''}>Kíp 3</option>
+            <option value="4" ${e.kip===4?'selected':''}>Hành chính</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label style="flex:1;font-size:.75rem;color:#666">MSNV:</label>
+          <input type="text" id="edit-id-${e.id}" value="${e.id}" style="flex:1;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem">
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label style="flex:1;font-size:.75rem;color:#666">Tên:</label>
+          <input type="text" id="edit-name-${e.id}" value="${e.name}" style="flex:1;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem">
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label style="flex:1;font-size:.75rem;color:#666">Vai trò:</label>
+          <input type="text" id="edit-role-${e.id}" value="${e.role||''}" style="flex:1;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem" placeholder="Vai trò">
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="saveEmpEdit('${e.id}')" style="flex:1;padding:6px;background:#4caf50;color:white;border:none;border-radius:4px;font-size:.82rem;font-weight:bold">💾 Lưu</button>
+          <button onclick="cancelEmpEdit()" style="flex:1;padding:6px;background:#999;color:white;border:none;border-radius:4px;font-size:.82rem">✕ Hủy</button>
+          <button class="del-btn" onclick="removeEmp(${e.kip},'${e.id}')" style="padding:6px 8px;background:#f44336;color:white;border:none;border-radius:4px;font-size:.82rem">🗑️ Xóa</button>
+        </div>
+      </li>`;
+    }
+    return `<li class="emp-manage-item" style="padding:7px 14px;display:flex;align-items:center;gap:10px">
+      <span class="emp-manage-kip k${e.kip}" style="min-width:60px">${grpLabel(e)}</span>
+      <span style="flex:1"><strong>${e.name}</strong><br><span style="font-size:.72rem;color:#999">${e.id} · ${e.role||'—'}</span></span>
+      <button onclick="editEmpStart('${e.id}')" style="padding:4px 8px;background:#2196f3;color:white;border:none;border-radius:4px;font-size:.82rem">✏️ Chỉnh</button>
+      <button class="del-btn" onclick="removeEmp(${e.kip},'${e.id}')" style="padding:4px 8px">✕</button>
+    </li>`;
+  }).join('') || '<li style="color:#aaa;padding:10px 14px;font-size:.82rem">Chưa có nhân viên.</li>';
 }
 
 // ── PHÂN CA XOAY ──────────────────────────
@@ -1705,6 +1737,88 @@ async function saveEmpField(empId, field, value){
       return;
     }
   }
+}
+
+function editEmpStart(empId){
+  editingEmpId = empId;
+  renderEmpMg();
+}
+
+function cancelEmpEdit(){
+  editingEmpId = null;
+  renderEmpMg();
+}
+
+async function saveEmpEdit(empId){
+  const emp = allEmps().find(e => e.id === empId);
+  if(!emp) return;
+
+  const newKip = parseInt(document.getElementById(`edit-kip-${empId}`).value);
+  const newId = document.getElementById(`edit-id-${empId}`).value.trim();
+  const newName = document.getElementById(`edit-name-${empId}`).value.trim();
+  const newRole = document.getElementById(`edit-role-${empId}`).value.trim();
+
+  if(!newId || !newName){
+    alert('MSNV và tên không được để trống!');
+    return;
+  }
+
+  // Check if ID is being changed and new ID already exists
+  if(newId !== emp.id && allEmps().find(e => e.id === newId)){
+    alert('MSNV này đã tồn tại!');
+    return;
+  }
+
+  // Prepare updates
+  const updates = {};
+  if(newKip !== emp.kip) updates.kip = newKip;
+  if(newId !== emp.id) updates.id = newId;
+  if(newName !== emp.name) updates.name = newName;
+  if(newRole !== (emp.role || '')) updates.role = newRole;
+
+  if(Object.keys(updates).length === 0){
+    // No changes
+    editingEmpId = null;
+    renderEmpMg();
+    return;
+  }
+
+  if(SB_OK){
+    // If ID is changing, delete old and insert new
+    if(updates.id && updates.id !== emp.id){
+      await sb.from('employees').delete().eq('id', emp.id);
+      const newEmp = {...emp, ...updates};
+      const {error} = await sb.from('employees').insert(newEmp);
+      if(error){
+        alert('Lỗi: '+error.message);
+        return;
+      }
+      // Update in-memory
+      const oldKip = emp.kip;
+      EMPS[oldKip] = (EMPS[oldKip]||[]).filter(e => e.id !== emp.id);
+      if(!EMPS[newKip]) EMPS[newKip] = [];
+      EMPS[newKip].push(newEmp);
+    } else {
+      // Regular update
+      const {error} = await sb.from('employees').update(updates).eq('id', empId);
+      if(error){
+        alert('Lỗi: '+error.message);
+        return;
+      }
+      // Update in-memory
+      Object.assign(emp, updates);
+      if(updates.kip && updates.kip !== emp.kip){
+        const oldKip = emp.kip;
+        EMPS[oldKip] = (EMPS[oldKip]||[]).filter(e => e.id !== emp.id);
+        if(!EMPS[newKip]) EMPS[newKip] = [];
+        EMPS[newKip].push(emp);
+      }
+    }
+  }
+
+  editingEmpId = null;
+  renderEmpMg();
+  renderAll();
 }
 
 async function removeEmp(kip,id){
