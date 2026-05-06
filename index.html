@@ -1542,9 +1542,13 @@ function renderHolList(){
     : '<li style="color:#aaa;padding:8px 0;font-size:.82rem">Chưa có ngày lễ.</li>';
 }
 function renderEmpMg(){
-  const grpLabel = e => e.kip===4
-    ? ({HC:'HC',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',S:'Sáng',C:'Chiều'}[e.fixed_shift]||'HC')
-    : `Kíp ${e.kip}`;
+  const grpLabel = e => {
+    if(e.kip===4){
+      if(!e.fixed_shift) return 'Xoay Ca';
+      return {HC:'HC',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',S:'Sáng',C:'Chiều'}[e.fixed_shift]||'HC';
+    }
+    return `Kíp ${e.kip}`;
+  };
   document.getElementById('empMgList').innerHTML = allEmps().map(e=>{
     const isEditing = editingEmpId === e.id;
     if(isEditing){
@@ -1552,10 +1556,11 @@ function renderEmpMg(){
         <div style="display:flex;gap:8px;margin-bottom:8px">
           <label style="flex:1;font-size:.75rem;color:#666">Kíp:</label>
           <select id="edit-kip-${e.id}" style="flex:1;border:1px solid #ddd;padding:4px 6px;border-radius:4px;font-size:.82rem">
-            <option value="1" ${e.kip===1?'selected':''}>Kíp 1</option>
-            <option value="2" ${e.kip===2?'selected':''}>Kíp 2</option>
-            <option value="3" ${e.kip===3?'selected':''}>Kíp 3</option>
-            <option value="4" ${e.kip===4?'selected':''}>Hành chính</option>
+            <option value="1" ${e.kip===1&&!e.fixed_shift?'selected':''}>Kíp 1</option>
+            <option value="2" ${e.kip===2&&!e.fixed_shift?'selected':''}>Kíp 2</option>
+            <option value="3" ${e.kip===3&&!e.fixed_shift?'selected':''}>Kíp 3</option>
+            <option value="0" ${e.kip===4&&!e.fixed_shift?'selected':''}>Xoay Ca</option>
+            <option value="4" ${e.kip===4&&e.fixed_shift?'selected':''}>Hành chính</option>
           </select>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -1753,7 +1758,11 @@ async function saveEmpEdit(empId){
   const emp = allEmps().find(e => e.id === empId);
   if(!emp) return;
 
-  const newKip = parseInt(document.getElementById(`edit-kip-${empId}`).value);
+  const kipVal = parseInt(document.getElementById(`edit-kip-${empId}`).value);
+  // Handle "Xoay Ca" (value=0) → kip=4, fixed_shift=null
+  const newKip = kipVal === 0 ? 4 : kipVal;
+  const newFixedShift = kipVal === 0 ? null : (emp.fixed_shift || null);
+
   const newId = document.getElementById(`edit-id-${empId}`).value.trim();
   const newName = document.getElementById(`edit-name-${empId}`).value.trim();
   const newRole = document.getElementById(`edit-role-${empId}`).value.trim();
@@ -1772,6 +1781,7 @@ async function saveEmpEdit(empId){
   // Prepare updates
   const updates = {};
   if(newKip !== emp.kip) updates.kip = newKip;
+  if(kipVal === 0) updates.fixed_shift = null; // "Xoay Ca" = no fixed_shift
   if(newId !== emp.id) updates.id = newId;
   if(newName !== emp.name) updates.name = newName;
   if(newRole !== (emp.role || '')) updates.role = newRole;
