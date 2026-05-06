@@ -1258,10 +1258,18 @@ function initLabel(){
 
 // ── SORT EMPLOYEES BY ROLE ─────────────────
 const ROLE_ORDER = {'Trưởng ca': 1, 'Tiện 2': 2, 'Tiện Mâm Cặp': 3, 'Mài chống tâm': 4};
+function getRoleOrder(role){
+  if(!role) return 999;
+  // Case-insensitive lookup
+  for(let key in ROLE_ORDER){
+    if(key.toLowerCase() === role.toLowerCase()) return ROLE_ORDER[key];
+  }
+  return 999;
+}
 function sortEmpByRole(emps){
   return emps.sort((a,b) => {
-    const orderA = ROLE_ORDER[a.role] || 999;
-    const orderB = ROLE_ORDER[b.role] || 999;
+    const orderA = getRoleOrder(a.role);
+    const orderB = getRoleOrder(b.role);
     if(orderA !== orderB) return orderA - orderB;
     return (a.role || '').localeCompare(b.role || '', 'vi');
   });
