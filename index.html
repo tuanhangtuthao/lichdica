@@ -1256,6 +1256,17 @@ function initLabel(){
     `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
 }
 
+// ── SORT EMPLOYEES BY ROLE ─────────────────
+const ROLE_ORDER = {'Trưởng Ca': 1, 'Tiện 2': 2, 'Tiện Mâm Cặp': 3, 'Mài': 4};
+function sortEmpByRole(emps){
+  return emps.sort((a,b) => {
+    const orderA = ROLE_ORDER[a.role] || 999;
+    const orderB = ROLE_ORDER[b.role] || 999;
+    if(orderA !== orderB) return orderA - orderB;
+    return (a.role || '').localeCompare(b.role || '', 'vi');
+  });
+}
+
 // ── TAB 1: BẢNG LỊCH ──────────────────────
 function renderTable(){
   const today = new Date(); today.setHours(0,0,0,0);
@@ -1283,7 +1294,7 @@ function renderTable(){
     const bs = getBlockStatus(k,today);
     const bsLbl = bs.type==='work' ? `(Ngày làm ${bs.day}/${bs.total})` : `(Ngày nghỉ ${bs.day}/${bs.total})`;
     h += `<tr class="kh k${k}"><td colspan="${3+NDAYS}"><span>▣ KÍP ${k} - Hôm nay: ${SICON[ts]} ${SLBL(ts)} <span style="font-size:0.9em;opacity:0.9;font-weight:normal">${bsLbl}</span></span></td></tr>`;
-    (EMPS[k]||[]).sort((a,b) => (a.role || '').localeCompare(b.role || '', 'vi')).forEach(e => {
+    sortEmpByRole(EMPS[k]||[]).forEach(e => {
       if(q&&!e.name.toLowerCase().includes(q)&&!e.id.includes(q)) return;
       const isRot = e.kip === 4 && e.fixed_shift !== 'HC';
       const isKip = e.kip >= 1 && e.kip <= 3;
@@ -1306,7 +1317,7 @@ function renderTable(){
 
     if(hcEmps.length>0){
       h += `<tr class="kh k4"><td colspan="${3+NDAYS}"><span>▣ HÀNH CHÍNH · ${hcEmps.length} NV</span></td></tr>`;
-      hcEmps.sort((a,b) => (a.role || '').localeCompare(b.role || '', 'vi')).forEach(e => {
+      sortEmpByRole(hcEmps).forEach(e => {
         const hcNameHtml = `<span class="name-edit" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca" style="color:#00695c">${e.name}</span>`;
         h += `<tr><td class="c1">${hcNameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
         dates.forEach(d => {
@@ -1319,7 +1330,7 @@ function renderTable(){
     }
     if(rotEmps.length>0){
       h += `<tr class="kh k5"><td colspan="${3+NDAYS}"><span>▣ CỐ ĐỊNH VÀ CA XOAY · ${rotEmps.length} NV</span></td></tr>`;
-      rotEmps.sort((a,b) => (a.role || '').localeCompare(b.role || '', 'vi')).forEach(e => {
+      sortEmpByRole(rotEmps).forEach(e => {
         const isRot = e.kip === 4 && e.fixed_shift !== 'HC';
         const nameHtml = isRot ? `<span class="name-edit" onclick="openQuickEdit('${e.id}','${e.name}')" title="Phân ca nhanh">${e.name}</span>` : e.name;
         h += `<tr><td class="c1">${nameHtml}</td><td class="c2">${e.id}</td><td class="c3">${e.role}</td>`;
