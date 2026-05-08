@@ -283,7 +283,7 @@ input.sc-note:focus{border-color:#4a148c}
   <div class="section">
     <div class="card">
       <div class="card-head">⚙️ Thang Điểm & Xếp Hạng
-        <span style="font-size:.72rem;color:#999;font-weight:400">thang điểm 0 – 10</span>
+        <span style="font-size:.72rem;color:#999;font-weight:400">thang điểm 0 – 12</span>
       </div>
       <div class="card-body">
         <div style="overflow-x:auto">
@@ -645,7 +645,7 @@ function renderScoring(){
          const noteHint = nVal ? '2px solid red' : '1px solid transparent';
          
          html += `<td style="text-align:center;padding:4px 0">
-           <input type="number" min="0" max="10" step="0.1" title="${nVal}" data-note="${nVal}"
+           <input type="number" min="0" max="12" step="0.1" title="${nVal}" data-note="${nVal}"
                   data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}"
                   class="sc-input" placeholder="-" value="${sVal}"
                   ondblclick="editDailyNote(this)" onchange="handleScoreChange(this)"
@@ -674,7 +674,7 @@ async function scoreAllMonth(btn) {
      let v = el.value.trim();
      if(v !== '') {
         const sc = parseFloat(v);
-        if(isNaN(sc) || sc < 0 || sc > 10) hasError = true;
+        if(isNaN(sc) || sc < 0 || sc > 12) hasError = true;
         else {
            dailyRows.push({
               emp_id: el.dataset.empid,
@@ -688,7 +688,7 @@ async function scoreAllMonth(btn) {
   });
 
   if(hasError) {
-    alert("Có điểm không hợp lệ. Vui lòng kiểm tra lại điểm (0 - 10).");
+    alert("Có điểm không hợp lệ. Vui lòng kiểm tra lại điểm (0 - 12).");
     return;
   }
   
@@ -801,7 +801,7 @@ function renderApproval(){
        const sVal = st.scores[dk] !== undefined ? st.scores[dk] : '';
        html += `<div style="display:inline-flex;flex-direction:column;align-items:center;background:#fff;border-radius:6px;padding:3px;border:1px solid #ddd;min-width:38px;">
          <span style="font-size:.65rem;font-weight:600;color:#888">${i}</span>
-         <input type="number" min="0" max="10" step="0.1" title="${dk}" id="appr-sc-${e.id}-${i}" value="${sVal}" style="width:100%;text-align:center;border:none;background:none;font-size:.85rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none" onchange="this.style.color=scoreColor(this.value)">
+         <input type="number" min="0" max="12" step="0.1" title="${dk}" id="appr-sc-${e.id}-${i}" value="${sVal}" style="width:100%;text-align:center;border:none;background:none;font-size:.85rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none" onchange="this.style.color=scoreColor(this.value)">
        </div>`;
     }
 
@@ -830,7 +830,7 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
     const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
     if(val.trim() !== '') {
        let score = parseFloat(val);
-       if(isNaN(score) || score < 0 || score > 10){
+       if(isNaN(score) || score < 0 || score > 12){
           errorFound = true;
        } else {
           dailyRows.push({
@@ -838,14 +838,14 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
              emp_name: emp.name,
              date: dk,
              score: score,
-             note: '' 
+             note: ''
           });
        }
     }
   }
 
   if(errorFound){
-    alert('Có điểm không hợp lệ (phải từ 0-10). Vui lòng kiểm tra lại!');
+    alert('Có điểm không hợp lệ (phải từ 0-12). Vui lòng kiểm tra lại!');
     return;
   }
 
@@ -895,7 +895,7 @@ function renderConfig(){
     const key=g.replace('+','p');
     h+=`<tr>
       <td><span class="gb ${gbClass(g)}" style="font-size:1rem;font-weight:900;min-width:44px">${g}</span></td>
-      <td><input type="number" min="0" max="10" step="0.1" class="form-input"
+      <td><input type="number" min="0" max="12" step="0.1" class="form-input"
         id="cfg-${key}" value="${cfg.min_score}" style="width:80px;flex:none;text-align:center"></td>
       <td><input type="text" class="form-input"
         id="cfgd-${key}" placeholder="Mô tả..." value="${cfg.description||''}"></td>
