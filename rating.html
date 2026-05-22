@@ -582,7 +582,8 @@ function renderResults(){
       const s = e.dayScores[dk];
       const dayNote = RATINGS.find(r => r.emp_id === e.id && r.date === dk)?.note || '';
       if(s !== undefined){
-        h+= `<td style="text-align:center;font-weight:700;color:${scoreColor(s)};background:${s>=9?'var(--ap-bg)':s>=8?'var(--a-bg)':s>=6.5?'var(--b-bg)':s>=5?'var(--c-bg)':'var(--d-bg)};cursor:pointer;border:2px solid transparent" onclick="showDayNote('${e.id}', ${i}, ${s}, '${dayNote.replace(/'/g, "\\'")}')" title="${dayNote?'Ghi chú: '+dayNote:'Không có ghi chú'}">${s}</td>`;
+        const noteEncoded = btoa(dayNote); // Encode to avoid special char issues
+        h+= `<td style="text-align:center;font-weight:700;color:${scoreColor(s)};background:${s>=9?'var(--ap-bg)':s>=8?'var(--a-bg)':s>=6.5?'var(--b-bg)':s>=5?'var(--c-bg)':'var(--d-bg)};cursor:pointer;border:2px solid transparent" data-day="${i}" data-score="${s}" data-note="${noteEncoded}" class="day-cell" title="${dayNote?'Ghi chú: '+dayNote:'Không có ghi chú'}">${s}</td>`;
       } else {
         h+= `<td style="text-align:center;color:#eee">-</td>`;
       }
@@ -591,6 +592,20 @@ function renderResults(){
   });
   h+='</tbody></table></div>';
   document.getElementById('resultsWrap').innerHTML=h;
+
+  // Add click listeners to day cells
+  setTimeout(() => {
+    document.querySelectorAll('.day-cell').forEach(cell => {
+      cell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const day = this.dataset.day;
+        const score = this.dataset.score;
+        const noteEncoded = this.dataset.note;
+        const note = noteEncoded ? atob(noteEncoded) : '';
+        showDayNote(day, score, note);
+      });
+    });
+  }, 0);
 }
 
 // ── HELPERS ──────────────────────────────────
@@ -602,7 +617,7 @@ function toggleDet(detId, btn) {
   if(btn) btn.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 
-function showDayNote(empId, day, score, note) {
+function showDayNote(day, score, note) {
   const msg = `📅 Ngày ${day}\n⭐ Điểm: ${score}\n📝 Ghi chú: ${note || '(không có ghi chú)'}`;
   alert(msg);
 }
