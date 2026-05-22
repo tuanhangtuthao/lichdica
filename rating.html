@@ -574,6 +574,15 @@ function renderResults(){
   document.getElementById('resultsWrap').innerHTML=h;
 }
 
+// ── HELPERS ──────────────────────────────────
+function toggleDet(detId, btn) {
+  const el = document.getElementById(detId);
+  if(!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  if(btn) btn.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
 // ── TAB 2: CHẤM ĐIỂM ──────────────────────
 function editDailyNote(el){
     const oldNote = el.dataset.note || '';
@@ -638,33 +647,41 @@ function renderScoringStats(mVal) {
 
   // Draw chart
   setTimeout(() => {
-    const ctx = document.getElementById('gradeChart');
-    if(ctx && !window.gradeChartInstance) {
-      window.gradeChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['A+', 'A', 'B', 'C', 'D'],
-          datasets: [{
-            label: 'Số nhân viên',
-            data: [gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']],
-            backgroundColor: ['#1b5e20', '#2e7d32', '#1565c0', '#e65100', '#b71c1c'],
-            borderRadius: 6
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {legend: {display: false}},
-          scales: {x: {beginAtZero: true, max: Math.max(gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']) + 2}}},
-          height: 180
-        }
-      });
-    } else if(ctx && window.gradeChartInstance) {
-      window.gradeChartInstance.data.datasets[0].data = [gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']];
-      window.gradeChartInstance.update();
+    try {
+      if(typeof Chart === 'undefined') {console.warn('Chart.js not loaded yet'); return;}
+      const ctx = document.getElementById('gradeChart');
+      if(!ctx) return;
+
+      if(!window.gradeChartInstance) {
+        window.gradeChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['A+', 'A', 'B', 'C', 'D'],
+            datasets: [{
+              label: 'Số nhân viên',
+              data: [gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']],
+              backgroundColor: ['#1b5e20', '#2e7d32', '#1565c0', '#e65100', '#b71c1c'],
+              borderRadius: 6
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {legend: {display: false}},
+            scales: {x: {beginAtZero: true, max: Math.max(gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']) + 2}},
+            y: {ticks: {maxRotation: 0}}},
+            height: 180
+          }
+        });
+      } else {
+        window.gradeChartInstance.data.datasets[0].data = [gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']];
+        window.gradeChartInstance.update();
+      }
+    } catch(e) {
+      console.warn('Lỗi vẽ biểu đồ:', e);
     }
-  }, 50);
+  }, 100);
 }
 
 function renderScoring(){
