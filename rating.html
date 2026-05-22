@@ -235,6 +235,13 @@ input.sc-note:focus{border-color:#4a148c}
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input type="text" class="form-input" id="rfSearch" placeholder="Tên nhân viên..." style="width:160px;min-width:160px" oninput="renderResults()">
           <input type="month" class="form-input" id="rfMonth" style="width:130px;min-width:130px" onchange="renderResults()">
+          <select class="form-select" id="printKipSelect" style="width:120px;min-width:120px">
+            <option value="0">Tất cả Kíp</option>
+            <option value="1">Kíp 1</option>
+            <option value="2">Kíp 2</option>
+            <option value="3">Kíp 3</option>
+            <option value="4">HC / Ca Xoay</option>
+          </select>
           <button class="btn" style="background:#2e7d32;color:#fff;margin-left:auto" onclick="openPrintPage()">🖨️ In Phiếu Ký</button>
         </div>
       </div>
@@ -593,11 +600,13 @@ function toggleDet(detId, btn) {
 
 function openPrintPage(){
   const monthVal = document.getElementById('rfMonth').value;
+  const kipVal = document.getElementById('printKipSelect').value;
   if(!monthVal){
     alert('Vui lòng chọn tháng trước');
     return;
   }
-  window.open(`rating-print.html?month=${monthVal}`, '_blank');
+  const kipFile = kipVal === '0' ? 'rating-print.html' : `rating-print-kip${kipVal}.html`;
+  window.open(`${kipFile}?month=${monthVal}`, '_blank');
 }
 
 // ── TAB 2: CHẤM ĐIỂM ──────────────────────
@@ -992,6 +1001,26 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
 
   if(errorFound){
     alert('Có điểm không hợp lệ (phải từ 0-12). Vui lòng kiểm tra lại!');
+    return;
+  }
+
+  // Tính điểm trung bình để xác định hạng
+  const statMap = {};
+  RATINGS.filter(r => r.emp_id === emp_id && r.date.startsWith(month_key)).forEach(r => {
+    if(!statMap[emp_id]) statMap[emp_id] = {sum:0, cnt:0};
+    statMap[emp_id].sum += parseFloat(r.score);
+    statMap[emp_id].cnt++;
+  });
+  const st = statMap[emp_id] || {sum:0, cnt:0};
+  const avgScore = st.cnt > 0 ? round1(st.sum/st.cnt) : null;
+  const scoreToUse = finalScore !== null ? finalScore : avgScore;
+  const gradeToCheck = scoreToUse !== null ? getGrade(scoreToUse) : null;
+
+  // Kiểm tra: nếu hạng không phải B, bắt buộc phải có lý do (note)
+  if(gradeToCheck && gradeToCheck !== 'B' && note === '') {
+    alert(`Xếp loại ${gradeToCheck} phải có lý do trong ghi chú. Vui lòng nhập lý do!`);
+    btn.disabled = false;
+    btn.textContent = '💾 Lưu & Cập Nhật';
     return;
   }
 

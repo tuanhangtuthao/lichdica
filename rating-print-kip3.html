@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phiếu Xác Nhận Đánh Giá Nhân Viên</title>
+<title>Phiếu Xác Nhận Đánh Giá Nhân Viên - Kíp 3</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI','Arial',sans-serif;background:#fff;color:#333;line-height:1.6}
@@ -53,7 +53,7 @@ td{font-size:.9rem}
   <!-- HEADER -->
   <div class="header">
     <h1>📋 PHIẾU XÁC NHẬN ĐÁNH GIÁ NHÂN VIÊN</h1>
-    <p>Phân Xưởng 1 - Tháng <span id="printMonth">05/2026</span></p>
+    <p>Phân Xưởng 1 - Kíp 3 - Tháng <span id="printMonth">05/2026</span></p>
   </div>
 
   <!-- THÔNG TIN -->
@@ -131,6 +131,7 @@ const GRADE_CFG = [
   {grade:'C', min_score:6.0},
   {grade:'D', min_score:0.0},
 ];
+const KIP_FILTER = 3;
 
 function getGrade(score){
   const s=[...GRADE_CFG].sort((a,b)=>b.min_score-a.min_score);
@@ -162,7 +163,7 @@ async function loadPrintData(){
   try{
     const monthPrefix = monthVal + '-';
     const [er,rr,mr] = await Promise.all([
-      sb.from('employees').select('*').order('kip').order('sort_order'),
+      sb.from('employees').select('*').eq('kip',KIP_FILTER).order('sort_order'),
       sb.from('daily_ratings').select('*').like('date',monthPrefix+'%'),
       sb.from('monthly_reviews').select('*').eq('month_key',monthVal),
     ]);
@@ -175,10 +176,10 @@ async function loadPrintData(){
       return !skipRoles.some(x=>r.includes(x));
     };
 
-    const emps = {1:[],2:[],3:[],4:[]};
+    const emps = [];
     (er.data||[]).forEach(e=>{
-      if(emps[e.kip] && isRatable(e.role))
-        emps[e.kip].push({id:e.id,name:e.name,role:e.role||'',kip:e.kip});
+      if(isRatable(e.role))
+        emps.push({id:e.id,name:e.name,role:e.role||'',kip:e.kip});
     });
 
     const statMap = {};
@@ -197,28 +198,26 @@ async function loadPrintData(){
     // Render table
     let html = '';
     let stt = 1;
-    [1,2,3,4].forEach(k=>{
-      (emps[k]||[]).forEach(e=>{
-        const st = statMap[e.id];
-        const avg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
-        const grade = avg !== '-' ? getGrade(avg) : '-';
-        const note = reviewMap[e.id] || '';
-        html += `<tr>
-          <td class="stt">${stt}</td>
-          <td class="name">${e.name}</td>
-          <td>${e.id}</td>
-          <td>${GRP_LABEL[e.kip]||'Kíp '+e.kip}</td>
-          <td style="font-size:.8rem">${e.role||'-'}</td>
-          <td class="score" style="color:${avg!=='-'?'#e65100':'#ccc'};font-weight:700">${avg}</td>
-          <td class="grade"><span class="badge ${gbClass(grade)}">${grade}</span></td>
-          <td style="font-size:.75rem;color:#555;padding:8px;max-width:200px;word-wrap:break-word">${note}</td>
-          <td style="text-align:center;padding:20px 10px">
-            <div style="border-bottom:1px solid #333;height:40px;margin-top:10px"></div>
-            <div style="font-size:.7rem;color:#888;margin-top:3px">Tên & Chữ ký</div>
-          </td>
-        </tr>`;
-        stt++;
-      });
+    emps.forEach(e=>{
+      const st = statMap[e.id];
+      const avg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
+      const grade = avg !== '-' ? getGrade(avg) : '-';
+      const note = reviewMap[e.id] || '';
+      html += `<tr>
+        <td class="stt">${stt}</td>
+        <td class="name">${e.name}</td>
+        <td>${e.id}</td>
+        <td>${GRP_LABEL[e.kip]||'Kíp '+e.kip}</td>
+        <td style="font-size:.8rem">${e.role||'-'}</td>
+        <td class="score" style="color:${avg!=='-'?'#e65100':'#ccc'};font-weight:700">${avg}</td>
+        <td class="grade"><span class="badge ${gbClass(grade)}">${grade}</span></td>
+        <td style="font-size:.75rem;color:#555;padding:8px;max-width:200px;word-wrap:break-word">${note}</td>
+        <td style="text-align:center;padding:20px 10px">
+          <div style="border-bottom:1px solid #333;height:40px;margin-top:10px"></div>
+          <div style="font-size:.7rem;color:#888;margin-top:3px">Tên & Chữ ký</div>
+        </td>
+      </tr>`;
+      stt++;
     });
     document.getElementById('printTableBody').innerHTML = html;
   }catch(e){
