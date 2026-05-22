@@ -334,6 +334,7 @@ input.sc-note:focus{border-color:#4a148c}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3/dist/chart.min.js"></script>
 <script>
 // ══════════════════════════════════════════
 // ⚙️  SUPABASE (giống index.html)
@@ -346,7 +347,8 @@ const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 // ── STATE ──────────────────────────────────
 let EMPS = {1:[],2:[],3:[],4:[]};
 let RATINGS = [];
-let MONTHLY_REVIEWS = []; // [{id, emp_id, month_key, note, approved}]
+let MONTHLY_REVIEWS = []; // [{id, emp_id, month_key, note, approved, final_score, violation_note}]
+let VIOLATIONS = []; // [{emp_id, month_key, violation_note, final_score}]
 let GRADE_CFG = [
   {grade:'A+',min_score:9.0,description:'Xuất sắc',sort_order:1},
   {grade:'A', min_score:8.0,description:'Giỏi',    sort_order:2},
@@ -589,6 +591,82 @@ function handleScoreChange(el) {
     el.dataset.changed = "1";
 }
 
+function renderScoringStats(mVal) {
+  const [y, m] = mVal.split('-');
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const monthPrefix = mVal + '-';
+
+  const emps = allEmps(0);
+  const statMap = {};
+  RATINGS.filter(r => r.date.startsWith(monthPrefix)).forEach(r => {
+    if(!statMap[r.emp_id]) statMap[r.emp_id] = {sum:0, cnt:0};
+    statMap[r.emp_id].sum += parseFloat(r.score);
+    statMap[r.emp_id].cnt++;
+  });
+
+  // Calculate grade distribution
+  const gcnt={'A+':0,'A':0,'B':0,'C':0,'D':0};
+  emps.forEach(e => {
+    const st = statMap[e.id];
+    if(st && st.cnt > 0) gcnt[getGrade(st.sum/st.cnt)]++;
+  });
+
+  const totalScored = Object.values(statMap).filter(s => s.cnt > 0).length;
+
+  let h = `<div style="padding:12px 12px 0">
+    <div class="card">
+      <div class="card-head" style="background:#f0f0f0">📊 Kết Quả Tháng ${m}/${y}</div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:10px;margin-bottom:16px">
+          <div style="text-align:center;padding:12px;background:#e8f5e9;border-radius:8px">
+            <div style="font-size:1.8rem;font-weight:800;color:#1b5e20">${totalScored}</div>
+            <div style="font-size:.75rem;color:#666">Đã chấm</div>
+          </div>`;
+
+  ['A+','A','B','C','D'].forEach(g => {
+    h += `<div style="text-align:center;padding:12px;background:#fff;border:1px solid #ddd;border-radius:8px">
+      <div class="gb ${gbClass(g)}" style="font-size:1.4rem;margin-bottom:4px">${g}</div>
+      <div style="font-size:1.6rem;font-weight:800;color:#333">${gcnt[g]}</div>
+    </div>`;
+  });
+
+  h += `</div>
+    <canvas id="gradeChart" style="max-height:200px;margin:10px 0"></canvas>
+  </div></div></div>`;
+
+  document.getElementById('scoringWrap').innerHTML = h + '<div id="scoringTable" style="margin-top:12px"></div>';
+
+  // Draw chart
+  setTimeout(() => {
+    const ctx = document.getElementById('gradeChart');
+    if(ctx && !window.gradeChartInstance) {
+      window.gradeChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['A+', 'A', 'B', 'C', 'D'],
+          datasets: [{
+            label: 'Số nhân viên',
+            data: [gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']],
+            backgroundColor: ['#1b5e20', '#2e7d32', '#1565c0', '#e65100', '#b71c1c'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {legend: {display: false}},
+          scales: {x: {beginAtZero: true, max: Math.max(gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']) + 2}}},
+          height: 180
+        }
+      });
+    } else if(ctx && window.gradeChartInstance) {
+      window.gradeChartInstance.data.datasets[0].data = [gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']];
+      window.gradeChartInstance.update();
+    }
+  }, 50);
+}
+
 function renderScoring(){
   const mVal=document.getElementById('scoreMonth').value; // YYYY-MM
   if(!mVal){
@@ -597,7 +675,7 @@ function renderScoring(){
     document.getElementById('exclNote').innerHTML='';
     return;
   }
-  
+
   const [y, m] = mVal.split('-');
   const daysInMonth = new Date(y, m, 0).getDate();
   const monthPrefix = mVal + '-';
@@ -608,6 +686,9 @@ function renderScoring(){
     statMap[r.emp_id].scores[r.date] = parseFloat(r.score);
     if(r.note) statMap[r.emp_id].notes[r.date] = r.note;
   });
+
+  // Show stats first
+  renderScoringStats(mVal);
 
   const emps = allEmps(scoreKip);
   const doneCount = emps.filter(e => statMap[e.id] && Object.keys(statMap[e.id].scores).length > 0).length;
@@ -629,7 +710,7 @@ function renderScoring(){
     html+= `</tr>
           </thead>
           <tbody>`;
-          
+
     kEmps.forEach(e=>{
       const st = statMap[e.id] || {scores:{}, notes:{}};
       html+=`<tr>
@@ -637,13 +718,13 @@ function renderScoring(){
           <div style="font-weight:700;font-size:.85rem;color:#222">${e.name}</div>
           <div style="font-size:.68rem;color:#888">${e.id}${e.role?' · '+e.role:''}</div>
         </td>`;
-        
+
       for(let i=1; i<=daysInMonth; i++){
          const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
          const sVal = st.scores[dk] !== undefined ? st.scores[dk] : '';
          const nVal = st.notes[dk] || '';
          const noteHint = nVal ? '2px solid red' : '1px solid transparent';
-         
+
          html += `<td style="text-align:center;padding:4px 0">
            <input type="number" min="0" max="12" step="0.1" title="${nVal}" data-note="${nVal}"
                   data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}"
@@ -658,7 +739,7 @@ function renderScoring(){
     html+='</tbody></table></div></div>';
   });
   if(!html) html='<div style="text-align:center;padding:40px;color:#aaa">Không có nhân viên.</div>';
-  document.getElementById('scoringWrap').innerHTML=html;
+  document.getElementById('scoringTable').innerHTML=html;
 }
 
 async function scoreAllMonth(btn) {
@@ -779,17 +860,20 @@ function renderApproval(){
       gHtml = `<span class="gb ${gbClass(grade)}">${grade}</span>`;
     }
 
-    const rev = reviewMap[e.id] || {note:'', approved:false};
-    
-    html+= `<div class="card" style="border:1px solid ${rev.approved?'#4caf50':'#e0e0e0'}">
-      <div class="card-head" style="background:${rev.approved?'#e8f5e9':'#fafafa'}; cursor:pointer" onclick="toggleDet('appr-det-${e.id}', this.querySelector('.expand-btn'))">
+    const rev = reviewMap[e.id] || {note:'', approved:false, final_score:null, violation_note:''};
+    const hasFinal = rev.final_score !== null && rev.final_score !== undefined;
+    const finalScore = hasFinal ? parseFloat(rev.final_score) : avg;
+    const finalGrade = finalScore !== '-' ? getGrade(finalScore) : '-';
+
+    html+= `<div class="card" style="border:2px solid ${rev.approved?'#4caf50':rev.violation_note?'#ff6f00':'#e0e0e0'}">
+      <div class="card-head" style="background:${rev.approved?'#e8f5e9':rev.violation_note?'#fff3e0':'#fafafa'}; cursor:pointer" onclick="toggleDet('appr-det-${e.id}', this.querySelector('.expand-btn'))">
         <div style="flex:1;min-width:0">
-          <div style="font-weight:700;color:#1a237e">${e.name}</div>
+          <div style="font-weight:700;color:#1a237e">${e.name}${rev.violation_note?' ⚠️':''}</div>
           <div style="font-size:.7rem;color:#777">${e.id} - ${GRP_LABEL[e.kip]}</div>
         </div>
         <div style="text-align:right">
-          <div><b style="font-size:1.1rem;color:${avg!=='-'?scoreColor(avg):'#ccc'}">${avg}</b> ${gHtml}</div>
-          <div style="font-size:.65rem;color:${rev.approved?'#2e7d32':'#f57f17'}">${rev.approved?'Đã duyệt':'Chưa duyệt'}</div>
+          <div><b style="font-size:1.1rem;color:${finalScore!=='-'?scoreColor(finalScore):'#ccc'}">${finalScore}</b> <span class="gb ${gbClass(finalGrade)}">${finalGrade}</span></div>
+          <div style="font-size:.65rem;color:${rev.approved?'#2e7d32':rev.violation_note?'#ff6f00':'#f57f17'}"><span>${rev.approved?'✅ Đã duyệt':rev.violation_note?'⚠️ Vi phạm':'Chưa duyệt'}</span>${hasFinal?' · Điểm cuối':''}</div>
         </div>
         <button class="expand-btn">▼</button>
       </div>
@@ -806,6 +890,16 @@ function renderApproval(){
     }
 
     html+= `</div>
+        <div style="background:#fff9c4;padding:10px;border-radius:8px;margin-bottom:10px">
+          <div style="font-weight:700;font-size:.85rem;color:#e65100;margin-bottom:8px">⚠️ Vi Phạm Nghiêm Trọng (nếu có)</div>
+          <textarea id="appr-viol-${e.id}" placeholder="Ghi nhận vi phạm... (tính kỹ lưỡng, an toàn, kỷ luật, v.v.)" style="width:100%;height:50px;padding:8px;border:1.5px solid #ffb74d;border-radius:8px;font-family:inherit;font-size:.85rem;resize:vertical;outline:none;background:#fffde7">${rev.violation_note||''}</textarea>
+          <div style="font-size:.75rem;color:#e65100;margin-top:4px">Nếu có vi phạm, bạn có thể đặt điểm cuối khác với trung bình</div>
+        </div>
+        <div style="background:#f3e5f5;padding:10px;border-radius:8px;margin-bottom:10px">
+          <div style="font-weight:700;font-size:.85rem;color:#6a1b9a;margin-bottom:8px">📌 Điểm Cuối (nếu khác trung bình)</div>
+          <input type="number" min="0" max="12" step="0.1" id="appr-final-${e.id}" placeholder="Để trống = dùng điểm trung bình" value="${hasFinal?rev.final_score:''}" style="width:100%;padding:8px;border:1.5px solid #ce93d8;border-radius:8px;font-size:.85rem;outline:none;background:#fce4ec">
+          <div style="font-size:.75rem;color:#6a1b9a;margin-top:4px">VD: Nếu NV có vi phạm nghiêm trọng, có thể hạ xuống 7 điểm thay vì trung bình 9.5</div>
+        </div>
         <textarea id="appr-note-${e.id}" placeholder="Ghi chú tháng của Quản lý..." style="width:100%;height:60px;padding:8px;border:1px solid #ccc;border-radius:8px;font-family:inherit;font-size:.85rem;resize:vertical;outline:none">${rev.note}</textarea>
         <div style="text-align:right;margin-top:10px">
           <button class="btn btn-pri" onclick="saveApproval('${e.id}', '${mVal}', ${daysInMonth}, this)">💾 Lưu & Cập Nhật</button>
@@ -819,6 +913,8 @@ function renderApproval(){
 
 async function saveApproval(emp_id, month_key, daysInMonth, btn) {
   const note = document.getElementById(`appr-note-${emp_id}`).value.trim();
+  const violNote = document.getElementById(`appr-viol-${emp_id}`).value.trim();
+  const finalScoreVal = document.getElementById(`appr-final-${emp_id}`).value.trim();
   const emp = allEmpsNoFilter().find(e => e.id === emp_id) || {name: 'NV'};
   
   const [y, m] = month_key.split('-');
@@ -844,6 +940,15 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
     }
   }
 
+  // Validate final score if provided
+  let finalScore = null;
+  if(finalScoreVal !== ''){
+    finalScore = parseFloat(finalScoreVal);
+    if(isNaN(finalScore) || finalScore < 0 || finalScore > 12){
+      errorFound = true;
+    }
+  }
+
   if(errorFound){
     alert('Có điểm không hợp lệ (phải từ 0-12). Vui lòng kiểm tra lại!');
     return;
@@ -858,8 +963,8 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
         if(drErr) console.warn('Lỗi lưu daily ratings:', drErr);
     }
     
-    // Yêu cầu đề cập `approved: true` khi duyệt.
-    const reviewRecord = {emp_id: emp_id, month_key: month_key, note: note, approved: true};
+    // Lưu với violation_note và final_score
+    const reviewRecord = {emp_id: emp_id, month_key: month_key, note: note, approved: true, violation_note: violNote || null, final_score: finalScore};
     const {data, error} = await sb.from('monthly_reviews').upsert(reviewRecord, {onConflict: 'emp_id,month_key'}).select();
     
     if(error){
