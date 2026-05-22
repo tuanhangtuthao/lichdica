@@ -669,8 +669,7 @@ function renderScoringStats(mVal) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {legend: {display: false}},
-            scales: {x: {beginAtZero: true, max: Math.max(gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']) + 2}},
-            y: {ticks: {maxRotation: 0}}},
+            scales: {x: {beginAtZero: true, max: Math.max(gcnt['A+'], gcnt['A'], gcnt['B'], gcnt['C'], gcnt['D']) + 2}, y: {ticks: {maxRotation: 0}}},
             height: 180
           }
         });
