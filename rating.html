@@ -636,6 +636,7 @@ function renderScoringStats(mVal) {
   });
 
   const totalScored = Object.values(statMap).filter(s => s.cnt > 0).length;
+  const totalEmps = emps.length;
 
   let h = `<div style="padding:12px 12px 0">
     <div class="card">
@@ -648,9 +649,11 @@ function renderScoringStats(mVal) {
           </div>`;
 
   ['A+','A','B','C','D'].forEach(g => {
+    const pct = totalEmps > 0 ? Math.round(gcnt[g] / totalEmps * 100) : 0;
     h += `<div style="text-align:center;padding:12px;background:#fff;border:1px solid #ddd;border-radius:8px">
       <div class="gb ${gbClass(g)}" style="font-size:1.4rem;margin-bottom:4px">${g}</div>
       <div style="font-size:1.6rem;font-weight:800;color:#333">${gcnt[g]}</div>
+      <div style="font-size:.7rem;color:#888">${pct}%</div>
     </div>`;
   });
 
@@ -837,7 +840,7 @@ function renderApproval(){
   const [y, m] = mVal.split('-');
   const daysInMonth = new Date(y, m, 0).getDate();
   const monthPrefix = mVal + '-';
-  
+
   // Calculate avg for the month
   const statMap = {};
   RATINGS.filter(r => r.date.startsWith(monthPrefix)).forEach(r => {
@@ -847,13 +850,38 @@ function renderApproval(){
     statMap[r.emp_id].scores[r.date] = parseFloat(r.score);
   });
 
+  // Calculate grade distribution
+  const gcnt={'A+':0,'A':0,'B':0,'C':0,'D':0};
+  emps.forEach(e => {
+    const st = statMap[e.id];
+    if(st && st.cnt > 0) gcnt[getGrade(st.sum/st.cnt)]++;
+  });
+  const totalEmps = emps.length;
+
   const reviewMap={};
   MONTHLY_REVIEWS.filter(r => r.month_key === mVal).forEach(r => reviewMap[r.emp_id] = r);
 
+  // Hiển thị stats
+  let statsHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:10px;padding:0 12px 16px;margin-bottom:10px">
+    <div style="text-align:center;padding:12px;background:#e8f5e9;border-radius:8px">
+      <div style="font-size:1.6rem;font-weight:800;color:#1b5e20">${emps.length}</div>
+      <div style="font-size:.75rem;color:#666">Tổng NV</div>
+    </div>`;
+  ['A+','A','B','C','D'].forEach(g => {
+    const pct = totalEmps > 0 ? Math.round(gcnt[g] / totalEmps * 100) : 0;
+    statsHtml += `<div style="text-align:center;padding:12px;background:#fff;border:1px solid #ddd;border-radius:8px">
+      <div class="gb ${gbClass(g)}" style="font-size:1.2rem;margin-bottom:2px">${g}</div>
+      <div style="font-size:1.4rem;font-weight:800;color:#333">${gcnt[g]}</div>
+      <div style="font-size:.65rem;color:#888">${pct}%</div>
+    </div>`;
+  });
+  statsHtml += `</div>`;
+
+  document.getElementById('approvalWrap').innerHTML = statsHtml;
   document.getElementById('apprProgress').innerHTML=
     `Đang xem: <b style="color:#4a148c">${emps.length}</b> nhân viên`;
 
-  let html='<div style="display:flex;flex-direction:column;gap:12px">';
+  let html = statsHtml + '<div style="display:flex;flex-direction:column;gap:12px">';
   emps.forEach(e => {
     const st = statMap[e.id] || {sum:0, cnt:0, scores:{}};
     const avg = st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
