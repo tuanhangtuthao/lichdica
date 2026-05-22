@@ -780,8 +780,10 @@ async function scoreAllMonth(btn) {
       });
       inputs.forEach(el => el.dataset.changed = "0");
       alert('Đã lưu thành công: ' + dailyRows.length + ' bản ghi điểm!');
+      // Refresh bảng để cập nhật TB & Hạng
+      renderScoring();
   }
-  
+
   if(btn){
       btn.textContent = "💾 Lưu điểm Tháng";
       btn.disabled = false;
