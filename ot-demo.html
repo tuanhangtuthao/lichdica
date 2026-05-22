@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo – Giao diện Tăng Ca Mới</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#222}
+
+/* ── LAYOUT ── */
+.demo-wrap{max-width:560px;margin:0 auto;padding:12px}
+.demo-title{background:linear-gradient(135deg,#1a237e,#283593);color:#fff;
+  border-radius:12px;padding:14px 18px;margin-bottom:14px;font-size:1rem;font-weight:700}
+.demo-title small{display:block;font-size:.73rem;opacity:.8;font-weight:400;margin-top:2px}
+.section{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);
+  margin-bottom:16px;overflow:hidden}
+.section-hdr{padding:12px 16px;font-size:.8rem;font-weight:700;color:#666;
+  border-bottom:1px solid #f0f0f0;background:#fafafa;display:flex;align-items:center;gap:6px}
+.section-hdr span{font-size:1rem}
+
+/* ── MODE TABS ── */
+.mode-tabs{display:flex;border-radius:10px;overflow:hidden;margin:12px;border:2px solid #1a237e}
+.mode-tab{flex:1;padding:9px 6px;border:none;font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:.15s;background:#fff;color:#1a237e;display:flex;align-items:center;justify-content:center;gap:5px}
+.mode-tab.active{background:#1a237e;color:#fff}
+.mode-tab:hover:not(.active){background:#e8eaf6}
+
+/* ── FILTER CHIPS (MỚI) ── */
+.filter-bar{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.fc{padding:6px 14px;border:none;border-radius:20px;font-size:.75rem;font-weight:700;
+  cursor:pointer;transition:.15s;white-space:nowrap;background:#e8eaf6;color:#546e7a}
+.fc.active{color:#fff}
+.fc.all.active{background:#1a237e}
+.fc.c1.active{background:#01579b}
+.fc.c2.active{background:#6a1b9a}
+.fc.c3.active{background:#2e7d32}
+.fc.s.active{background:#e65100}
+.fc.ch.active{background:#3949ab}
+.fc.hc.active{background:#00695c}
+.fc:hover:not(.active){background:#cfd8dc;color:#263238}
+.fc.ca{min-width:52px;text-align:center}
+
+/* ── STAT CHIPS (MỚI) ── */
+.stats{display:flex;gap:8px;padding:0 12px 12px}
+.stat{flex:1;background:linear-gradient(135deg,#e8eaf6,#f3f4ff);border:1px solid #c5cae9;
+  border-radius:10px;padding:10px 8px;text-align:center}
+.stat .val{font-size:1.25rem;font-weight:900;color:#1a237e;display:block;line-height:1.1}
+.stat .lbl{font-size:.68rem;color:#78909c;margin-top:3px;display:block}
+.stat.warn .val{color:#e65100}
+.stat.ok .val{color:#2e7d32}
+
+/* ── LEGEND (MỚI) ── */
+.legend{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px 12px}
+.leg{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;
+  font-size:.72rem;font-weight:700}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.leg.s{background:#fff3e0;color:#e65100}.leg.s .leg-dot{background:#e65100}
+.leg.c{background:#e8eaf6;color:#3949ab}.leg.c .leg-dot{background:#3949ab}
+.leg.c123{background:#e0f2f1;color:#00695c}.leg.c123 .leg-dot{background:#00695c}
+.leg.hr{background:#fce4ec;color:#c62828}.leg.hr .leg-dot{background:#c62828}
+
+/* ── GRID TABLE (MỚI) ── */
+.grid-wrap{overflow-x:auto;padding:0 12px 12px;-webkit-overflow-scrolling:touch}
+.grid-wrap table{border-collapse:collapse;white-space:nowrap;font-size:.72rem;width:100%}
+.grid-wrap th{background:#1a237e;color:#fff;padding:5px 3px;text-align:center;font-weight:700;position:sticky;top:0}
+.grid-th-name{position:sticky;left:0;z-index:5;background:#1a237e !important;
+  text-align:left !important;padding:6px 10px !important;min-width:120px}
+.grid-wrap td{padding:4px 3px;border-bottom:1px solid #f0f0f0;border-right:1px solid #f5f5f5;text-align:center}
+.grid-name{position:sticky;left:0;z-index:2;background:#fff;padding:5px 10px !important;
+  text-align:left;font-weight:600;min-width:120px;border-right:2px solid #e0e0e0 !important;color:#1a237e}
+.grid-wrap tr:nth-child(even) .grid-name{background:#f8f9fa}
+.grid-wrap tr:nth-child(even) td{background:#f8f9fa}
+
+/* Group row */
+.grid-group{background:linear-gradient(90deg,#1565c0,#1976d2) !important}
+.grid-group td{background:transparent !important;color:#fff;font-weight:700;
+  font-size:.72rem;padding:5px 10px;border:none !important}
+
+/* OT cell badges */
+.ot-cell{display:inline-flex;align-items:center;justify-content:center;
+  border-radius:4px;font-size:.65rem;font-weight:800;padding:2px 4px;min-width:22px}
+.ot-c1{background:#b2dfdb;color:#004d40}
+.ot-c2{background:#ffe082;color:#e65100}
+.ot-c3{background:#ce93d8;color:#4a148c}
+.ot-s{background:#ffe0b2;color:#bf360c}
+.ot-c{background:#c5cae9;color:#1a237e}
+.ot-h{background:#c8e6c9;color:#1b5e20}
+/* Today column */
+.today-col{background:rgba(249,168,37,.15) !important;outline:2px solid #f9a825;outline-offset:-2px}
+.grid-wrap th.today-h{background:#f9a825 !important;color:#333 !important}
+
+/* ── TIMELINE VIEW (MỚI) ── */
+.tl-day{margin:0 12px 10px;border-radius:10px;overflow:hidden;
+  box-shadow:0 1px 6px rgba(0,0,0,.09)}
+.tl-day-hdr{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;background:#37474f;color:#fff}
+.tl-day-hdr.today{background:linear-gradient(90deg,#e65100,#f57c00)}
+.tl-day-hdr .d-name{font-weight:800;font-size:.88rem}
+.tl-day-hdr .d-count{font-size:.72rem;opacity:.9;background:rgba(255,255,255,.2);
+  padding:2px 8px;border-radius:10px}
+
+/* Kíp sub-header */
+.tl-kip{padding:5px 14px;font-size:.7rem;font-weight:800;letter-spacing:.5px;color:#fff}
+.tl-kip.k1{background:#1565c0}.tl-kip.k2{background:#6a1b9a}
+.tl-kip.k3{background:#2e7d32}.tl-kip.k4{background:#00695c}
+
+/* Employee OT row */
+.tl-row{display:grid;grid-template-columns:1fr auto;align-items:center;
+  padding:8px 14px;border-bottom:1px solid #f5f5f5;background:#fff;gap:8px}
+.tl-row:last-child{border-bottom:none}
+.tl-row:hover{background:#f9fafe}
+.tl-name{font-weight:600;font-size:.82rem;color:#1a237e}
+.tl-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.tl-time{display:flex;align-items:center;gap:5px}
+.tl-time-txt{font-size:.78rem;font-weight:700;color:#333}
+.tl-dur{background:#1a237e;color:#fff;border-radius:10px;font-size:.65rem;
+  font-weight:800;padding:2px 7px}
+.tl-type{font-size:.65rem;font-weight:800;border-radius:10px;padding:2px 8px}
+.tl-type.c1{background:#b2dfdb;color:#004d40}
+.tl-type.c2{background:#ffe082;color:#e65100}
+.tl-type.c3{background:#ce93d8;color:#4a148c}
+.tl-type.hr{background:#fce4ec;color:#c62828}
+.tl-note{font-size:.68rem;color:#78909c;max-width:180px;text-align:right;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* today dot */
+.today-dot{width:8px;height:8px;border-radius:50%;background:#ff5722;
+  display:inline-block;margin-right:4px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+/* ── COMPARISON NOTE ── */
+.cmp{display:flex;gap:10px;padding:12px}
+.cmp-col{flex:1;border-radius:8px;padding:10px;font-size:.72rem}
+.cmp-col.old{background:#fce4ec;border:1px solid #ef9a9a}
+.cmp-col.new{background:#e8f5e9;border:1px solid #a5d6a7}
+.cmp-col h4{font-size:.75rem;font-weight:800;margin-bottom:6px}
+.cmp-col.old h4{color:#c62828}.cmp-col.new h4{color:#2e7d32}
+.cmp-col li{margin-left:14px;margin-bottom:3px;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="demo-wrap">
+
+  <div class="demo-title">
+    Demo – Giao diện Tăng Ca Mới
+    <small>Xem trước trước khi áp dụng vào hệ thống chính</small>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="section">
+    <div class="section-hdr"><span>🔀</span> Mode chuyển tab</div>
+    <div style="padding:12px">
+      <div class="mode-tabs">
+        <div class="mode-tab active" onclick="switchTab(this,'grid')">📅 Grid tháng</div>
+        <div class="mode-tab" onclick="switchTab(this,'timeline')">📋 Theo ngày</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER CHIPS MỚI -->
+  <div class="section">
+    <div class="section-hdr"><span>🎛</span> Filter chips — đồng nhất 1 kiểu</div>
+    <div class="filter-bar">
+      <button class="fc all active" onclick="setF(this)">Tất cả</button>
+      <button class="fc c1 ca"      onclick="setF(this)">Ca 1</button>
+      <button class="fc c2 ca"      onclick="setF(this)">Ca 2</button>
+      <button class="fc c3 ca"      onclick="setF(this)">Ca 3</button>
+      <button class="fc s"          onclick="setF(this)">Sáng</button>
+      <button class="fc ch"         onclick="setF(this)">Chiều</button>
+      <button class="fc hc"         onclick="setF(this)">HC</button>
+    </div>
+  </div>
+
+  <!-- STAT CHIPS MỚI -->
+  <div class="section">
+    <div class="section-hdr"><span>📊</span> Stat chips — gradient + màu ngữ nghĩa</div>
+    <div class="stats">
+      <div class="stat"><span class="val">14</span><span class="lbl">Nhân viên</span></div>
+      <div class="stat warn"><span class="val">21</span><span class="lbl">Ngày OT</span></div>
+      <div class="stat ok"><span class="val">75h</span><span class="lbl">Tổng giờ</span></div>
+    </div>
+  </div>
+
+  <!-- LEGEND MỚI -->
+  <div class="section">
+    <div class="section-hdr"><span>🏷</span> Legend — chip màu thay text thuần</div>
+    <div class="legend">
+      <span class="leg s"><span class="leg-dot"></span>Full Sáng</span>
+      <span class="leg c"><span class="leg-dot"></span>Full Chiều</span>
+      <span class="leg c123"><span class="leg-dot"></span>Ca 1 / 2 / 3</span>
+      <span class="leg hr"><span class="leg-dot"></span>Theo giờ</span>
+    </div>
+  </div>
+
+  <!-- GRID TABLE MỚI -->
+  <div class="section" id="view-grid">
+    <div class="section-hdr"><span>📅</span> Grid tháng — ô có OT hiện badge, cột tên nổi</div>
+    <div class="grid-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="grid-th-name">Nhân viên</th>
+            <th>20<br>T2</th>
+            <th>21<br>T3</th>
+            <th class="today-h">22<br>T4</th>
+            <th>23<br>T5</th>
+            <th>24<br>T6</th>
+            <th>25<br>T7</th>
+            <th>26<br>CN</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="grid-group">
+            <td colspan="8">▣ Kíp 1 · 5 NV</td>
+          </tr>
+          <tr>
+            <td class="grid-name">Trần Đan Hữu</td>
+            <td></td>
+            <td><span class="ot-cell ot-c1">C1</span></td>
+            <td class="today-col"><span class="ot-cell ot-c1">C1</span></td>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td class="grid-name">Nguyễn Hồng Sơn</td>
+            <td><span class="ot-cell ot-h">2h</span></td>
+            <td></td>
+            <td class="today-col"></td>
+            <td><span class="ot-cell ot-c2">C2</span></td>
+            <td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td class="grid-name">Võ Trường Thịnh</td>
+            <td></td><td></td>
+            <td class="today-col"><span class="ot-cell ot-c3">C3</span></td>
+            <td></td>
+            <td><span class="ot-cell ot-s">S</span></td>
+            <td></td><td></td>
+          </tr>
+          <tr class="grid-group" style="background:linear-gradient(90deg,#6a1b9a,#7b1fa2) !important">
+            <td colspan="8">▣ Kíp 2 · 4 NV</td>
+          </tr>
+          <tr>
+            <td class="grid-name">Dương Thanh Sang</td>
+            <td></td>
+            <td><span class="ot-cell ot-c1">C1</span></td>
+            <td class="today-col"><span class="ot-cell ot-c1">C1</span></td>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr>
+            <td class="grid-name">Lê Đức Khải</td>
+            <td><span class="ot-cell ot-h">4h</span></td>
+            <td></td>
+            <td class="today-col"></td>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+          <tr class="grid-group" style="background:linear-gradient(90deg,#00695c,#00796b) !important">
+            <td colspan="8">▣ Hành Chính · 3 NV</td>
+          </tr>
+          <tr>
+            <td class="grid-name">Nguyễn Văn Hậu</td>
+            <td></td><td></td>
+            <td class="today-col"><span class="ot-cell ot-h">4h</span></td>
+            <td></td>
+            <td><span class="ot-cell ot-h">2h</span></td>
+            <td></td><td></td>
+          </tr>
+          <tr>
+            <td class="grid-name">Ngô Thị Kim Thoa</td>
+            <td><span class="ot-cell ot-h">1h</span></td>
+            <td></td>
+            <td class="today-col"></td>
+            <td></td><td></td><td></td><td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TIMELINE VIEW MỚI -->
+  <div id="view-timeline" style="display:none">
+    <div class="section-hdr" style="margin:0 0 10px;padding:10px 4px;background:none;border:none">
+      <span>📋</span> Theo ngày — kíp có màu, dòng NV rõ ràng hơn
+    </div>
+
+    <!-- Ngày thường -->
+    <div class="tl-day">
+      <div class="tl-day-hdr">
+        <span class="d-name">Thứ ba, 21/4/2026</span>
+        <span class="d-count">2 người</span>
+      </div>
+      <div class="tl-kip k4">HÀNH CHÍNH</div>
+      <div class="tl-row">
+        <div class="tl-name">Nguyễn Văn Hậu</div>
+        <div class="tl-right">
+          <div class="tl-time">
+            <span class="tl-time-txt">14:00 – 18:00</span>
+            <span class="tl-dur">4h</span>
+            <span class="tl-type hr">Theo giờ</span>
+          </div>
+          <span class="tl-note">lọc hàng 622007001</span>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-name">Ngô Thị Kim Thoa</div>
+        <div class="tl-right">
+          <div class="tl-time">
+            <span class="tl-time-txt">07:00 – 08:00</span>
+            <span class="tl-dur">1h</span>
+            <span class="tl-type hr">Theo giờ</span>
+          </div>
+          <span class="tl-note">Code công đoàn + giao hàng</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hôm nay -->
+    <div class="tl-day">
+      <div class="tl-day-hdr today">
+        <span class="d-name"><span class="today-dot"></span>Hôm nay — Thứ tư, 22/4/2026</span>
+        <span class="d-count">16 người</span>
+      </div>
+      <div class="tl-kip k1">KÍP 1</div>
+      <div class="tl-row">
+        <div class="tl-name">Trần Đan Hữu</div>
+        <div class="tl-right">
+          <div class="tl-time">
+            <span class="tl-time-txt">14:00 – 18:00</span>
+            <span class="tl-dur">4h</span>
+            <span class="tl-type c1">Ca 1</span>
+          </div>
+          <span class="tl-note">thiếu nhân sự mài vt</span>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-name">Nguyễn Hồng Sơn</div>
+        <div class="tl-right">
+          <div class="tl-time">
+            <span class="tl-time-txt">14:00 – 18:00</span>
+            <span class="tl-dur">4h</span>
+            <span class="tl-type c1">Ca 1</span>
+          </div>
+          <span class="tl-note">thiếu nhân sự nấn</span>
+        </div>
+      </div>
+      <div class="tl-kip k2">KÍP 2</div>
+      <div class="tl-row">
+        <div class="tl-name">Dương Thanh Sang</div>
+        <div class="tl-right">
+          <div class="tl-time">
+            <span class="tl-time-txt">14:00 – 18:00</span>
+            <span class="tl-dur">4h</span>
+            <span class="tl-type c1">Ca 1</span>
+          </div>
+          <span class="tl-note">thiếu nhân sự</span>
+        </div>
+      </div>
+      <div class="tl-kip k3">KÍP 3</div>
+      <div class="tl-row">
+        <div class="tl-name">Trần Minh Tuấn</div>
+        <div class="tl-right">
+          <div class="tl-time">
+            <span class="tl-time-txt">18:00 – 22:00</span>
+            <span class="tl-dur">4h</span>
+            <span class="tl-type c3">Ca 3</span>
+          </div>
+          <span class="tl-note">thiếu nhân sự</span>
+        </div>
+      </div>
+      <div class="tl-kip k4">HÀNH CHÍNH</div>
+      <div class="tl-row">
+        <div class="tl-name">Nguyễn Văn Hậu</div>
+        <div class="tl-right">
+          <div class="tl-time">
+            <span class="tl-time-txt">14:00 – 18:00</span>
+            <span class="tl-dur">4h</span>
+            <span class="tl-type hr">Theo giờ</span>
+          </div>
+          <span class="tl-note">lọc hàng 622007001</span>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-name">Ngô Thị Kim Thoa</div>
+        <div class="tl-right">
+          <div class="tl-time">
+            <span class="tl-time-txt">14:00 – 16:00</span>
+            <span class="tl-dur">2h</span>
+            <span class="tl-type hr">Theo giờ</span>
+          </div>
+          <span class="tl-note">hỗ trợ</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SO SÁNH -->
+  <div class="section">
+    <div class="section-hdr"><span>⚖️</span> So sánh cũ vs mới</div>
+    <div class="cmp">
+      <div class="cmp-col old">
+        <h4>❌ Cũ</h4>
+        <ul>
+          <li>Filter chips không đồng nhất</li>
+          <li>Ô grid trắng trơn</li>
+          <li>Legend text thuần</li>
+          <li>Kíp label không màu</li>
+          <li>Dòng NV khó scan</li>
+          <li>Stat chip flat</li>
+        </ul>
+      </div>
+      <div class="cmp-col new">
+        <h4>✅ Mới</h4>
+        <ul>
+          <li>Chips đồng nhất, màu per loại</li>
+          <li>Badge C1/C2/C3/2h trong ô</li>
+          <li>Legend chip có màu</li>
+          <li>Kíp header màu theo kíp</li>
+          <li>Giờ + badge + ghi chú tách biệt</li>
+          <li>Stat chip gradient + màu ngữ nghĩa</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:8px 4px;font-size:.72rem;color:#999;text-align:center;margin-bottom:20px">
+    Demo tĩnh · Không có dữ liệu thật · Chỉ để xem layout
+  </div>
+
+</div>
+
+<script>
+function switchTab(btn, tab) {
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-grid').style.display = tab==='grid'?'':'none';
+  document.getElementById('view-timeline').style.display = tab==='timeline'?'':'none';
+}
+function setF(btn) {
+  document.querySelectorAll('.fc').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

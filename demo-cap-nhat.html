@@ -1,0 +1,772 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo Cap Nhat Lich Di Ca</title>
+<style>
+:root {
+  --bg: #f6f1e8;
+  --paper: #fffdf8;
+  --ink: #1f2a2e;
+  --muted: #6d7475;
+  --line: #dccfbc;
+  --brand: #0f766e;
+  --brand-2: #d97706;
+  --danger: #b42318;
+  --ok: #166534;
+  --soft-green: #dff3ea;
+  --soft-amber: #fff1d6;
+  --soft-red: #fde7e4;
+  --soft-blue: #e3eef8;
+  --shadow: 0 14px 40px rgba(35, 24, 10, 0.12);
+  --radius: 18px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; font-family: "Segoe UI", sans-serif; background: radial-gradient(circle at top, #fff8ef, var(--bg) 55%); color: var(--ink); }
+body { min-height: 100vh; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+.app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 18px 72px;
+}
+.hero {
+  background: linear-gradient(135deg, #123f3b, #0f766e 58%, #d97706 130%);
+  color: #fff;
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -60px;
+  top: -60px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+.hero-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.hero h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 3vw, 3rem); line-height: 1.05; }
+.hero p { margin: 0; color: rgba(255,255,255,.88); max-width: 780px; }
+.hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: start; }
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 11px 16px;
+  font-weight: 700;
+  transition: transform .15s ease, opacity .15s ease, background .15s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: #fff; color: #0d5b55; }
+.btn-secondary { background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+.stat {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  padding: 14px;
+  backdrop-filter: blur(10px);
+}
+.stat .value { font-size: 1.5rem; font-weight: 800; display: block; margin-bottom: 4px; }
+.layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+.panel, .card {
+  background: var(--paper);
+  border: 1px solid rgba(120, 99, 66, 0.12);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.panel { padding: 18px; }
+.panel h2, .card h2 { margin: 0 0 10px; font-size: 1.08rem; }
+.panel p.note { margin: 0 0 14px; color: var(--muted); font-size: .92rem; }
+.field { margin-bottom: 12px; }
+.field label { display: block; margin-bottom: 6px; font-size: .86rem; font-weight: 700; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+}
+.field textarea { min-height: 76px; resize: vertical; }
+.field small { display: block; margin-top: 4px; color: var(--muted); }
+.error-text { color: var(--danger); font-size: .82rem; min-height: 18px; margin-top: 4px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.content { display: grid; gap: 18px; }
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.toolbar .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: .85rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.chip.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.card { padding: 18px; }
+.table-wrap { overflow: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 760px; }
+th, td { padding: 12px 10px; border-bottom: 1px solid #eee2cf; text-align: left; vertical-align: top; }
+th { font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+tbody tr:hover { background: #fff7ea; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.badge.shift-sang { background: var(--soft-green); color: var(--ok); }
+.badge.shift-chieu { background: #e6ecff; color: #2746a3; }
+.badge.shift-dem { background: #ebe5ff; color: #5b3cc4; }
+.badge.shift-nghi { background: #f2f2f2; color: #666; }
+.badge.ot { background: var(--soft-amber); color: #9a5800; }
+.badge.locked { background: var(--soft-red); color: var(--danger); }
+.badge.role { background: var(--soft-blue); color: #15527a; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.timeline { display: grid; gap: 12px; }
+.log-item {
+  border: 1px solid #eee2cf;
+  border-radius: 14px;
+  padding: 14px;
+  background: linear-gradient(180deg, #fff, #fffaf2);
+}
+.log-item strong { display: block; margin-bottom: 4px; }
+.muted { color: var(--muted); }
+.empty {
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  padding: 22px;
+  color: var(--muted);
+  text-align: center;
+}
+.callout {
+  border-left: 4px solid var(--brand-2);
+  background: #fff4e2;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #7a4b00;
+  font-size: .92rem;
+}
+.toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  gap: 10px;
+  z-index: 1000;
+}
+.toast {
+  min-width: 260px;
+  max-width: 340px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: #fff;
+  box-shadow: var(--shadow);
+  animation: toast-in .2s ease;
+}
+.toast.ok { background: linear-gradient(135deg, #166534, #15803d); }
+.toast.warn { background: linear-gradient(135deg, #b45309, #d97706); }
+.toast.err { background: linear-gradient(135deg, #991b1b, #b42318); }
+@keyframes toast-in {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+input[type="file"] { display: none; }
+@media (max-width: 980px) {
+  .layout, .grid-2 { grid-template-columns: 1fr; }
+  .quick-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .app { padding: 16px 12px 72px; }
+  .hero { padding: 18px; border-radius: 22px; }
+  .quick-stats { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr; }
+  .toolbar { align-items: stretch; }
+  .toolbar > * { width: 100%; }
+  .hero-actions { width: 100%; }
+  .hero-actions .btn { flex: 1; justify-content: center; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <div class="hero-top">
+      <div>
+        <p class="badge" style="background:rgba(255,255,255,.16);color:#fff;border:none;margin:0 0 10px;">Demo nang cap web app lich di ca</p>
+        <h1>Lich di ca ban demo da duoc bo sung cac muc uu tien</h1>
+        <p>
+          Demo nay minh hoa cac de xuat da noi: giao dien UTF-8 sach, phan quyen mau khong hard-code,
+          validation form, toast thong bao, export/import JSON, nhat ky thay doi va khu vuc canh bao rui ro.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="btnExportTop" type="button">Export JSON</button>
+        <label class="btn btn-secondary" for="importFile">Import JSON</label>
+        <button class="btn btn-secondary" id="btnSeed" type="button">Nap du lieu demo</button>
+      </div>
+    </div>
+    <div class="quick-stats">
+      <div class="stat"><span class="value" id="statEmployees">0</span><span>Nhan vien dang hien thi</span></div>
+      <div class="stat"><span class="value" id="statOt">0</span><span>Ca co OT trong ngay</span></div>
+      <div class="stat"><span class="value" id="statConflicts">0</span><span>Canh bao xung dot</span></div>
+      <div class="stat"><span class="value" id="statLogs">0</span><span>Ban ghi nhat ky</span></div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <aside class="panel">
+      <h2>Cap nhat co kiem soat</h2>
+      <p class="note">Khu vuc nay demo mot luong cap nhat an toan hon: co quyen, co validation, co nhat ky va co backup.</p>
+      <div class="field">
+        <label for="demoRole">Vai tro thao tac</label>
+        <select id="demoRole" aria-label="Vai tro nguoi dung demo">
+          <option value="viewer">Viewer - chi xem</option>
+          <option value="editor" selected>Editor - sua du lieu</option>
+          <option value="manager">Manager - toan quyen</option>
+        </select>
+        <small>Demo nay chi mo phong phan quyen phia giao dien, nhung co tach ro quyen xem va quyen sua.</small>
+      </div>
+      <div class="field">
+        <label for="employeeName">Ho ten</label>
+        <input id="employeeName" name="employeeName" type="text" placeholder="Nguyen Van A" maxlength="60" />
+        <div class="error-text" id="errName"></div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="employeeId">MSNV</label>
+          <input id="employeeId" name="employeeId" type="text" placeholder="1001" maxlength="10" />
+          <div class="error-text" id="errId"></div>
+        </div>
+        <div class="field">
+          <label for="department">Bo phan</label>
+          <select id="department" name="department">
+            <option value="Tien 2">Tien 2</option>
+            <option value="Mai chong tam">Mai chong tam</option>
+            <option value="Bavia">Bavia</option>
+            <option value="Hanh chinh">Hanh chinh</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="shift">Ca lam viec</label>
+          <select id="shift" name="shift">
+            <option value="Sang">Sang</option>
+            <option value="Chieu">Chieu</option>
+            <option value="Dem">Dem</option>
+            <option value="Nghi">Nghi</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="workDate">Ngay</label>
+          <input id="workDate" name="workDate" type="date" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="otHours">OT (gio)</label>
+          <input id="otHours" name="otHours" type="number" min="0" max="12" step="0.5" value="0" />
+          <div class="error-text" id="errOt"></div>
+        </div>
+        <div class="field">
+          <label for="status">Trang thai</label>
+          <select id="status" name="status">
+            <option value="Da xac nhan">Da xac nhan</option>
+            <option value="Cho duyet">Cho duyet</option>
+            <option value="Can kiem tra">Can kiem tra</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="notes">Ghi chu</label>
+        <textarea id="notes" name="notes" placeholder="Vi du: Co doi ca voi KIP 2, can xac nhan lai truoc 16:00."></textarea>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" id="btnAdd" type="button">Them / cap nhat lich</button>
+        <button class="btn btn-ghost" id="btnReset" type="button">Dat lai form</button>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0;">
+      <div class="callout">
+        Khac voi file goc, demo nay co thong bao canh bao xung dot, import/export backup va lich su cap nhat de de doi soat.
+      </div>
+      <div style="margin-top:14px;display:grid;gap:10px;">
+        <button class="btn btn-ghost" id="btnDemoConflict" type="button">Tao tinh huong xung dot demo</button>
+        <button class="btn btn-ghost" id="btnClearLogs" type="button">Xoa nhat ky</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="card">
+        <div class="toolbar">
+          <div>
+            <h2 style="margin-bottom:4px;">Bang lich ca da duoc bo sung validation</h2>
+            <div class="muted">Co loc theo vai tro, danh dau OT, canh bao xung dot va hanh dong backup.</div>
+          </div>
+          <div class="chips" role="tablist" aria-label="Bo loc ca lam viec">
+            <button class="chip active" data-filter="all" type="button">Tat ca</button>
+            <button class="chip" data-filter="Sang" type="button">Sang</button>
+            <button class="chip" data-filter="Chieu" type="button">Chieu</button>
+            <button class="chip" data-filter="Dem" type="button">Dem</button>
+            <button class="chip" data-filter="conflict" type="button">Chi xung dot</button>
+          </div>
+        </div>
+        <div class="table-wrap" style="margin-top:16px;">
+          <table aria-label="Bang lich demo">
+            <thead>
+              <tr>
+                <th>Nhan vien</th>
+                <th>MSNV</th>
+                <th>Bo phan</th>
+                <th>Ngay</th>
+                <th>Ca</th>
+                <th>OT</th>
+                <th>Trang thai</th>
+                <th>Kiem soat</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="card">
+          <div class="toolbar">
+            <div>
+              <h2 style="margin-bottom:4px;">Canh bao va kiem tra du lieu</h2>
+              <div class="muted">Mo phong nhung muc nen bo sung de tranh loi van hanh.</div>
+            </div>
+          </div>
+          <div id="riskList" style="margin-top:16px;display:grid;gap:12px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="toolbar">
+            <div>
+              <h2 style="margin-bottom:4px;">Backup / khoi phuc</h2>
+              <div class="muted">Thay cho viec phu thuoc hoan toan vao cloud, co the luu file backup cuc bo.</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:grid;gap:12px;">
+            <div class="log-item">
+              <strong>Export JSON</strong>
+              <div class="muted">Xuat tat ca du lieu lich, cau hinh va nhat ky sang file JSON de sao luu.</div>
+              <div style="margin-top:10px;"><button class="btn btn-primary" id="btnExportCard" type="button">Tai file backup</button></div>
+            </div>
+            <div class="log-item">
+              <strong>Import JSON</strong>
+              <div class="muted">Nhap lai du lieu da backup. Demo co kiem tra dinh dang truoc khi ghi de tranh hong du lieu.</div>
+              <div style="margin-top:10px;"><label class="btn btn-ghost" for="importFile">Chon file backup</label></div>
+            </div>
+            <div class="log-item">
+              <strong>Khuyen nghi bao mat</strong>
+              <div class="muted">Khong dat API key, service role hay mat khau quan tri trong file frontend. Demo nay chi dung du lieu noi bo.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="toolbar">
+          <div>
+            <h2 style="margin-bottom:4px;">Nhat ky thay doi</h2>
+            <div class="muted">Thay vi sua am tham, moi cap nhat deu duoc ghi lai de doi soat.</div>
+          </div>
+        </div>
+        <div class="timeline" id="activityLog" style="margin-top:16px;"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<input id="importFile" type="file" accept="application/json" aria-label="Chon file backup JSON">
+<div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+const state = {
+  filter: 'all',
+  schedules: [],
+  logs: []
+};
+
+const sampleSchedules = [
+  { name: 'Tran Dan Huu', id: '1049', department: 'Tien 2', shift: 'Sang', date: todayStr(), otHours: 2, status: 'Da xac nhan', notes: 'Tang cuong san luong dau ca', role: 'Truong ca' },
+  { name: 'Duong Thanh Sang', id: '2019', department: 'Mai chong tam', shift: 'Chieu', date: todayStr(), otHours: 0, status: 'Cho duyet', notes: 'Can xac nhan giao ca', role: 'To truong' },
+  { name: 'Le Duc Khai', id: '2663', department: 'Bavia', shift: 'Dem', date: todayStr(), otHours: 1.5, status: 'Can kiem tra', notes: 'Vuot 10h lien tuc neu giu ca dem + OT', role: 'Nhan vien' }
+];
+
+const els = {
+  role: document.getElementById('demoRole'),
+  name: document.getElementById('employeeName'),
+  id: document.getElementById('employeeId'),
+  department: document.getElementById('department'),
+  shift: document.getElementById('shift'),
+  date: document.getElementById('workDate'),
+  otHours: document.getElementById('otHours'),
+  status: document.getElementById('status'),
+  notes: document.getElementById('notes'),
+  body: document.getElementById('scheduleBody'),
+  riskList: document.getElementById('riskList'),
+  log: document.getElementById('activityLog'),
+  toast: document.getElementById('toastStack'),
+  importFile: document.getElementById('importFile'),
+  statEmployees: document.getElementById('statEmployees'),
+  statOt: document.getElementById('statOt'),
+  statConflicts: document.getElementById('statConflicts'),
+  statLogs: document.getElementById('statLogs'),
+  errName: document.getElementById('errName'),
+  errId: document.getElementById('errId'),
+  errOt: document.getElementById('errOt')
+};
+
+function todayStr() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + mm + '-' + dd;
+}
+
+function escapeHtml(text) {
+  return String(text || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function showToast(type, message) {
+  const div = document.createElement('div');
+  div.className = 'toast ' + type;
+  div.textContent = message;
+  els.toast.appendChild(div);
+  setTimeout(() => div.remove(), 2800);
+}
+
+function addLog(action, detail) {
+  state.logs.unshift({ action, detail, time: new Date().toLocaleString('vi-VN') });
+  state.logs = state.logs.slice(0, 12);
+}
+
+function canEdit() {
+  return els.role.value === 'editor' || els.role.value === 'manager';
+}
+
+function validateForm() {
+  let ok = true;
+  els.errName.textContent = '';
+  els.errId.textContent = '';
+  els.errOt.textContent = '';
+
+  const name = els.name.value.trim();
+  const id = els.id.value.trim();
+  const ot = Number(els.otHours.value || 0);
+
+  if (!canEdit()) {
+    showToast('warn', 'Vai tro Viewer chi duoc xem, khong duoc cap nhat du lieu.');
+    return false;
+  }
+  if (name.length < 3) {
+    els.errName.textContent = 'Ho ten can it nhat 3 ky tu.';
+    ok = false;
+  }
+  if (!/^\d{4,10}$/.test(id)) {
+    els.errId.textContent = 'MSNV phai la chuoi so 4-10 ky tu.';
+    ok = false;
+  }
+  if (Number.isNaN(ot) || ot < 0 || ot > 12) {
+    els.errOt.textContent = 'OT chi duoc trong khoang 0-12 gio.';
+    ok = false;
+  }
+  if (!els.date.value) {
+    showToast('warn', 'Ban can chon ngay lam viec.');
+    ok = false;
+  }
+  return ok;
+}
+
+function getConflicts(list = state.schedules) {
+  const map = new Map();
+  const conflicts = [];
+  for (const item of list) {
+    const key = item.id + '|' + item.date;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(item);
+  }
+  map.forEach(entries => {
+    if (entries.length > 1) conflicts.push({ type: 'duplicate', entries });
+    entries.forEach(entry => {
+      if (entry.otHours >= 4 && entry.shift === 'Dem') conflicts.push({ type: 'fatigue', entries: [entry] });
+      if (entry.status === 'Can kiem tra') conflicts.push({ type: 'review', entries: [entry] });
+    });
+  });
+  return conflicts;
+}
+
+function statusBadgeClass(shift) {
+  if (shift === 'Sang') return 'shift-sang';
+  if (shift === 'Chieu') return 'shift-chieu';
+  if (shift === 'Dem') return 'shift-dem';
+  return 'shift-nghi';
+}
+
+function renderTable() {
+  const conflicts = getConflicts();
+  const conflictKeys = new Set(conflicts.flatMap(group => group.entries.map(item => item.id + '|' + item.date)));
+  let rows = state.schedules.filter(item => {
+    if (state.filter === 'all') return true;
+    if (state.filter === 'conflict') return conflictKeys.has(item.id + '|' + item.date);
+    return item.shift === state.filter;
+  });
+
+  if (!rows.length) {
+    els.body.innerHTML = '<tr><td colspan="8"><div class="empty">Khong co dong du lieu nao khop bo loc hien tai.</div></td></tr>';
+    return;
+  }
+
+  rows = rows.slice().sort((a, b) => (a.date + a.id).localeCompare(b.date + b.id));
+  els.body.innerHTML = rows.map(item => {
+    const key = item.id + '|' + item.date;
+    const hasConflict = conflictKeys.has(key);
+    return '<tr>' +
+      '<td><strong>' + escapeHtml(item.name) + '</strong><div class="muted">' + escapeHtml(item.role || 'Nhan vien') + '</div></td>' +
+      '<td>' + escapeHtml(item.id) + '</td>' +
+      '<td>' + escapeHtml(item.department) + '</td>' +
+      '<td>' + escapeHtml(item.date) + '</td>' +
+      '<td><span class="badge ' + statusBadgeClass(item.shift) + '">' + escapeHtml(item.shift) + '</span></td>' +
+      '<td>' + (item.otHours > 0 ? '<span class="badge ot">+' + escapeHtml(item.otHours) + 'h</span>' : '<span class="muted">Khong co</span>') + '</td>' +
+      '<td>' + escapeHtml(item.status) + '<div class="muted">' + escapeHtml(item.notes || '') + '</div></td>' +
+      '<td>' +
+        (hasConflict ? '<span class="badge locked">Can kiem tra</span>' : '<span class="badge role">Hop le</span>') +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderRisks() {
+  const conflicts = getConflicts();
+  if (!conflicts.length) {
+    els.riskList.innerHTML = '<div class="empty">Chua phat hien xung dot nao. Day la muc can bo sung so voi ban goc de tranh loi van hanh.</div>';
+    return;
+  }
+  els.riskList.innerHTML = conflicts.map(group => {
+    if (group.type === 'duplicate') {
+      const names = group.entries.map(x => x.name + ' (' + x.id + ')').join(', ');
+      return '<div class="log-item"><strong>Xung dot lich trung ngay</strong><div class="muted">' + escapeHtml(names) + ' co nhieu hon 1 ban ghi trong ngay ' + escapeHtml(group.entries[0].date) + '.</div></div>';
+    }
+    if (group.type === 'fatigue') {
+      const entry = group.entries[0];
+      return '<div class="log-item"><strong>Canh bao met moi</strong><div class="muted">' + escapeHtml(entry.name) + ' dang ca dem va OT ' + escapeHtml(entry.otHours) + 'h. Nen doi soat lai gio lam thuc te.</div></div>';
+    }
+    const entry = group.entries[0];
+    return '<div class="log-item"><strong>Can duyet lai</strong><div class="muted">Ban ghi cua ' + escapeHtml(entry.name) + ' dang o trang thai "Can kiem tra".</div></div>';
+  }).join('');
+}
+
+function renderLogs() {
+  if (!state.logs.length) {
+    els.log.innerHTML = '<div class="empty">Chua co thay doi nao. Muc nhat ky nay minh hoa cho yeu cau co lich su cap nhat.</div>';
+    return;
+  }
+  els.log.innerHTML = state.logs.map(item =>
+    '<div class="log-item"><strong>' + escapeHtml(item.action) + '</strong><div>' + escapeHtml(item.detail) + '</div><div class="muted" style="margin-top:6px;">' + escapeHtml(item.time) + '</div></div>'
+  ).join('');
+}
+
+function updateStats() {
+  const conflicts = getConflicts();
+  els.statEmployees.textContent = String(state.schedules.length);
+  els.statOt.textContent = String(state.schedules.filter(x => Number(x.otHours) > 0).length);
+  els.statConflicts.textContent = String(conflicts.length);
+  els.statLogs.textContent = String(state.logs.length);
+}
+
+function renderAll() {
+  renderTable();
+  renderRisks();
+  renderLogs();
+  updateStats();
+}
+
+function resetForm() {
+  els.name.value = '';
+  els.id.value = '';
+  els.department.value = 'Tien 2';
+  els.shift.value = 'Sang';
+  els.date.value = todayStr();
+  els.otHours.value = '0';
+  els.status.value = 'Da xac nhan';
+  els.notes.value = '';
+  els.errName.textContent = '';
+  els.errId.textContent = '';
+  els.errOt.textContent = '';
+}
+
+function upsertSchedule() {
+  if (!validateForm()) return;
+  const item = {
+    name: els.name.value.trim(),
+    id: els.id.value.trim(),
+    department: els.department.value,
+    shift: els.shift.value,
+    date: els.date.value,
+    otHours: Number(els.otHours.value || 0),
+    status: els.status.value,
+    notes: els.notes.value.trim(),
+    role: els.role.value === 'manager' ? 'Quan ly cap nhat' : 'Nhan vien'
+  };
+  const idx = state.schedules.findIndex(x => x.id === item.id && x.date === item.date);
+  if (idx >= 0) {
+    state.schedules[idx] = item;
+    addLog('Cap nhat lich', item.name + ' - ' + item.date + ' / ' + item.shift);
+    showToast('ok', 'Da cap nhat ban ghi lich cho ' + item.name + '.');
+  } else {
+    state.schedules.push(item);
+    addLog('Them lich moi', item.name + ' - ' + item.date + ' / ' + item.shift);
+    showToast('ok', 'Da them lich moi cho ' + item.name + '.');
+  }
+  renderAll();
+  resetForm();
+}
+
+function exportJson() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    schedules: state.schedules,
+    logs: state.logs
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'demo-cap-nhat-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  addLog('Export backup', 'Da tao file JSON backup demo.');
+  renderAll();
+  showToast('ok', 'Da xuat file backup JSON.');
+}
+
+function importJson(file) {
+  const reader = new FileReader();
+  reader.onload = event => {
+    try {
+      const data = JSON.parse(String(event.target.result || '{}'));
+      if (!Array.isArray(data.schedules) || !Array.isArray(data.logs)) {
+        throw new Error('Cau truc file khong hop le');
+      }
+      state.schedules = data.schedules;
+      state.logs = data.logs;
+      addLog('Import backup', 'Da nap du lieu tu file backup JSON.');
+      renderAll();
+      showToast('ok', 'Da import file backup thanh cong.');
+    } catch (err) {
+      showToast('err', 'Import that bai: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function seedDemoData() {
+  state.schedules = sampleSchedules.map(item => ({ ...item }));
+  state.logs = [];
+  addLog('Nap du lieu demo', 'Da khoi tao bo du lieu minh hoa cho demo cap nhat.');
+  renderAll();
+  showToast('ok', 'Da nap du lieu demo.');
+}
+
+function createConflictDemo() {
+  state.schedules.push({
+    name: 'Tran Dan Huu',
+    id: '1049',
+    department: 'Tien 2',
+    shift: 'Chieu',
+    date: todayStr(),
+    otHours: 4,
+    status: 'Can kiem tra',
+    notes: 'Co 2 ban ghi trong cung 1 ngay de demo canh bao.',
+    role: 'Truong ca'
+  });
+  addLog('Tao xung dot demo', 'Da them 1 ban ghi trung ngay de mo phong canh bao.');
+  renderAll();
+  showToast('warn', 'Da tao xung dot demo trong bang lich.');
+}
+
+function bindEvents() {
+  document.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter]').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      state.filter = btn.dataset.filter;
+      renderTable();
+    });
+  });
+
+  document.getElementById('btnAdd').addEventListener('click', upsertSchedule);
+  document.getElementById('btnReset').addEventListener('click', resetForm);
+  document.getElementById('btnSeed').addEventListener('click', seedDemoData);
+  document.getElementById('btnDemoConflict').addEventListener('click', createConflictDemo);
+  document.getElementById('btnClearLogs').addEventListener('click', () => {
+    state.logs = [];
+    showToast('warn', 'Da xoa nhat ky demo.');
+    renderAll();
+  });
+  document.getElementById('btnExportTop').addEventListener('click', exportJson);
+  document.getElementById('btnExportCard').addEventListener('click', exportJson);
+  els.importFile.addEventListener('change', event => {
+    const file = event.target.files && event.target.files[0];
+    if (file) importJson(file);
+    event.target.value = '';
+  });
+  els.role.addEventListener('change', () => {
+    addLog('Doi vai tro demo', 'Da chuyen sang vai tro ' + els.role.value + '.');
+    renderLogs();
+    showToast('ok', 'Da chuyen vai tro demo sang ' + els.role.value + '.');
+  });
+}
+
+(function init() {
+  els.date.value = todayStr();
+  bindEvents();
+  seedDemoData();
+})();
+</script>
+</body>
+</html>

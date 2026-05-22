@@ -235,6 +235,7 @@ input.sc-note:focus{border-color:#4a148c}
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input type="text" class="form-input" id="rfSearch" placeholder="Tên nhân viên..." style="width:160px;min-width:160px" oninput="renderResults()">
           <input type="month" class="form-input" id="rfMonth" style="width:130px;min-width:130px" onchange="renderResults()">
+          <button class="btn" style="background:#2e7d32;color:#fff;margin-left:auto" onclick="openPrintPage()">🖨️ In Phiếu Ký</button>
         </div>
       </div>
     </div>
@@ -508,12 +509,17 @@ function renderResults(){
     const st=statMap[e.id];
     if(st&&st.cnt>0) gcnt[getGrade(st.sum/st.cnt)]++;
   });
+  const totalEmps = emps.length;
   document.getElementById('statsBar').innerHTML=
-    ['A+','A','B','C','D'].map(g=>`
+    ['A+','A','B','C','D'].map(g=>{
+      const pct = totalEmps > 0 ? Math.round(gcnt[g] / totalEmps * 100) : 0;
+      return `
       <div class="stat-chip">
         <div class="stat-num gb ${gbClass(g)}" style="border-radius:8px;padding:6px 4px;font-size:1.3rem">${gcnt[g]}</div>
         <div class="stat-lbl">Hạng ${g}</div>
-      </div>`).join('');
+        <div style="font-size:.7rem;color:#888;margin-top:2px">${pct}%</div>
+      </div>`;
+    }).join('');
 
   if(!emps.length){
     document.getElementById('resultsWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Không tìm thấy nhân viên.</div>';
@@ -581,6 +587,15 @@ function toggleDet(detId, btn) {
   const isHidden = el.style.display === 'none';
   el.style.display = isHidden ? 'block' : 'none';
   if(btn) btn.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+function openPrintPage(){
+  const monthVal = document.getElementById('rfMonth').value;
+  if(!monthVal){
+    alert('Vui lòng chọn tháng trước');
+    return;
+  }
+  window.open(`rating-print.html?month=${monthVal}`, '_blank');
 }
 
 // ── TAB 2: CHẤM ĐIỂM ──────────────────────

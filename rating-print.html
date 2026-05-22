@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phiếu Xác Nhận Đánh Giá Nhân Viên</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Arial',sans-serif;background:#fff;color:#333;line-height:1.6}
+@media print{
+  body{margin:0;padding:0}
+  .no-print{display:none}
+  .print-break{page-break-after:always}
+}
+.container{max-width:800px;margin:0 auto;padding:20px}
+.header{text-align:center;margin-bottom:30px;border-bottom:3px solid #1a237e;padding-bottom:15px}
+.header h1{font-size:1.8rem;color:#1a237e;font-weight:700;margin-bottom:5px}
+.header p{font-size:.9rem;color:#666}
+.info-row{display:flex;justify-content:space-between;margin-bottom:15px;font-size:.9rem}
+.info-item{flex:1}
+.info-label{font-weight:700;color:#555}
+.info-value{color:#333;border-bottom:1px solid #ddd;padding:4px 0}
+table{width:100%;border-collapse:collapse;margin:20px 0}
+th,td{padding:10px;border:1px solid #ddd;text-align:left}
+th{background:#1a237e;color:#fff;font-weight:700;text-align:center}
+td{font-size:.9rem}
+.stt{text-align:center;width:40px}
+.name{font-weight:600}
+.score{text-align:center}
+.grade{text-align:center;font-weight:700}
+.sign-box{margin-top:30px;border-top:2px solid #ddd;padding-top:20px}
+.sign-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:30px;margin-top:30px}
+.sign-col{text-align:center}
+.sign-line{border-top:1px solid #333;margin-top:50px;height:0}
+.sign-label{font-size:.85rem;color:#666;margin-top:5px}
+.date-line{border-bottom:1px solid #333;width:200px;display:inline-block;margin:0 5px;padding:0 5px}
+.note{font-size:.8rem;color:#888;margin-top:20px;font-style:italic}
+.legend{margin:20px 0;padding:15px;background:#f5f5f5;border-radius:8px;font-size:.85rem}
+.legend-item{margin:5px 0}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.75rem;font-weight:700;margin-right:5px}
+.badge-Ap{background:#e8f5e9;color:#1b5e20}
+.badge-A{background:#c8e6c9;color:#2e7d32}
+.badge-B{background:#bbdefb;color:#1565c0}
+.badge-C{background:#fff9c4;color:#e65100}
+.badge-D{background:#ffcdd2;color:#b71c1c}
+.print-btn{padding:10px 20px;background:#1a237e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem;margin:20px 0}
+.print-btn:hover{background:#0d1b5e}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <div class="header">
+    <h1>📋 PHIẾU XÁC NHẬN ĐÁNH GIÁ NHÂN VIÊN</h1>
+    <p>Phân Xưởng 1 - Tháng <span id="printMonth">05/2026</span></p>
+  </div>
+
+  <!-- THÔNG TIN -->
+  <div style="margin-bottom:30px">
+    <div class="info-row">
+      <div class="info-item">
+        <div class="info-label">Tháng:</div>
+        <div class="info-value"><span id="monthDisplay">05/2026</span></div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Ngày in:</div>
+        <div class="info-value"><span id="printDate"></span></div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Người lập:</div>
+        <div class="info-value" style="border:none">____________________</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BẢNG ĐIỂM -->
+  <table id="printTable">
+    <thead>
+      <tr>
+        <th class="stt">STT</th>
+        <th>Họ Tên</th>
+        <th>MSNV</th>
+        <th>Kíp</th>
+        <th class="score">Điểm TB</th>
+        <th class="grade">Hạng</th>
+      </tr>
+    </thead>
+    <tbody id="printTableBody">
+    </tbody>
+  </table>
+
+  <!-- CHÚ THÍCH HẠNG -->
+  <div class="legend">
+    <strong>Thang Điểm & Xếp Hạng:</strong>
+    <div class="legend-item">
+      <span class="badge badge-Ap">A+</span> = Xuất sắc (≥ 10.5)
+      <span class="badge badge-A">A</span> = Giỏi (≥ 9.0)
+      <span class="badge badge-B">B</span> = Khá (≥ 7.5)
+      <span class="badge badge-C">C</span> = Trung bình (≥ 6.0)
+      <span class="badge badge-D">D</span> = Cần cải thiện (< 6.0)
+    </div>
+  </div>
+
+  <!-- KỲ HẠN VÀ CHỮ KÝ -->
+  <div class="sign-box">
+    <div style="text-align:center;font-weight:700;margin-bottom:20px">PHÍA NHÂN VIÊN XÁC NHẬN</div>
+    <div class="sign-row">
+      <div class="sign-col">
+        <div class="sign-label">🖋️ Ký xác nhận</div>
+        <div class="sign-line"></div>
+        <div class="sign-label" style="margin-top:10px">Tên & Chữ ký</div>
+      </div>
+      <div class="sign-col">
+        <div class="sign-label">📅 Ngày</div>
+        <div class="sign-line"></div>
+        <div class="sign-label" style="margin-top:10px">Tháng / Năm</div>
+      </div>
+      <div class="sign-col">
+        <div class="sign-label">👤 Ghi chú</div>
+        <div class="sign-line"></div>
+        <div class="sign-label" style="margin-top:10px">Ý kiến bổ sung</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Lưu ý:</strong> Nhân viên vui lòng xem kỹ bảng điểm trên, ký xác nhận và trả lại cho phòng Nhân sự.
+    Nếu có ý kiến khác biệt, vui lòng ghi chú tại mục "Ghi chú" để được xem xét lại.
+  </div>
+
+  <!-- NÚT IN -->
+  <div class="no-print" style="text-align:center">
+    <button class="print-btn" onclick="window.print()">🖨️ In Phiếu</button>
+    <button class="print-btn" style="background:#666;margin-left:10px" onclick="window.history.back()">← Quay Lại</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const SB_OK = SB_URL.startsWith('https://') && !SB_URL.includes('PASTE');
+const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
+
+const GRP_LABEL = {1:'Kíp 1', 2:'Kíp 2', 3:'Kíp 3', 4:'HC / Ca Xoay'};
+const GRADE_CFG = [
+  {grade:'A+',min_score:10.5},
+  {grade:'A', min_score:9.0},
+  {grade:'B', min_score:7.5},
+  {grade:'C', min_score:6.0},
+  {grade:'D', min_score:0.0},
+];
+
+function getGrade(score){
+  const s=[...GRADE_CFG].sort((a,b)=>b.min_score-a.min_score);
+  for(const g of s){if(score>=g.min_score) return g.grade;}
+  return 'D';
+}
+
+function gbClass(g){return 'badge-'+(g==='A+'?'Ap':g);}
+function round1(v){return Math.round(parseFloat(v)*10)/10;}
+
+// Lấy month từ URL parameter
+const urlParams = new URLSearchParams(window.location.search);
+let monthVal = urlParams.get('month');
+if(!monthVal){
+  const today = new Date();
+  monthVal = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+}
+const [y,m] = monthVal.split('-');
+document.getElementById('monthDisplay').textContent = `${m}/${y}`;
+document.getElementById('printMonth').textContent = `${m}/${y}`;
+
+const today = new Date();
+document.getElementById('printDate').textContent =
+  `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
+
+// Load dữ liệu
+async function loadPrintData(){
+  if(!SB_OK) return;
+  try{
+    const monthPrefix = monthVal + '-';
+    const [er,rr] = await Promise.all([
+      sb.from('employees').select('*').order('kip').order('sort_order'),
+      sb.from('daily_ratings').select('*').like('date',monthPrefix+'%'),
+    ]);
+
+    const emps = {1:[],2:[],3:[],4:[]};
+    (er.data||[]).forEach(e=>{
+      if(emps[e.kip]) emps[e.kip].push({id:e.id,name:e.name,kip:e.kip});
+    });
+
+    const statMap = {};
+    (rr.data||[]).forEach(r=>{
+      if(!statMap[r.emp_id]) statMap[r.emp_id] = {sum:0,cnt:0};
+      statMap[r.emp_id].sum += parseFloat(r.score);
+      statMap[r.emp_id].cnt++;
+    });
+
+    // Render table
+    let html = '';
+    let stt = 1;
+    [1,2,3,4].forEach(k=>{
+      (emps[k]||[]).forEach(e=>{
+        const st = statMap[e.id];
+        const avg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
+        const grade = avg !== '-' ? getGrade(avg) : '-';
+        html += `<tr>
+          <td class="stt">${stt}</td>
+          <td class="name">${e.name}</td>
+          <td>${e.id}</td>
+          <td>${GRP_LABEL[e.kip]||'Kíp '+e.kip}</td>
+          <td class="score" style="color:${avg!=='-'?'#e65100':'#ccc'};font-weight:700">${avg}</td>
+          <td class="grade"><span class="badge ${gbClass(grade)}">${grade}</span></td>
+        </tr>`;
+        stt++;
+      });
+    });
+    document.getElementById('printTableBody').innerHTML = html;
+  }catch(e){
+    console.error('Load error:', e);
+    document.getElementById('printTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ccc">Không thể tải dữ liệu</td></tr>';
+  }
+}
+
+loadPrintData();
+</script>
+
+</body>
+</html>
