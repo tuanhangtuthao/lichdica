@@ -584,16 +584,20 @@ function renderResults(){
       <td style="text-align:center;background:#fff8e1">${grHtml}</td>`;
 
     for(let i=1; i<=daysInMonth; i++){
-      const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+      const dk = y + '-' + String(m).padStart(2,'0') + '-' + String(i).padStart(2,'0');
       const s = e.dayScores[dk];
       const dayNote = RATINGS.find(r => r.emp_id === e.id && r.date === dk)?.note || '';
       if(s !== undefined){
-        const key = `${e.id}_${i}`;
+        const key = e.id + '_' + i;
         window.DAY_NOTES_MAP[key] = {day: i, score: s, note: dayNote};
-        const titleTxt = dayNote ? `Ghi chú: ${dayNote}` : 'Không có ghi chú';
-        h+= `<td class="day-cell" data-key="${key}" style="text-align:center;font-weight:700;color:${scoreColor(s)};background:${s>=9?'var(--ap-bg)':s>=8?'var(--a-bg)':s>=6.5?'var(--b-bg)':s>=5?'var(--c-bg)':'var(--d-bg)};cursor:pointer;border:2px solid transparent" title="${titleTxt}">${s}</td>`;
+        let bgColor = 'var(--d-bg)';
+        if(s >= 9) bgColor = 'var(--ap-bg)';
+        else if(s >= 8) bgColor = 'var(--a-bg)';
+        else if(s >= 6.5) bgColor = 'var(--b-bg)';
+        else if(s >= 5) bgColor = 'var(--c-bg)';
+        h+= '<td class="day-cell" data-key="' + key + '" style="text-align:center;font-weight:700;color:' + scoreColor(s) + ';background:' + bgColor + ';cursor:pointer;border:2px solid transparent" title="Ghi chú">' + s + '</td>';
       } else {
-        h+= `<td style="text-align:center;color:#eee">-</td>`;
+        h+= '<td style="text-align:center;color:#eee">-</td>';
       }
     }
     h+= `<td style="font-size:.75rem;color:#444;max-width:250px;white-space:normal;line-height:1.4">${displayNote}</td></tr>`;
