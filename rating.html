@@ -560,20 +560,26 @@ function renderResults(){
     const avgTxt=e.avg!==null
       ?`<b style="font-size:1rem;color:${scoreColor(e.avg)}">${e.avg}</b>`
       :`<span style="color:#ccc">–</span>`;
-    const grHtml=e.avg!==null
-      ?`<span class="gb ${gbClass(getGrade(e.avg))}">${getGrade(e.avg)}</span>`
+    const grade = e.avg!==null ? getGrade(e.avg) : null;
+    const grHtml=grade
+      ?`<span class="gb ${gbClass(grade)}">${grade}</span>`
       :`<span style="color:#ccc">–</span>`;
     const mNote = reviewMap[e.id] || '';
-    
-    h+=`<tr>
-      <td style="position:sticky;left:0;z-index:1;background:#fafafa;border-right:1px solid #eee;">
-        <div style="font-weight:700;font-size:.85rem;color:#1a237e">${e.name}</div>
-        <div style="font-size:.7rem;color:#999">${e.id}</div>
+    const defaultNote = grade === 'B' ? 'Tròn vai' : '';
+    const displayNote = mNote || defaultNote;
+
+    h+=`<tr style="cursor:pointer" onclick="toggleDet('res-det-${e.id}', this.querySelector('.exp-btn'))">
+      <td style="position:sticky;left:0;z-index:1;background:#fafafa;border-right:1px solid #eee;display:flex;align-items:center;gap:6px">
+        <button class="exp-btn" style="background:none;border:none;color:#666;font-size:.9rem;transition:.15s;flex-shrink:0">▼</button>
+        <div>
+          <div style="font-weight:700;font-size:.85rem;color:#1a237e">${e.name}</div>
+          <div style="font-size:.7rem;color:#999">${e.id}</div>
+        </div>
       </td>
       <td style="font-size:.75rem;color:#666;text-align:center">${GRP_LABEL[e.kip]||''}</td>
       <td style="text-align:center;background:#fff8e1">${avgTxt}</td>
       <td style="text-align:center;background:#fff8e1">${grHtml}</td>`;
-    
+
     for(let i=1; i<=daysInMonth; i++){
       const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
       const s = e.dayScores[dk];
@@ -583,7 +589,31 @@ function renderResults(){
         h+= `<td style="text-align:center;color:#eee">-</td>`;
       }
     }
-    h+= `<td style="font-size:.75rem;color:#444;max-width:250px;white-space:normal;line-height:1.4">${mNote}</td></tr>`;
+    h+= `<td style="font-size:.75rem;color:#444;max-width:250px;white-space:normal;line-height:1.4">${displayNote}</td></tr>`;
+
+    // Detail row - hidden by default
+    h+= `<tr id="res-det-${e.id}" style="display:none">
+      <td colspan="${4 + daysInMonth + 1}" style="padding:0;background:#fafafa;border-top:none">
+        <div style="padding:12px 14px">
+          <div style="font-weight:700;margin-bottom:10px;color:#333">📋 Chi tiết điểm từng ngày:</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">`;
+
+    for(let i=1; i<=daysInMonth; i++){
+      const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+      const s = e.dayScores[dk];
+      if(s !== undefined){
+        const dayNote = RATINGS.find(r => r.emp_id === e.id && r.date === dk)?.note || '';
+        h+= `<div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-weight:700;font-size:.9rem;color:${scoreColor(s)}">${s}</div>
+          <div style="font-size:.65rem;color:#888;margin-top:2px">Ngày ${i}</div>
+          ${dayNote ? `<div style="font-size:.65rem;color:#666;margin-top:3px;font-style:italic">"${dayNote}"</div>` : ''}
+        </div>`;
+      }
+    }
+
+    h+= `</div>`;
+    if(mNote) h+= `<div style="margin-top:12px;padding:10px;background:#fff9c4;border-radius:6px;font-size:.8rem"><strong>📌 Ghi chú QL:</strong> ${mNote}</div>`;
+    h+= `</div></td></tr>`;
   });
   h+='</tbody></table></div>';
   document.getElementById('resultsWrap').innerHTML=h;
