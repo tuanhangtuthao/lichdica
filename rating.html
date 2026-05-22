@@ -248,6 +248,7 @@ input.sc-note:focus{border-color:#4a148c}
   <div class="score-ctrl">
     <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Tháng chấm:</label>
     <input type="month" class="form-input" id="scoreMonth" style="flex:0 0 auto" onchange="renderScoring()">
+    <input type="text" class="form-input" id="scoreSearch" placeholder="🔍 Tìm nhân viên..." style="width:160px" oninput="renderScoring()">
     <button class="btn btn-sm" style="background:#4a148c;color:#fff" onclick="scoreAllMonth(this)">💾 Lưu điểm Tháng</button>
   </div>
   <div class="kf-row" id="kipFilterRow">
@@ -267,6 +268,7 @@ input.sc-note:focus{border-color:#4a148c}
   <div class="score-ctrl">
     <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Tháng duyệt:</label>
     <input type="month" class="form-input" id="apprMonth" style="flex:0 0 auto" onchange="renderApproval()">
+    <input type="text" class="form-input" id="apprSearch" placeholder="🔍 Tìm nhân viên..." style="width:160px" oninput="renderApproval()">
   </div>
   <div class="kf-row" id="apprKipFilter">
     <button class="kf" id="akf-0" onclick="setApprKip(0)">Tất cả</button>
@@ -689,10 +691,14 @@ function renderScoring(){
   const doneCount = emps.filter(e => statMap[e.id] && Object.keys(statMap[e.id].scores).length > 0).length;
   document.getElementById('scoreProgress').innerHTML = `Đã chấm (ít nhất 1 ngày): <b style="color:#4a148c">${doneCount}</b> / ${emps.length} nhân viên <span style="font-style:italic;color:#888;font-size:.7rem;margin-left:5px">(Mẹo: Kích đúp vào ô điểm để viết ghi chú)</span>`;
 
+  const search = document.getElementById('scoreSearch').value.trim().toLowerCase();
   const kipsToShow = scoreKip === 0 ? [1,2,3,4] : [scoreKip];
   let html='';
   kipsToShow.forEach(k => {
-    const kEmps = emps.filter(e => e.kip === k);
+    let kEmps = emps.filter(e => e.kip === k);
+    if(search) {
+      kEmps = kEmps.filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
+    }
     if(!kEmps.length) return;
     html+=`<div class="kip-group-wrap">
       <div class="kip-head kh-k${k}">${GRP_LABEL[k]||'Kíp '+k} <span style="font-weight:400;font-size:.75rem;opacity:.85">(${kEmps.length} người)</span></div>
@@ -836,7 +842,11 @@ function renderApproval(){
     document.getElementById('approvalWrap').innerHTML='<div style="text-align:center;padding:50px;color:#aaa">Chọn tháng duyệt.</div>';
     return;
   }
-  const emps = allEmps(apprKip);
+  const search = document.getElementById('apprSearch').value.trim().toLowerCase();
+  let emps = allEmps(apprKip);
+  if(search) {
+    emps = emps.filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
+  }
   const [y, m] = mVal.split('-');
   const daysInMonth = new Date(y, m, 0).getDate();
   const monthPrefix = mVal + '-';

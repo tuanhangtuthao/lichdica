@@ -84,6 +84,7 @@ td{font-size:.9rem}
         <th>Kíp</th>
         <th class="score">Điểm TB</th>
         <th class="grade">Hạng</th>
+        <th style="width:150px;text-align:center">Chữ Ký Xác Nhận</th>
       </tr>
     </thead>
     <tbody id="printTableBody">
@@ -102,31 +103,8 @@ td{font-size:.9rem}
     </div>
   </div>
 
-  <!-- KỲ HẠN VÀ CHỮ KÝ -->
-  <div class="sign-box">
-    <div style="text-align:center;font-weight:700;margin-bottom:20px">PHÍA NHÂN VIÊN XÁC NHẬN</div>
-    <div class="sign-row">
-      <div class="sign-col">
-        <div class="sign-label">🖋️ Ký xác nhận</div>
-        <div class="sign-line"></div>
-        <div class="sign-label" style="margin-top:10px">Tên & Chữ ký</div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-label">📅 Ngày</div>
-        <div class="sign-line"></div>
-        <div class="sign-label" style="margin-top:10px">Tháng / Năm</div>
-      </div>
-      <div class="sign-col">
-        <div class="sign-label">👤 Ghi chú</div>
-        <div class="sign-line"></div>
-        <div class="sign-label" style="margin-top:10px">Ý kiến bổ sung</div>
-      </div>
-    </div>
-  </div>
-
   <div class="note">
-    <strong>Lưu ý:</strong> Nhân viên vui lòng xem kỹ bảng điểm trên, ký xác nhận và trả lại cho phòng Nhân sự.
-    Nếu có ý kiến khác biệt, vui lòng ghi chú tại mục "Ghi chú" để được xem xét lại.
+    <strong>Lưu ý:</strong> Nhân viên vui lòng xem kỹ bảng điểm trên, ký xác nhận tên ở cột "Chữ Ký Xác Nhận" và trả lại cho phòng Nhân sự.
   </div>
 
   <!-- NÚT IN -->
@@ -213,6 +191,10 @@ async function loadPrintData(){
           <td>${GRP_LABEL[e.kip]||'Kíp '+e.kip}</td>
           <td class="score" style="color:${avg!=='-'?'#e65100':'#ccc'};font-weight:700">${avg}</td>
           <td class="grade"><span class="badge ${gbClass(grade)}">${grade}</span></td>
+          <td style="text-align:center;padding:20px 10px">
+            <div style="border-bottom:1px solid #333;height:40px;margin-top:10px"></div>
+            <div style="font-size:.7rem;color:#888;margin-top:3px">Tên & Chữ ký</div>
+          </td>
         </tr>`;
         stt++;
       });
@@ -220,7 +202,7 @@ async function loadPrintData(){
     document.getElementById('printTableBody').innerHTML = html;
   }catch(e){
     console.error('Load error:', e);
-    document.getElementById('printTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ccc">Không thể tải dữ liệu</td></tr>';
+    document.getElementById('printTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ccc">Không thể tải dữ liệu</td></tr>';
   }
 }
 
