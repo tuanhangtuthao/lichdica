@@ -482,6 +482,9 @@ async function loadData(){
 
 // ── TAB 1: KẾT QUẢ ────────────────────────
 
+// Global store for day note data
+window.DAY_NOTES_MAP = {};
+
 function renderResults(){
   const search = document.getElementById('rfSearch').value.trim().toLowerCase();
   const mVal = document.getElementById('rfMonth').value; // YYYY-MM
@@ -493,6 +496,9 @@ function renderResults(){
   const [yy_str, mm_str] = mVal.split('-');
   const y = parseInt(yy_str), m = parseInt(mm_str);
   const daysInMonth = new Date(y, m, 0).getDate();
+
+  // Clear previous data
+  window.DAY_NOTES_MAP = {};
 
   const emps = allEmps(0).filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
   const filtered = RATINGS.filter(r=>r.date.startsWith(mVal));
@@ -582,8 +588,10 @@ function renderResults(){
       const s = e.dayScores[dk];
       const dayNote = RATINGS.find(r => r.emp_id === e.id && r.date === dk)?.note || '';
       if(s !== undefined){
-        const noteEncoded = btoa(dayNote); // Encode to avoid special char issues
-        h+= `<td style="text-align:center;font-weight:700;color:${scoreColor(s)};background:${s>=9?'var(--ap-bg)':s>=8?'var(--a-bg)':s>=6.5?'var(--b-bg)':s>=5?'var(--c-bg)':'var(--d-bg)};cursor:pointer;border:2px solid transparent" data-day="${i}" data-score="${s}" data-note="${noteEncoded}" class="day-cell" title="${dayNote?'Ghi chú: '+dayNote:'Không có ghi chú'}">${s}</td>`;
+        const key = `${e.id}_${i}`;
+        window.DAY_NOTES_MAP[key] = {day: i, score: s, note: dayNote};
+        const titleTxt = dayNote ? `Ghi chú: ${dayNote}` : 'Không có ghi chú';
+        h+= `<td class="day-cell" data-key="${key}" style="text-align:center;font-weight:700;color:${scoreColor(s)};background:${s>=9?'var(--ap-bg)':s>=8?'var(--a-bg)':s>=6.5?'var(--b-bg)':s>=5?'var(--c-bg)':'var(--d-bg)};cursor:pointer;border:2px solid transparent" title="${titleTxt}">${s}</td>`;
       } else {
         h+= `<td style="text-align:center;color:#eee">-</td>`;
       }
@@ -598,11 +606,9 @@ function renderResults(){
     document.querySelectorAll('.day-cell').forEach(cell => {
       cell.addEventListener('click', function(e) {
         e.stopPropagation();
-        const day = this.dataset.day;
-        const score = this.dataset.score;
-        const noteEncoded = this.dataset.note;
-        const note = noteEncoded ? atob(noteEncoded) : '';
-        showDayNote(day, score, note);
+        const key = this.dataset.key;
+        const data = window.DAY_NOTES_MAP[key];
+        if(data) showDayNote(data.day, data.score, data.note);
       });
     });
   }, 0);
