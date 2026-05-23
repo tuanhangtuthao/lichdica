@@ -227,6 +227,7 @@ async function loadPrintData(){
         <td>${e.id}</td>
         <td>${GRP_LABEL[e.kip]||'Kíp '+e.kip}</td>
         <td style="font-size:.8rem">${e.role||'-'}</td>
+        <td style="font-size:.8rem">${machine}</td>
         <td class="score" style="display:none;color:${avg!=='-'?'#e65100':'#ccc'};font-weight:700">${avg}</td>
         <td class="score" style="color:${avg!=='-'?'#2e7d32':'#ccc'};font-weight:700">${pct}${pct!=='-'?'%':''}</td>
         <td class="grade"><span class="badge ${gbClass(grade)}">${grade}</span></td>

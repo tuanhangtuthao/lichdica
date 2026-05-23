@@ -101,6 +101,7 @@ td{font-size:.9rem}
         <th>MSNV</th>
         <th>Kíp</th>
         <th>Bộ Phận</th>
+        <th>Máy Vận Hành</th>
         <th class="score" style="display:none">Điểm TB</th>
         <th class="score">% Đánh Giá</th>
         <th class="grade">Hạng</th>
@@ -253,6 +254,7 @@ async function loadPrintData(){
           <td>${e.id}</td>
           <td>${GRP_LABEL[e.kip]||'Kíp '+e.kip}</td>
           <td style="font-size:.8rem">${e.role||'-'}</td>
+          <td style="font-size:.8rem">${machine}</td>
           <td class="score" style="display:none;color:${avg!=='-'?'#e65100':'#ccc'};font-weight:700">${avg}</td>
           <td class="score" style="color:${avg!=='-'?'#2e7d32':'#ccc'};font-weight:700">${pct}${pct!=='-'?'%':''}</td>
           <td class="grade"><span class="badge ${gbClass(grade)}">${grade}</span></td>
