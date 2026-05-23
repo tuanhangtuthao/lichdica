@@ -66,6 +66,14 @@ td{font-size:.9rem}
     <button class="print-btn" style="background:#666;margin-left:10px" onclick="window.history.back()">← Quay Lại</button>
   </div>
 
+  <!-- BỘLỌC MÁY VẬN HÀNH -->
+  <div style="margin-bottom:20px;padding:10px;background:#f5f5f5;border-radius:8px">
+    <label style="font-weight:700;margin-right:10px">Lọc theo Máy Vận Hành:</label>
+    <select id="machineFilter" style="padding:8px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+      <option value="">-- Tất cả máy vận hành --</option>
+    </select>
+  </div>
+
   <!-- THÔNG TIN -->
   <div style="margin-bottom:30px">
     <div class="info-row">
@@ -93,6 +101,7 @@ td{font-size:.9rem}
         <th>MSNV</th>
         <th>Kíp</th>
         <th>Bộ Phận</th>
+        <th>Máy Vận Hành</th>
         <th class="score" style="display:none">Điểm TB</th>
         <th class="score">% Đánh Giá</th>
         <th class="grade">Hạng</th>
@@ -161,11 +170,12 @@ async function loadPrintData(){
   if(!SB_OK) return;
   try{
     const monthPrefix = monthVal + '-';
-    const [er,rr,mr,gr] = await Promise.all([
+    const [er,rr,mr,gr,sr] = await Promise.all([
       sb.from('employees').select('*').eq('kip',KIP_FILTER).order('sort_order'),
       sb.from('daily_ratings').select('*').like('date',monthPrefix+'%'),
       sb.from('monthly_reviews').select('*').eq('month_key',monthVal),
       sb.from('rating_config').select('*').order('sort_order'),
+      sb.from('employee_schedule').select('*').like('date',monthPrefix+'%'),
     ]);
 
     // Load grade config
@@ -221,12 +231,24 @@ async function loadPrintData(){
         <td class="score" style="color:${avg!=='-'?'#2e7d32':'#ccc'};font-weight:700">${pct}${pct!=='-'?'%':''}</td>
         <td class="grade"><span class="badge ${gbClass(grade)}">${grade}</span></td>
         <td style="font-size:.75rem;color:#555;padding:8px;max-width:200px;word-wrap:break-word">${note}</td>
-        <td style="text-align:center;padding:8px 10px">
-        </td>
-      </tr>`;
-      stt++;
-    });
-    document.getElementById('printTableBody').innerHTML = html;
+          <td style="text-align:center;padding:8px 10px">
+          </td>
+        </tr>`;
+        stt++;
+      });
+      return html;
+    };
+
+    // Initial render
+    document.getElementById('printTableBody').innerHTML = renderTable('');
+
+    // Add filter event listener
+    const machineFilterEl = document.getElementById('machineFilter');
+    if(machineFilterEl){
+      machineFilterEl.addEventListener('change', (e)=>{
+        document.getElementById('printTableBody').innerHTML = renderTable(e.target.value);
+      });
+    }
 
     // Update legend with loaded grades
     if(GRADE_CFG && GRADE_CFG.length > 0){
