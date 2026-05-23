@@ -124,18 +124,12 @@ const SB_OK = SB_URL.startsWith('https://') && !SB_URL.includes('PASTE');
 const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 
 const GRP_LABEL = {1:'Kíp 1', 2:'Kíp 2', 3:'Kíp 3', 4:'HC / Ca Xoay'};
-const GRADE_CFG = [
-  {grade:'A+',min_score:10.5},
-  {grade:'A', min_score:9.0},
-  {grade:'B', min_score:7.5},
-  {grade:'C', min_score:6.0},
-  {grade:'D', min_score:0.0},
-];
+let GRADE_CFG = [];
 const KIP_FILTER = 1;
 
 function getGrade(score){
-  const s=[...GRADE_CFG].sort((a,b)=>b.min_score-a.min_score);
-  for(const g of s){if(score>=g.min_score) return g.grade;}
+  const s=[...GRADE_CFG].sort((a,b)=>(b.min_score||b.score)-(a.min_score||a.score));
+  for(const g of s){const minS=g.min_score||g.score;if(score>=minS) return g.grade;}
   return 'D';
 }
 
@@ -162,11 +156,17 @@ async function loadPrintData(){
   if(!SB_OK) return;
   try{
     const monthPrefix = monthVal + '-';
-    const [er,rr,mr] = await Promise.all([
+    const [er,rr,mr,gr] = await Promise.all([
       sb.from('employees').select('*').eq('kip',KIP_FILTER).order('sort_order'),
       sb.from('daily_ratings').select('*').like('date',monthPrefix+'%'),
       sb.from('monthly_reviews').select('*').eq('month_key',monthVal),
+      sb.from('rating_config').select('*').order('sort_order'),
     ]);
+
+    // Load grade config
+    if(gr.data && gr.data.length > 0){
+      GRADE_CFG = gr.data;
+    }
 
     // Filter out leaders (Trưởng ca, etc.)
     const isRatable = (role) => {
@@ -220,6 +220,17 @@ async function loadPrintData(){
       stt++;
     });
     document.getElementById('printTableBody').innerHTML = html;
+
+    // Update legend with loaded grades
+    if(GRADE_CFG && GRADE_CFG.length > 0){
+      let legendHtml = '<strong>Thang Điểm & Xếp Hạng:</strong><div class="legend-item">';
+      GRADE_CFG.forEach(g=>{
+        const score = g.min_score || g.score || 0;
+        legendHtml += '<span class="badge badge-' + (g.grade==='A+'?'Ap':g.grade) + '">' + g.grade + '</span> = ≥ ' + score + ' ';
+      });
+      legendHtml += '</div>';
+      document.querySelector('.legend').innerHTML = legendHtml;
+    }
   }catch(e){
     console.error('Load error:', e);
     document.getElementById('printTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;color:#ccc">Không thể tải dữ liệu</td></tr>';
