@@ -66,11 +66,11 @@ td{font-size:.9rem}
     <button class="print-btn" style="background:#666;margin-left:10px" onclick="window.history.back()">← Quay Lại</button>
   </div>
 
-  <!-- BỘLỌC MÁY VẬN HÀNH -->
+  <!-- BỘLỌC BỘ PHẬN -->
   <div style="margin-bottom:20px;padding:10px;background:#f5f5f5;border-radius:8px">
-    <label style="font-weight:700;margin-right:10px">Lọc theo Máy Vận Hành:</label>
-    <select id="machineFilter" style="padding:8px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
-      <option value="">-- Tất cả máy vận hành --</option>
+    <label style="font-weight:700;margin-right:10px">Lọc theo Bộ Phận:</label>
+    <select id="departmentFilter" style="padding:8px;border:1px solid #ddd;border-radius:4px;cursor:pointer">
+      <option value="">-- Tất cả bộ phận --</option>
     </select>
   </div>
 
@@ -101,7 +101,6 @@ td{font-size:.9rem}
         <th>MSNV</th>
         <th>Kíp</th>
         <th>Bộ Phận</th>
-        <th>Máy Vận Hành</th>
         <th class="score" style="display:none">Điểm TB</th>
         <th class="score">% Đánh Giá</th>
         <th class="grade">Hạng</th>
@@ -170,12 +169,11 @@ async function loadPrintData(){
   if(!SB_OK) return;
   try{
     const monthPrefix = monthVal + '-';
-    const [er,rr,mr,gr,sr] = await Promise.all([
+    const [er,rr,mr,gr] = await Promise.all([
       sb.from('employees').select('*').eq('kip',KIP_FILTER).order('sort_order'),
       sb.from('daily_ratings').select('*').like('date',monthPrefix+'%'),
       sb.from('monthly_reviews').select('*').eq('month_key',monthVal),
       sb.from('rating_config').select('*').order('sort_order'),
-      sb.from('employee_schedule').select('*').like('date',monthPrefix+'%'),
     ]);
 
     // Load grade config
@@ -210,36 +208,31 @@ async function loadPrintData(){
       reviewMap[r.emp_id] = r.note || '';
     });
 
-    // Map employee schedules to get máy vận hành
-    const scheduleMap = {};
-    const machineTypes = new Set();
-    (sr.data||[]).forEach(s=>{
-      if(s.emp_id && s.machine_type){
-        scheduleMap[s.emp_id] = s.machine_type;
-        machineTypes.add(s.machine_type);
-      }
+    // Collect unique departments from employees
+    const departmentTypes = new Set();
+    emps.forEach(e=>{
+      if(e.role) departmentTypes.add(e.role);
     });
 
-    // Populate machine type filter
-    const machineFilter = document.getElementById('machineFilter');
-    if(machineFilter && machineTypes.size > 0){
-      const sortedMachines = Array.from(machineTypes).sort();
-      sortedMachines.forEach(m=>{
+    // Populate department filter
+    const departmentFilter = document.getElementById('departmentFilter');
+    if(departmentFilter && departmentTypes.size > 0){
+      const sortedDepartments = Array.from(departmentTypes).sort();
+      sortedDepartments.forEach(d=>{
         const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m;
-        machineFilter.appendChild(opt);
+        opt.value = d;
+        opt.textContent = d;
+        departmentFilter.appendChild(opt);
       });
     }
 
     // Function to render table
-    const renderTable = (filterMachine) => {
+    const renderTable = (filterDepartment) => {
       let html = '';
       let stt = 1;
       emps.forEach(e=>{
-        const machine = scheduleMap[e.id] || '-';
         // Apply filter
-        if(filterMachine && machine !== filterMachine) return;
+        if(filterDepartment && e.role !== filterDepartment) return;
 
         const st = statMap[e.id];
         const avg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
@@ -254,7 +247,6 @@ async function loadPrintData(){
           <td>${e.id}</td>
           <td>${GRP_LABEL[e.kip]||'Kíp '+e.kip}</td>
           <td style="font-size:.8rem">${e.role||'-'}</td>
-          <td style="font-size:.8rem">${machine}</td>
           <td class="score" style="display:none;color:${avg!=='-'?'#e65100':'#ccc'};font-weight:700">${avg}</td>
           <td class="score" style="color:${avg!=='-'?'#2e7d32':'#ccc'};font-weight:700">${pct}${pct!=='-'?'%':''}</td>
           <td class="grade"><span class="badge ${gbClass(grade)}">${grade}</span></td>
@@ -271,9 +263,9 @@ async function loadPrintData(){
     document.getElementById('printTableBody').innerHTML = renderTable('');
 
     // Add filter event listener
-    const machineFilterEl = document.getElementById('machineFilter');
-    if(machineFilterEl){
-      machineFilterEl.addEventListener('change', (e)=>{
+    const departmentFilterEl = document.getElementById('departmentFilter');
+    if(departmentFilterEl){
+      departmentFilterEl.addEventListener('change', (e)=>{
         document.getElementById('printTableBody').innerHTML = renderTable(e.target.value);
       });
     }
