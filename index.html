@@ -1272,8 +1272,8 @@ function todayAttChipHtml(empId, empName, dk, status){
   const safe = empName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   if(status === 'N') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
   if(status === 'NP') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
-  if(status === 'VM') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
-  return `<span class="att-chip w" title="Đi làm">✅ Đi Làm</span>`;
+  if(status === 'VM') return `<span class="att-chip n" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đổi lại Đi Làm" style="cursor:pointer">🏠 Ngày Nghỉ</span>`;
+  return `<span class="att-chip w" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đánh dấu Vắng Mặt" style="cursor:pointer">✅ Đi Làm</span>`;
 }
 
 // Nhóm nhân viên theo bộ phận (role), trưởng ca lên đầu
