@@ -1390,11 +1390,13 @@ function renderTable(){
         const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
         const dk = dKey(d);
         const ots = getEmpOtOnDate(e.id, dk);
-        const displayS = ots && ots.length > 0
-          ? (resolveOtTimes(ots[0]).shift || ots[0].shift || 'S')
-          : s;
         const hasOt = ots && ots.length > 0;
-        h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[displayS]||displayS)}"><span class="ot-badge">${displayS}</span></td>`;
+        let cellContent = s;
+        if(hasOt){
+          const otShift = resolveOtTimes(ots[0]).shift || ots[0].shift || 'S';
+          cellContent = `<span class="ot-badge">${otShift}</span>`;
+        }
+        h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[hasOt?(resolveOtTimes(ots[0]).shift || ots[0].shift || 'S'):s]||s)}">${cellContent}</td>`;
       });
       h += '</tr>';
     });
@@ -1413,11 +1415,13 @@ function renderTable(){
           const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
           const dk = dKey(d);
           const ots = getEmpOtOnDate(e.id, dk);
-          const displayS = ots && ots.length > 0
-            ? (resolveOtTimes(ots[0]).shift || ots[0].shift || 'S')
-            : s;
           const hasOt = ots && ots.length > 0;
-          h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[displayS]||displayS)}"><span class="ot-badge">${displayS}</span></td>`;
+          let cellContent = s;
+          if(hasOt){
+            const otShift = resolveOtTimes(ots[0]).shift || ots[0].shift || 'S';
+            cellContent = `<span class="ot-badge">${otShift}</span>`;
+          }
+          h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[hasOt?(resolveOtTimes(ots[0]).shift || ots[0].shift || 'S'):s]||s)}">${cellContent}</td>`;
         });
         h += '</tr>';
       });
@@ -1432,11 +1436,13 @@ function renderTable(){
           const s=empShift(e,d), tc=sameD(d,today)?' today-c':'', hl=isHol(d);
           const dk = dKey(d);
           const ots = getEmpOtOnDate(e.id, dk);
-          const displayS = ots && ots.length > 0
-            ? (resolveOtTimes(ots[0]).shift || ots[0].shift || 'S')
-            : s;
           const hasOt = ots && ots.length > 0;
-          h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[displayS]||displayS)}"><span class="ot-badge">${displayS}</span></td>`;
+          let cellContent = s;
+          if(hasOt){
+            const otShift = resolveOtTimes(ots[0]).shift || ots[0].shift || 'S';
+            cellContent = `<span class="ot-badge">${otShift}</span>`;
+          }
+          h += `<td class="sh${s}${tc} d-c${hasOt?' cell-ot':''}" title="${hl?hl.name:(SNAME[hasOt?(resolveOtTimes(ots[0]).shift || ots[0].shift || 'S'):s]||s)}">${cellContent}</td>`;
         });
         h += '</tr>';
       });
