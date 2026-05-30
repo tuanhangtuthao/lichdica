@@ -1271,8 +1271,8 @@ function getTodayStatus(e, today, dk) {
 function todayAttChipHtml(empId, empName, dk, status){
   const safe = empName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   if(status === 'N') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
-  if(status === 'NP') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
-  if(status === 'VM') return `<span class="att-chip n" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đổi lại Đi Làm" style="cursor:pointer">🏠 Ngày Nghỉ</span>`;
+  if(status === 'NP') return `<span class="att-chip np" title="Nghỉ phép đã duyệt">🏖️ Nghỉ Phép</span>`;
+  if(status === 'VM') return `<span class="att-chip vm" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đổi lại Đi Làm" style="cursor:pointer">🔴 Vắng Mặt</span>`;
   return `<span class="att-chip w" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đánh dấu Vắng Mặt" style="cursor:pointer">✅ Đi Làm</span>`;
 }
 
