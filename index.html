@@ -1253,9 +1253,8 @@ function getTodayStatus(e, today, dk) {
     // Kíp nghỉ - check có tăng ca không
     const ots = getEmpOtOnDate(e.id, dk);
     if (ots && ots.length > 0) {
-      // Có tăng ca - return ca tăng
-      const o = ots[0];
-      return resolveOtTimes(o).shift || o.shift || 'C1';
+      // Có tăng ca - return 'W' (Đi Làm, không hiển thị ca)
+      return 'W';
     }
     // Không có tăng ca - return 'N' (Ngày Nghỉ)
     return 'N';
@@ -1264,7 +1263,7 @@ function getTodayStatus(e, today, dk) {
   // Kíp không nghỉ - return status bình thường
   const attSt = getAttStatus(e.id, dk);
   if (attSt === 'NP' || attSt === 'VM') return attSt;
-  return empShift(e, today);
+  return 'W';
 }
 
 // Hiển thị chip status cho tab "Hôm Nay"
