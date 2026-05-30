@@ -1248,16 +1248,33 @@ function makeOtSmBadge(ots) {
 // ── STATUS CHO TAB HÔM NAY ──────────────────
 // Tính status của nhân viên hôm nay (có xét kíp nghỉ + tăng ca)
 function getTodayStatus(e, today, dk) {
+  // Hành Chính (Kíp 4) chỉ nghỉ CN + lễ, không theo chu kỳ
+  if (e.kip === 4) {
+    const isSun = today.getDay() === 0;
+    const hl = isHol(today);
+    if (isSun || hl) {
+      // CN hoặc ngày lễ - check có tăng ca không
+      const ots = getEmpOtOnDate(e.id, dk);
+      if (ots && ots.length > 0) {
+        return 'W';
+      }
+      return 'N';
+    }
+    // Không phải CN/lễ - check Nghỉ Phép hoặc Vắng Mặt
+    const attSt = getAttStatus(e.id, dk);
+    if (attSt === 'NP' || attSt === 'VM') return attSt;
+    return 'W';
+  }
+
+  // Kíp 1, 2, 3 - theo chu kỳ
   const bs = getBlockStatus(e.kip, today);
 
   if (bs.type === 'rest') {
     // Kíp nghỉ - check có tăng ca không
     const ots = getEmpOtOnDate(e.id, dk);
     if (ots && ots.length > 0) {
-      // Có tăng ca - return 'W' (Đi Làm, không hiển thị ca)
       return 'W';
     }
-    // Không có tăng ca - return 'N' (Ngày Nghỉ)
     return 'N';
   }
 
