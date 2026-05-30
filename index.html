@@ -1447,10 +1447,10 @@ function renderSummary(){
     </div><div class="sum-body">`;
 
     // Đếm điểm danh cho cả kíp
-    let cntW=0, cntNP=0, cntVM=0;
+    let cntW=0, cntRest=0;
     kipEmps.forEach(e => {
       const st = getTodayStatus(e, today, dk);
-      if(st==='NP') cntNP++; else if(st==='VM') cntVM++; else cntW++;
+      if(st==='W') cntW++; else cntRest++;
     });
 
     // Trưởng ca lên đầu
@@ -1480,8 +1480,7 @@ function renderSummary(){
 
     sg += `</div><div class="att-summary">
       <span style="color:#1b5e20">✅ ${cntW} đi làm</span>
-      ${cntNP?`<span style="color:#e65100">🏖️ ${cntNP} nghỉ phép</span>`:''}
-      ${cntVM?`<span style="color:#c62828">🔴 ${cntVM} vắng mặt</span>`:''}
+      ${cntRest?`<span style="color:#6a1b9a">🏠 ${cntRest} nghỉ</span>`:''}
     </div></div>`;
   }
 
@@ -1490,8 +1489,8 @@ function renderSummary(){
     const hcE = (EMPS[4]||[]).filter(e=>e.fixed_shift==='HC');
     const cdE = (EMPS[4]||[]).filter(e=>e.fixed_shift!=='HC');
     if(hcE.length>0){
-      let hcW=0,hcNP=0,hcVM=0;
-      hcE.forEach(e=>{const st=getTodayStatus(e, today, dk);if(st==='NP')hcNP++;else if(st==='VM')hcVM++;else hcW++;});
+      let hcW=0,hcRest=0;
+      hcE.forEach(e=>{const st=getTodayStatus(e, today, dk);if(st==='W')hcW++;else hcRest++;});
       sg += `<div class="sum-card"><div class="sum-head k4">🏢 Hành Chính<span class="sum-shift-badge">${hcE.length} NV</span></div><div class="sum-body">`;
       hcE.forEach(e => {
         const ots = getEmpOtOnDate(e.id, dk);
@@ -1500,11 +1499,11 @@ function renderSummary(){
         sg += `<div class="sum-row"><span class="name" style="cursor:pointer;color:#00695c" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca">${e.name}</span>
           <span style="display:flex;align-items:center;gap:5px">${otBadge}${todayAttChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
-      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${hcW} đi làm</span>${hcNP?`<span style="color:#e65100">🏖️ ${hcNP} nghỉ phép</span>`:''}${hcVM?`<span style="color:#c62828">🔴 ${hcVM} vắng mặt</span>`:''}</div></div>`;
+      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${hcW} đi làm</span>${hcRest?`<span style="color:#6a1b9a">🏠 ${hcRest} nghỉ</span>`:''}`;
     }
     if(cdE.length>0){
-      let cdW=0,cdNP=0,cdVM=0;
-      cdE.forEach(e=>{const st=getTodayStatus(e, today, dk);if(st==='NP')cdNP++;else if(st==='VM')cdVM++;else cdW++;});
+      let cdW=0,cdRest=0;
+      cdE.forEach(e=>{const st=getTodayStatus(e, today, dk);if(st==='W')cdW++;else cdRest++;});
       const SHIFT_ORD = {S:0,C1:1,C2:2,C3:3,C:4,HC:5,N:6,NP:7,L:8,UN:9};
       const cdeSorted = [...cdE].sort((a,b)=>{
         const sa=empShift(a,today), sb=empShift(b,today);
@@ -1521,7 +1520,14 @@ function renderSummary(){
         sg += `<div class="sum-row"><span class="name">${e.name}</span>
           <span style="display:flex;align-items:center;gap:5px">${otBadge}${todayAttChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
-      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${cdW} đi làm</span>${cdNP?`<span style="color:#e65100">🏖️ ${cdNP} nghỉ phép</span>`:''}${cdVM?`<span style="color:#c62828">🔴 ${cdVM} vắng mặt</span>`:''}</div></div>`;
+      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${cdW} đi làm</span>${cdRest?`<span style="color:#6a1b9a">🏠 ${cdRest} nghỉ</span>`:''}`;
+    }
+  }
+  document.getElementById('sumGrid').innerHTML = sg;
+}
+
+// ── TAB 3: TĂNG CA ──────────────────────
+function renderOvertime(){
     }
   }
   document.getElementById('sumGrid').innerHTML = sg;
