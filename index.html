@@ -1269,15 +1269,10 @@ function getTodayStatus(e, today, dk) {
 // Hiển thị chip status cho tab "Hôm Nay"
 function todayAttChipHtml(empId, empName, dk, status){
   const safe = empName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  if(status === 'NP') return `<span class="att-chip np" title="Nghỉ phép đã duyệt">🏖️ Nghỉ Phép</span>`;
-  if(status === 'VM') return `<span class="att-chip vm" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đổi lại Đi Làm">🔴 Vắng Mặt</span>`;
   if(status === 'N') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
-  if(status === 'C1') return `<span class="att-chip c1" title="Tăng ca Ca 1">① Ca 1</span>`;
-  if(status === 'C2') return `<span class="att-chip c2" title="Tăng ca Ca 2">② Ca 2</span>`;
-  if(status === 'C3') return `<span class="att-chip c3" title="Tăng ca Ca 3">③ Ca 3</span>`;
-  if(status === 'S') return `<span class="att-chip s" title="Ca sáng">☀️ Sáng</span>`;
-  if(status === 'C') return `<span class="att-chip c" title="Ca chiều">🌙 Chiều</span>`;
-  return `<span class="att-chip w" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đánh dấu Vắng Mặt">✅ Đi Làm</span>`;
+  if(status === 'NP') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
+  if(status === 'VM') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
+  return `<span class="att-chip w" title="Đi làm">✅ Đi Làm</span>`;
 }
 
 // Nhóm nhân viên theo bộ phận (role), trưởng ca lên đầu
