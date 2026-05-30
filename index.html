@@ -1475,7 +1475,7 @@ function renderSummary(){
 
     sg += `</div><div class="att-summary">
       <span style="color:#1b5e20">✅ ${cntW} đi làm</span>
-      ${cntRest?`<span style="color:#6a1b9a">🏠 ${cntRest} nghỉ</span>`:''}
+      <span style="color:#6a1b9a">🏠 ${cntRest} nghỉ</span>
     </div></div>`;
   }
 
@@ -1494,7 +1494,7 @@ function renderSummary(){
         sg += `<div class="sum-row"><span class="name" style="cursor:pointer;color:#00695c" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca">${e.name}</span>
           <span style="display:flex;align-items:center;gap:5px">${otBadge}${todayAttChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
-      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${hcW} đi làm</span>${hcRest?`<span style="color:#6a1b9a">🏠 ${hcRest} nghỉ</span>`:''}`;
+      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${hcW} đi làm</span><span style="color:#6a1b9a">🏠 ${hcRest} nghỉ</span></div></div>`;
     }
     if(cdE.length>0){
       let cdW=0,cdRest=0;
@@ -1515,7 +1515,7 @@ function renderSummary(){
         sg += `<div class="sum-row"><span class="name">${e.name}</span>
           <span style="display:flex;align-items:center;gap:5px">${otBadge}${todayAttChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
-      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${cdW} đi làm</span>${cdRest?`<span style="color:#6a1b9a">🏠 ${cdRest} nghỉ</span>`:''}`;
+      sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${cdW} đi làm</span><span style="color:#6a1b9a">🏠 ${cdRest} nghỉ</span></div></div>`;
     }
   }
   document.getElementById('sumGrid').innerHTML = sg;
