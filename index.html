@@ -330,6 +330,15 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 .att-chip.np{background:#fff3e0;color:#e65100;cursor:default}
 .att-chip.vm{background:#ffebee;color:#c62828}
 .att-chip.vm:active{background:#ffcdd2}
+.att-chip.n{background:#e1bee7;color:#6a1b9a;cursor:default}
+.att-chip.c1{background:#c3e9ff;color:#01579b}
+.att-chip.c1:active{background:#81d4fa}
+.att-chip.c2{background:#fff9c4;color:#e65100}
+.att-chip.c2:active{background:#ffeb3b}
+.att-chip.c3{background:#f8bbd0;color:#ad1457}
+.att-chip.c3:active{background:#f48fb1}
+.att-chip.s{background:#c8e6c9;color:#2e7d32;cursor:default}
+.att-chip.c{background:#ffe0b2;color:#e65100;cursor:default}
 .att-chip.loading{opacity:.5;pointer-events:none}
 /* Dòng tổng điểm danh */
 .att-summary{font-size:.72rem;padding:6px 14px;background:#f8f9ff;
@@ -1234,6 +1243,44 @@ function makeOtSmBadge(ots) {
   const hLbl = t.hours ? ` ${t.hours}h` : '';
   return `<span class="ot-sm">⏱ ${t.start||'?'}→${t.end||'?'}${hLbl}</span>`;
 }
+
+// ── STATUS CHO TAB HÔM NAY ──────────────────
+// Tính status của nhân viên hôm nay (có xét kíp nghỉ + tăng ca)
+function getTodayStatus(e, today, dk) {
+  const bs = getBlockStatus(e.kip, today);
+
+  if (bs.type === 'rest') {
+    // Kíp nghỉ - check có tăng ca không
+    const ots = getEmpOtOnDate(e.id, dk);
+    if (ots && ots.length > 0) {
+      // Có tăng ca - return ca tăng
+      const o = ots[0];
+      return resolveOtTimes(o).shift || o.shift || 'C1';
+    }
+    // Không có tăng ca - return 'N' (Ngày Nghỉ)
+    return 'N';
+  }
+
+  // Kíp không nghỉ - return status bình thường
+  const attSt = getAttStatus(e.id, dk);
+  if (attSt === 'NP' || attSt === 'VM') return attSt;
+  return empShift(e, today);
+}
+
+// Hiển thị chip status cho tab "Hôm Nay"
+function todayAttChipHtml(empId, empName, dk, status){
+  const safe = empName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  if(status === 'NP') return `<span class="att-chip np" title="Nghỉ phép đã duyệt">🏖️ Nghỉ Phép</span>`;
+  if(status === 'VM') return `<span class="att-chip vm" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đổi lại Đi Làm">🔴 Vắng Mặt</span>`;
+  if(status === 'N') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
+  if(status === 'C1') return `<span class="att-chip c1" title="Tăng ca Ca 1">① Ca 1</span>`;
+  if(status === 'C2') return `<span class="att-chip c2" title="Tăng ca Ca 2">② Ca 2</span>`;
+  if(status === 'C3') return `<span class="att-chip c3" title="Tăng ca Ca 3">③ Ca 3</span>`;
+  if(status === 'S') return `<span class="att-chip s" title="Ca sáng">☀️ Sáng</span>`;
+  if(status === 'C') return `<span class="att-chip c" title="Ca chiều">🌙 Chiều</span>`;
+  return `<span class="att-chip w" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đánh dấu Vắng Mặt">✅ Đi Làm</span>`;
+}
+
 // Nhóm nhân viên theo bộ phận (role), trưởng ca lên đầu
 function groupEmpsByDept(emps) {
   const leaders = emps.filter(e => e.role === 'Trưởng ca');
@@ -1403,7 +1450,7 @@ function renderSummary(){
     // Đếm điểm danh cho cả kíp
     let cntW=0, cntNP=0, cntVM=0;
     kipEmps.forEach(e => {
-      const st = getAttStatus(e.id, dk);
+      const st = getTodayStatus(e, today, dk);
       if(st==='NP') cntNP++; else if(st==='VM') cntVM++; else cntW++;
     });
 
@@ -1411,10 +1458,10 @@ function renderSummary(){
     leaders.forEach(e => {
       const ots = getEmpOtOnDate(e.id, dk);
       const otBadge = makeOtSmBadge(ots);
-      const attSt = getAttStatus(e.id, dk);
+      const attSt = getTodayStatus(e, today, dk);
       sg += `<div class="sum-row leader">
         <span class="name">👑 ${e.name}</span>
-        <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${e.role}</span>${attChipHtml(e.id,e.name,dk,attSt)}</span>
+        <span style="display:flex;align-items:center;gap:5px">${otBadge}<span class="role-tag">${e.role}</span>${todayAttChipHtml(e.id,e.name,dk,attSt)}</span>
       </div>`;
     });
 
@@ -1424,10 +1471,10 @@ function renderSummary(){
       deptMap[dept].forEach(e => {
         const ots = getEmpOtOnDate(e.id, dk);
         const otBadge = makeOtSmBadge(ots);
-        const attSt = getAttStatus(e.id, dk);
+        const attSt = getTodayStatus(e, today, dk);
         sg += `<div class="sum-row">
           <span class="name">${e.name}</span>
-          <span style="display:flex;align-items:center;gap:5px">${otBadge}${attChipHtml(e.id,e.name,dk,attSt)}</span>
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}${todayAttChipHtml(e.id,e.name,dk,attSt)}</span>
         </div>`;
       });
     });
@@ -1445,21 +1492,20 @@ function renderSummary(){
     const cdE = (EMPS[4]||[]).filter(e=>e.fixed_shift!=='HC');
     if(hcE.length>0){
       let hcW=0,hcNP=0,hcVM=0;
-      hcE.forEach(e=>{const st=getAttStatus(e.id,dk);if(st==='NP')hcNP++;else if(st==='VM')hcVM++;else hcW++;});
+      hcE.forEach(e=>{const st=getTodayStatus(e, today, dk);if(st==='NP')hcNP++;else if(st==='VM')hcVM++;else hcW++;});
       sg += `<div class="sum-card"><div class="sum-head k4">🏢 Hành Chính<span class="sum-shift-badge">${hcE.length} NV</span></div><div class="sum-body">`;
       hcE.forEach(e => {
-        const s=empShift(e,today);
         const ots = getEmpOtOnDate(e.id, dk);
         const otBadge = makeOtSmBadge(ots);
-        const attSt = getAttStatus(e.id, dk);
+        const attSt = getTodayStatus(e, today, dk);
         sg += `<div class="sum-row"><span class="name" style="cursor:pointer;color:#00695c" onclick="openKipOt('${e.id}','${e.name}',true)" title="Đăng ký tăng ca">${e.name}</span>
-          <span style="display:flex;align-items:center;gap:5px">${otBadge}${attChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}${todayAttChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
       sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${hcW} đi làm</span>${hcNP?`<span style="color:#e65100">🏖️ ${hcNP} nghỉ phép</span>`:''}${hcVM?`<span style="color:#c62828">🔴 ${hcVM} vắng mặt</span>`:''}</div></div>`;
     }
     if(cdE.length>0){
       let cdW=0,cdNP=0,cdVM=0;
-      cdE.forEach(e=>{const st=getAttStatus(e.id,dk);if(st==='NP')cdNP++;else if(st==='VM')cdVM++;else cdW++;});
+      cdE.forEach(e=>{const st=getTodayStatus(e, today, dk);if(st==='NP')cdNP++;else if(st==='VM')cdVM++;else cdW++;});
       const SHIFT_ORD = {S:0,C1:1,C2:2,C3:3,C:4,HC:5,N:6,NP:7,L:8,UN:9};
       const cdeSorted = [...cdE].sort((a,b)=>{
         const sa=empShift(a,today), sb=empShift(b,today);
@@ -1472,9 +1518,9 @@ function renderSummary(){
         if(s !== lastShift){ lastShift=s; sg += `<div class="sum-dept-hd">${SICON[s]||''} ${SLBL(s)}</div>`; }
         const ots = getEmpOtOnDate(e.id, dk);
         const otBadge = makeOtSmBadge(ots);
-        const attSt = getAttStatus(e.id, dk);
+        const attSt = getTodayStatus(e, today, dk);
         sg += `<div class="sum-row"><span class="name">${e.name}</span>
-          <span style="display:flex;align-items:center;gap:5px">${otBadge}${attChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
+          <span style="display:flex;align-items:center;gap:5px">${otBadge}${todayAttChipHtml(e.id,e.name,dk,attSt)}</span></div>`;
       });
       sg += `</div><div class="att-summary"><span style="color:#1b5e20">✅ ${cdW} đi làm</span>${cdNP?`<span style="color:#e65100">🏖️ ${cdNP} nghỉ phép</span>`:''}${cdVM?`<span style="color:#c62828">🔴 ${cdVM} vắng mặt</span>`:''}</div></div>`;
     }
