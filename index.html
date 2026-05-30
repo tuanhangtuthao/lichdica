@@ -332,6 +332,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 .att-chip.vm{background:#ffebee;color:#c62828}
 .att-chip.vm:active{background:#ffcdd2}
 .att-chip.n{background:#e1bee7;color:#6a1b9a;cursor:default}
+.att-chip.tc{background:#fff3cd;color:#856404;cursor:default}
 .att-chip.c1{background:#c3e9ff;color:#01579b}
 .att-chip.c1:active{background:#81d4fa}
 .att-chip.c2{background:#fff9c4;color:#e65100}
@@ -1273,7 +1274,10 @@ function getTodayStatus(e, today, dk) {
     // Kíp nghỉ - check có tăng ca không
     const ots = getEmpOtOnDate(e.id, dk);
     if (ots && ots.length > 0) {
-      return 'W';
+      // Có tăng ca - return shift để hiển thị "TC-Sáng" hoặc "TC-Chiều"
+      const o = ots[0];
+      const shift = resolveOtTimes(o).shift || o.shift || 'S';
+      return 'TC-' + (shift === 'S' ? 'Sáng' : 'Chiều');
     }
     return 'N';
   }
@@ -1290,6 +1294,12 @@ function todayAttChipHtml(empId, empName, dk, status){
   if(status === 'N') return `<span class="att-chip n" title="Ngày nghỉ">🏠 Ngày Nghỉ</span>`;
   if(status === 'NP') return `<span class="att-chip np" title="Nghỉ phép đã duyệt">🏖️ Nghỉ Phép</span>`;
   if(status === 'VM') return `<span class="att-chip vm" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đổi lại Đi Làm" style="cursor:pointer">🔴 Vắng Mặt</span>`;
+  if(status.startsWith('TC-')) {
+    const period = status.substring(3);
+    const icon = period === 'Sáng' ? '☀️' : '🌙';
+    const title = period === 'Sáng' ? 'Tăng ca ca sáng' : 'Tăng ca ca chiều';
+    return `<span class="att-chip tc" title="${title}">${icon} ${status}</span>`;
+  }
   return `<span class="att-chip w" onclick="toggleVangMat('${empId}','${safe}','${dk}')" title="Bấm để đánh dấu Vắng Mặt" style="cursor:pointer">✅ Đi Làm</span>`;
 }
 
