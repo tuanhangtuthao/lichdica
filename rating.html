@@ -980,6 +980,30 @@ function renderApproval(){
           <div style="font-size:.75rem;color:#e65100;margin-top:4px">Nếu có vi phạm, bạn có thể đặt điểm cuối khác với trung bình</div>
         </div>
         <div style="background:#f3e5f5;padding:10px;border-radius:8px;margin-bottom:10px">
+          <div style="font-weight:700;font-size:.85rem;color:#6a1b9a;margin-bottom:8px">📌 Chỉnh Hạng (nếu khác chấm điểm)</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+              <input type="radio" name="appr-grade-${e.id}" value="" ${!rev.grade?'checked':''} style="cursor:pointer"> <span>📊 Tự động</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+              <input type="radio" name="appr-grade-${e.id}" value="A+" ${rev.grade==='A+'?'checked':''} style="cursor:pointer"> <span class="gb gb-Ap">A+</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+              <input type="radio" name="appr-grade-${e.id}" value="A" ${rev.grade==='A'?'checked':''} style="cursor:pointer"> <span class="gb gb-A">A</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+              <input type="radio" name="appr-grade-${e.id}" value="B" ${rev.grade==='B'?'checked':''} style="cursor:pointer"> <span class="gb gb-B">B</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+              <input type="radio" name="appr-grade-${e.id}" value="C" ${rev.grade==='C'?'checked':''} style="cursor:pointer"> <span class="gb gb-C">C</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+              <input type="radio" name="appr-grade-${e.id}" value="D" ${rev.grade==='D'?'checked':''} style="cursor:pointer"> <span class="gb gb-D">D</span>
+            </label>
+          </div>
+          <div style="font-size:.75rem;color:#6a1b9a">Chọn hạng → kết quả in sẽ dùng hạng này. Để trống → tự động tính từ chấm điểm</div>
+        </div>
+        <div style="background:#f3e5f5;padding:10px;border-radius:8px;margin-bottom:10px">
           <div style="font-weight:700;font-size:.85rem;color:#6a1b9a;margin-bottom:8px">📌 Điểm Cuối (nếu khác trung bình)</div>
           <input type="number" min="0" max="12" step="0.1" id="appr-final-${e.id}" placeholder="Để trống = dùng điểm trung bình" value="${hasFinal?rev.final_score:''}" style="width:100%;padding:8px;border:1.5px solid #ce93d8;border-radius:8px;font-size:.85rem;outline:none;background:#fce4ec">
           <div style="font-size:.75rem;color:#6a1b9a;margin-top:4px">VD: Nếu NV có vi phạm nghiêm trọng, có thể hạ xuống 7 điểm thay vì trung bình 9.5</div>
@@ -1061,14 +1085,18 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
   btn.textContent = 'Đang lưu...';
   btn.disabled = true;
 
+  // Lấy hạng được chỉnh (nếu có)
+  const selectedGrade = document.querySelector(`input[name="appr-grade-${emp_id}"]:checked`)?.value || '';
+  const gradeToSave = selectedGrade || null;
+
   if (SB_OK) {
     if(dailyRows.length > 0){
         const {error: drErr} = await sb.from('daily_ratings').upsert(dailyRows, {onConflict: 'emp_id,date'});
         if(drErr) console.warn('Lỗi lưu daily ratings:', drErr);
     }
-    
-    // Lưu với violation_note và final_score
-    const reviewRecord = {emp_id: emp_id, month_key: month_key, note: note, approved: true, violation_note: violNote || null, final_score: finalScore};
+
+    // Lưu với violation_note, final_score, và grade
+    const reviewRecord = {emp_id: emp_id, month_key: month_key, note: note, approved: true, violation_note: violNote || null, final_score: finalScore, grade: gradeToSave};
     const {data, error} = await sb.from('monthly_reviews').upsert(reviewRecord, {onConflict: 'emp_id,month_key'}).select();
     
     if(error){

@@ -238,8 +238,10 @@ async function loadPrintData(){
 
           const st = statMap[e.id];
           const avg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
-          const grade = avg !== '-' ? getGrade(avg) : '-';
-          let note = reviewMap[e.id] || '';
+          const review = reviewMap[e.id] || {};
+          // Nếu có hạng được chỉnh → dùng nó, không thì tính từ điểm
+          let grade = review.grade ? review.grade : (avg !== '-' ? getGrade(avg) : '-');
+          let note = review.note || '';
           // Default note for grade B
           if(grade === 'B' && !note) note = 'Tròn vai';
           const pct = avg !== '-' ? Math.round(parseFloat(avg)/10*100) : '-';
