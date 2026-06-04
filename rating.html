@@ -242,7 +242,8 @@ input.sc-note:focus{border-color:#4a148c}
             <option value="3">Kíp 3</option>
             <option value="4">HC / Ca Xoay</option>
           </select>
-          <button class="btn" style="background:#2e7d32;color:#fff;margin-left:auto" onclick="openPrintPage()">🖨️ In Phiếu Ký</button>
+          <button class="btn" style="background:#2e7d32;color:#fff" onclick="openPrintPage()">🖨️ In Phiếu Ký</button>
+          <button class="btn" style="background:#1565c0;color:#fff" onclick="exportResultsToExcel()">📊 Xuất Excel</button>
         </div>
       </div>
     </div>
@@ -345,6 +346,7 @@ input.sc-note:focus{border-color:#4a148c}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 // ══════════════════════════════════════════
 // ⚙️  SUPABASE (giống index.html)
@@ -1218,6 +1220,92 @@ function _doShowTab(tab){
   try{renderResults();}catch(e){console.warn(e);}
   try{renderConfig();}catch(e){console.warn(e);}
 })();
+
+// ═══════════════════════════════════════════════
+// 📊 XUẤT EXCEL
+// ═══════════════════════════════════════════════
+function exportResultsToExcel() {
+  const mVal = document.getElementById('rfMonth').value;
+  const kipVal = parseInt(document.getElementById('printKipSelect').value || '0');
+  const search = document.getElementById('rfSearch').value.trim().toLowerCase();
+
+  if (!mVal) {
+    alert('Vui lòng chọn tháng để xuất!');
+    return;
+  }
+
+  const [y, m] = mVal.split('-');
+  const monthPrefix = mVal + '-';
+
+  // Tính điểm
+  const statMap = {};
+  RATINGS.filter(r => r.date.startsWith(monthPrefix)).forEach(r => {
+    if(!statMap[r.emp_id]) statMap[r.emp_id] = {sum:0, cnt:0};
+    statMap[r.emp_id].sum += parseFloat(r.score);
+    statMap[r.emp_id].cnt++;
+  });
+
+  // Lấy review data
+  const reviewMap = {};
+  MONTHLY_REVIEWS.filter(r => r.month_key === mVal).forEach(r => reviewMap[r.emp_id] = r);
+
+  // Build data
+  const rows = [];
+  rows.push(['STT', 'Họ Tên', 'MSNV', 'Kíp', 'Bộ Phận', 'Điểm TB', 'Điểm %', 'Hạng', 'Ghi Chú']);
+
+  let stt = 1;
+  const GRP_LABEL = {1:'Kíp 1', 2:'Kíp 2', 3:'Kíp 3', 4:'HC / Ca Xoay'};
+
+  [1,2,3,4].forEach(k => {
+    if(kipVal !== 0 && kipVal !== k) return;
+    (EMPS[k] || []).forEach(e => {
+      if(search && !e.name.toLowerCase().includes(search) && !e.id.toLowerCase().includes(search)) return;
+
+      const st = statMap[e.id] || {sum:0, cnt:0};
+      const avg = st.cnt > 0 ? round1(st.sum / st.cnt) : '-';
+      const review = reviewMap[e.id] || {};
+      const grade = review.grade ? review.grade : (avg !== '-' ? getGrade(avg) : '-');
+      const pct = avg !== '-' ? Math.round(parseFloat(avg) / 10 * 100) : '-';
+      const note = review.note || '';
+
+      rows.push([
+        stt,
+        e.name,
+        e.id,
+        GRP_LABEL[e.kip] || 'Kíp ' + e.kip,
+        e.role || '',
+        avg,
+        pct !== '-' ? pct + '%' : '',
+        grade,
+        note
+      ]);
+      stt++;
+    });
+  });
+
+  // Tạo workbook
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Kết Quả Đánh Giá');
+
+  // Style (nếu có)
+  ws['!cols'] = [
+    {wch: 6},  // STT
+    {wch: 20}, // Họ Tên
+    {wch: 12}, // MSNV
+    {wch: 15}, // Kíp
+    {wch: 18}, // Bộ Phận
+    {wch: 10}, // Điểm TB
+    {wch: 10}, // Điểm %
+    {wch: 8},  // Hạng
+    {wch: 30}  // Ghi Chú
+  ];
+
+  // Export
+  const filename = `Đánh Giá NV - ${m}/${y}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
 </script>
 </body>
 </html>
