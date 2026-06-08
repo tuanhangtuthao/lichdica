@@ -823,7 +823,7 @@ function renderScoring(){
            <input type="number" min="0" max="12" step="0.1" title="${nVal}" data-note="${nVal}"
                   data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}"
                   class="sc-input" placeholder="-" value="${sVal}"
-                  ondblclick="editDailyNote(this)" onchange="handleScoreChange(this)"
+                  ondblclick="editDailyNote(this)" oninput="handleScoreChange(this)"
                   onfocus="this.select()"
                   style="width:38px;text-align:center;border:none;border-bottom:${noteHint};background:none;font-size:.88rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none">
          </td>`;
