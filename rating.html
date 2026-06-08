@@ -856,7 +856,7 @@ async function scoreAllMonth(btn) {
         if(isNaN(sc) || sc < 0 || sc > 12) hasError = true;
         else {
            dailyRows.push({
-              emp_id: parseInt(el.dataset.empid) || el.dataset.empid, // Convert to number nếu có thể
+              emp_id: el.dataset.empid, // Giữ là TEXT/string
               emp_name: el.dataset.empname || '',
               date: el.dataset.date || '',
               score: sc,
@@ -889,7 +889,8 @@ async function scoreAllMonth(btn) {
   for(const row of dailyRows) {
     const {error: delError} = await sb.from('daily_ratings')
       .delete()
-      .match({emp_id: row.emp_id, date: row.date});
+      .eq('emp_id', row.emp_id)
+      .eq('date', row.date);
     console.log(`📌 Debug - delete emp_id=${row.emp_id} date=${row.date}:`, delError); // Debug
   }
 
