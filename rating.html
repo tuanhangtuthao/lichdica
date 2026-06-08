@@ -456,7 +456,9 @@ function closePwModal(){ document.getElementById('pwOverlay').classList.remove('
 function checkPw(){
   const v=document.getElementById('pwInput').value.trim();
   if(v===SETTINGS_PASS){
-    unlocked=true; closePwModal(); _doShowTab(pendingTab);
+    unlocked=true;
+    sessionStorage.setItem('ratingPwUnlocked', 'true'); // Lưu vào session
+    closePwModal(); _doShowTab(pendingTab);
   } else {
     const inp=document.getElementById('pwInput');
     inp.classList.add('error');
@@ -1243,6 +1245,11 @@ function _doShowTab(tab){
 // ── INIT ───────────────────────────────────
 (async()=>{
   try{
+    // Check mật khẩu từ session
+    if(sessionStorage.getItem('ratingPwUnlocked') === 'true'){
+      unlocked = true;
+    }
+
     const t=new Date();
     document.getElementById('todayLabel').textContent=
       `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
