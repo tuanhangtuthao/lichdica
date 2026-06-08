@@ -885,14 +885,20 @@ async function scoreAllMonth(btn) {
 
   // Xóa bản ghi cũ rồi insert mới (thay vì upsert)
   const empDateKeys = dailyRows.map(r => ({emp_id: r.emp_id, date: r.date}));
+  console.log('📌 Debug - empDateKeys to delete:', empDateKeys); // Debug
 
-  // Xóa bản ghi cũ
+  // Xóa bản ghi cũ - delete từng record
   for(const key of empDateKeys) {
-    await sb.from('daily_ratings').delete().eq('emp_id', key.emp_id).eq('date', key.date);
+    const {data: delData, error: delError} = await sb.from('daily_ratings')
+      .delete()
+      .eq('emp_id', key.emp_id)
+      .eq('date', key.date);
+    console.log('📌 Debug - delete result:', {delData, delError}); // Debug
   }
 
   // Insert bản ghi mới
   const {data, error} = await sb.from('daily_ratings').insert(dailyRows);
+  console.log('📌 Debug - insert dailyRows:', dailyRows); // Debug
   console.log('📌 Debug - insert data:', data); // Debug
   console.log('📌 Debug - insert error:', error); // Debug
 
