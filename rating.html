@@ -883,7 +883,8 @@ async function scoreAllMonth(btn) {
 
   console.log('📌 Debug - dailyRows:', dailyRows); // Debug
 
-  const {error} = await sb.from('daily_ratings').upsert(dailyRows, {onConflict: 'emp_id,date'});
+  const {data, error} = await sb.from('daily_ratings').upsert(dailyRows);
+  console.log('📌 Debug - upsert data:', data); // Debug
   console.log('📌 Debug - upsert error:', error); // Debug
 
   if(error){
