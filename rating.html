@@ -768,7 +768,7 @@ function renderScoring(){
 
   // Lấy danh sách nhân viên: kết hợp nhân viên hiện tại + nhân viên có rating cũ
   const empsMap = {};
-  allEmps(scoreKip).forEach(e => { empsMap[e.id] = e; });
+  allEmps(0).forEach(e => { empsMap[e.id] = e; }); // Lấy tất cả nhân viên
   Object.assign(empsMap, empDataMap); // Thêm nhân viên bị xóa
   const emps = Object.values(empsMap);
   const doneCount = emps.filter(e => statMap[e.id] && Object.keys(statMap[e.id].scores).length > 0).length;
