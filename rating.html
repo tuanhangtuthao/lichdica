@@ -511,17 +511,27 @@ function renderResults(){
   // Clear previous data
   window.DAY_NOTES_MAP = {};
 
-  const emps = allEmps(0).filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
   const filtered = RATINGS.filter(r=>r.date.startsWith(mVal));
 
   // Per-employee stats
   const statMap={};
+  const empDataMap = {}; // Lưu thông tin nhân viên từ rating data
   filtered.forEach(r=>{
     if(!statMap[r.emp_id]) statMap[r.emp_id]={sum:0,cnt:0,dayScores:{}};
     statMap[r.emp_id].sum+=parseFloat(r.score);
     statMap[r.emp_id].cnt++;
     statMap[r.emp_id].dayScores[r.date] = r.score;
+    // Lưu thông tin nhân viên từ rating (để hiển thị nhân viên bị xóa)
+    if(!empDataMap[r.emp_id]) {
+      empDataMap[r.emp_id] = {id: r.emp_id, name: r.emp_name, role: '', kip: 0};
+    }
   });
+
+  // Lấy danh sách nhân viên: kết hợp nhân viên hiện tại + nhân viên có rating cũ
+  const empsMap = {};
+  allEmps(0).forEach(e => { empsMap[e.id] = e; });
+  Object.assign(empsMap, empDataMap); // Thêm nhân viên bị xóa
+  let emps = Object.values(empsMap).filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
 
   // Monthly Reviews map
   const reviewMap = {};
@@ -742,16 +752,25 @@ function renderScoring(){
   const monthPrefix = mVal + '-';
 
   const statMap = {};
+  const empDataMap = {}; // Lưu thông tin nhân viên từ rating data
   RATINGS.filter(r => r.date.startsWith(monthPrefix)).forEach(r => {
     if(!statMap[r.emp_id]) statMap[r.emp_id] = {scores:{}, notes:{}};
     statMap[r.emp_id].scores[r.date] = parseFloat(r.score);
     if(r.note) statMap[r.emp_id].notes[r.date] = r.note;
+    // Lưu thông tin nhân viên từ rating (để hiển thị nhân viên bị xóa)
+    if(!empDataMap[r.emp_id]) {
+      empDataMap[r.emp_id] = {id: r.emp_id, name: r.emp_name, role: '', kip: 0};
+    }
   });
 
   // Show stats first
   renderScoringStats(mVal);
 
-  const emps = allEmps(scoreKip);
+  // Lấy danh sách nhân viên: kết hợp nhân viên hiện tại + nhân viên có rating cũ
+  const empsMap = {};
+  allEmps(scoreKip).forEach(e => { empsMap[e.id] = e; });
+  Object.assign(empsMap, empDataMap); // Thêm nhân viên bị xóa
+  const emps = Object.values(empsMap);
   const doneCount = emps.filter(e => statMap[e.id] && Object.keys(statMap[e.id].scores).length > 0).length;
   document.getElementById('scoreProgress').innerHTML = `Đã chấm (ít nhất 1 ngày): <b style="color:#4a148c">${doneCount}</b> / ${emps.length} nhân viên <span style="font-style:italic;color:#888;font-size:.7rem;margin-left:5px">(Mẹo: Kích đúp vào ô điểm để viết ghi chú)</span>`;
 
