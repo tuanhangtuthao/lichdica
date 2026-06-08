@@ -769,7 +769,13 @@ function renderScoring(){
   // Lấy danh sách nhân viên: kết hợp nhân viên hiện tại + nhân viên có rating cũ
   const empsMap = {};
   allEmps(0).forEach(e => { empsMap[e.id] = e; }); // Lấy tất cả nhân viên
-  Object.assign(empsMap, empDataMap); // Thêm nhân viên bị xóa
+
+  // Thêm nhân viên bị xóa (gán kíp = 1 mặc định vì đã xóa không biết kíp)
+  Object.entries(empDataMap).forEach(([empId, empData]) => {
+    if(!empsMap[empId]) {
+      empsMap[empId] = {...empData, kip: 1}; // Mặc định kíp 1
+    }
+  });
   const emps = Object.values(empsMap);
   const doneCount = emps.filter(e => statMap[e.id] && Object.keys(statMap[e.id].scores).length > 0).length;
   document.getElementById('scoreProgress').innerHTML = `Đã chấm (ít nhất 1 ngày): <b style="color:#4a148c">${doneCount}</b> / ${emps.length} nhân viên <span style="font-style:italic;color:#888;font-size:.7rem;margin-left:5px">(Mẹo: Kích đúp vào ô điểm để viết ghi chú)</span>`;
