@@ -856,9 +856,9 @@ async function scoreAllMonth(btn) {
         if(isNaN(sc) || sc < 0 || sc > 12) hasError = true;
         else {
            dailyRows.push({
-              emp_id: el.dataset.empid,
-              emp_name: el.dataset.empname,
-              date: el.dataset.date,
+              emp_id: parseInt(el.dataset.empid) || el.dataset.empid, // Convert to number nếu có thể
+              emp_name: el.dataset.empname || '',
+              date: el.dataset.date || '',
               score: sc,
               note: el.dataset.note || ''
            });
@@ -883,24 +883,19 @@ async function scoreAllMonth(btn) {
 
   console.log('📌 Debug - dailyRows:', dailyRows); // Debug
 
-  // Xóa bản ghi cũ rồi insert mới (thay vì upsert)
-  const empDateKeys = dailyRows.map(r => ({emp_id: r.emp_id, date: r.date}));
-  console.log('📌 Debug - empDateKeys to delete:', empDateKeys); // Debug
+  // Xóa bản ghi cũ - dùng filter thay vì chain eq
+  console.log('📌 Debug - dailyRows before insert:', dailyRows); // Debug
 
-  // Xóa bản ghi cũ - delete từng record
-  for(const key of empDateKeys) {
-    const {data: delData, error: delError} = await sb.from('daily_ratings')
+  for(const row of dailyRows) {
+    const {error: delError} = await sb.from('daily_ratings')
       .delete()
-      .eq('emp_id', key.emp_id)
-      .eq('date', key.date);
-    console.log('📌 Debug - delete result:', {delData, delError}); // Debug
+      .match({emp_id: row.emp_id, date: row.date});
+    console.log(`📌 Debug - delete emp_id=${row.emp_id} date=${row.date}:`, delError); // Debug
   }
 
   // Insert bản ghi mới
   const {data, error} = await sb.from('daily_ratings').insert(dailyRows);
-  console.log('📌 Debug - insert dailyRows:', dailyRows); // Debug
-  console.log('📌 Debug - insert data:', data); // Debug
-  console.log('📌 Debug - insert error:', error); // Debug
+  console.log('📌 Debug - insert result:', {data, error}); // Debug
 
   if(error){
       alert('❌ Lỗi lưu điểm:\n' + error.message);
