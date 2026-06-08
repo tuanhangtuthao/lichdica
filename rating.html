@@ -881,17 +881,22 @@ async function scoreAllMonth(btn) {
       btn.disabled = true;
   }
 
+  console.log('📌 Debug - dailyRows:', dailyRows); // Debug
+
   const {error} = await sb.from('daily_ratings').upsert(dailyRows, {onConflict: 'emp_id,date'});
-  
+  console.log('📌 Debug - upsert error:', error); // Debug
+
   if(error){
-      alert('Lỗi lưu điểm: ' + error.message);
+      alert('❌ Lỗi lưu điểm:\n' + error.message);
+      console.error('🔴 Lỗi chi tiết:', error); // Debug
   } else {
       dailyRows.forEach(row => {
           RATINGS = RATINGS.filter(r => !(r.emp_id === row.emp_id && r.date === row.date));
           RATINGS.push(row);
       });
       inputs.forEach(el => el.dataset.changed = "0");
-      alert('Đã lưu thành công: ' + dailyRows.length + ' bản ghi điểm!');
+      alert('✅ Đã lưu thành công: ' + dailyRows.length + ' bản ghi điểm!');
+      console.log('✅ Lưu thành công'); // Debug
       // Refresh bảng để cập nhật TB & Hạng
       renderScoring();
   }
