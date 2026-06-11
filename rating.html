@@ -881,10 +881,22 @@ async function scoreAllMonth(btn) {
       btn.disabled = true;
   }
 
-  const {error} = await sb.from('daily_ratings').upsert(dailyRows);
+  // Delete rồi insert
+  const deleteKeys = dailyRows.map(r => `${r.emp_id}_${r.date}`);
+  let hasDeleteError = false;
 
-  if(error){
-      alert('Lỗi lưu điểm: ' + error.message);
+  for(const row of dailyRows) {
+    const {error: delErr} = await sb.from('daily_ratings')
+      .delete()
+      .eq('emp_id', row.emp_id)
+      .eq('date', row.date);
+    if(delErr) hasDeleteError = true;
+  }
+
+  const {error: insertErr} = await sb.from('daily_ratings').insert(dailyRows);
+
+  if(insertErr){
+      alert('Lỗi lưu điểm: ' + insertErr.message);
   } else {
       dailyRows.forEach(row => {
           RATINGS = RATINGS.filter(r => !(r.emp_id === row.emp_id && r.date === row.date));
