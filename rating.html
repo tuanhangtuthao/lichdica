@@ -843,73 +843,61 @@ function renderScoring(){
 async function scoreAllMonth(btn) {
   const inputs = document.querySelectorAll('.sc-input[data-changed="1"]');
   if(inputs.length === 0){
-    alert('Không có điểm thay đổi để lưu!');
+    alert('Không có điểm hay dòng thay đổi mới nào để lưu!');
     return;
   }
 
   const dailyRows = [];
   let hasError = false;
-
-  // Tạo danh sách điểm để lưu
   inputs.forEach(el => {
-    const v = el.value.trim();
-    if(v !== '') {
-      const sc = parseFloat(v);
-      if(isNaN(sc) || sc < 0 || sc > 12) {
-        hasError = true;
-      } else {
-        dailyRows.push({
-          emp_id: el.dataset.empid,
-          emp_name: el.dataset.empname || '',
-          date: el.dataset.date || '',
-          score: sc,
-          note: el.dataset.note || ''
-        });
-      }
-    }
+     let v = el.value.trim();
+     if(v !== '') {
+        const sc = parseFloat(v);
+        if(isNaN(sc) || sc < 0 || sc > 12) hasError = true;
+        else {
+           dailyRows.push({
+              emp_id: el.dataset.empid,
+              emp_name: el.dataset.empname,
+              date: el.dataset.date,
+              score: sc,
+              note: el.dataset.note || ''
+           });
+        }
+     }
   });
 
   if(hasError) {
-    alert("Điểm không hợp lệ (0-12). Vui lòng kiểm tra lại!");
+    alert("Có điểm không hợp lệ. Vui lòng kiểm tra lại điểm (0 - 12).");
     return;
   }
 
-  if(!SB_OK) {
-    alert('Không kết nối DB.');
-    return;
+  if(!SB_OK){
+      alert('Không kết nối được lưc trữ DB.');
+      return;
   }
 
-  if(btn) { btn.textContent = "Đang lưu..."; btn.disabled = true; }
+  if(btn){
+      btn.textContent = "Đang lưu...";
+      btn.disabled = true;
+  }
 
-  try {
-    // Lưu từng dòng: xóa cũ rồi insert mới
-    for(const row of dailyRows) {
-      // Xóa bản ghi cũ nếu tồn tại
-      await sb.from('daily_ratings')
-        .delete()
-        .eq('emp_id', row.emp_id)
-        .eq('date', row.date);
-    }
+  const {error} = await sb.from('daily_ratings').upsert(dailyRows);
 
-    // Insert bản ghi mới
-    const {error} = await sb.from('daily_ratings').insert(dailyRows);
-
-    if(error) {
-      alert('❌ Lỗi: ' + error.message);
-    } else {
-      // Update state
+  if(error){
+      alert('Lỗi lưu điểm: ' + error.message);
+  } else {
       dailyRows.forEach(row => {
-        RATINGS = RATINGS.filter(r => !(r.emp_id === row.emp_id && r.date === row.date));
-        RATINGS.push(row);
+          RATINGS = RATINGS.filter(r => !(r.emp_id === row.emp_id && r.date === row.date));
+          RATINGS.push(row);
       });
       inputs.forEach(el => el.dataset.changed = "0");
-      alert('✅ Lưu thành công: ' + dailyRows.length + ' điểm!');
+      alert('Đã lưu thành công: ' + dailyRows.length + ' bản ghi điểm!');
       renderScoring();
-    }
-  } catch(e) {
-    alert('Lỗi: ' + e.message);
-  } finally {
-    if(btn) { btn.textContent = "💾 Lưu điểm Tháng"; btn.disabled = false; }
+  }
+
+  if(btn){
+      btn.textContent = "💾 Lưu điểm Tháng";
+      btn.disabled = false;
   }
 }
 
