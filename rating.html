@@ -475,7 +475,7 @@ async function loadData(){
     // Các bảng bắt buộc
     const [er,rr,gr]=await Promise.all([
       sb.from('employees').select('*').order('kip').order('sort_order'),
-      sb.from('daily_ratings').select('*').order('date'),
+      sb.from('ratings_new').select('*').order('date'),
       sb.from('rating_config').select('*').order('sort_order'),
     ]);
     EMPS={1:[],2:[],3:[],4:[]};
@@ -886,14 +886,14 @@ async function scoreAllMonth(btn) {
   let hasDeleteError = false;
 
   for(const row of dailyRows) {
-    const {error: delErr} = await sb.from('daily_ratings')
+    const {error: delErr} = await sb.from('ratings_new')
       .delete()
       .eq('emp_id', row.emp_id)
       .eq('date', row.date);
     if(delErr) hasDeleteError = true;
   }
 
-  const {error: insertErr} = await sb.from('daily_ratings').insert(dailyRows);
+  const {error: insertErr} = await sb.from('ratings_new').insert(dailyRows);
 
   if(insertErr){
       alert('Lỗi lưu điểm: ' + insertErr.message);
@@ -916,7 +916,7 @@ async function scoreAllMonth(btn) {
 async function deleteRating(id,fromScoring=false){
   if(!confirm('Xóa điểm này?')) return;
   if(SB_OK){
-    const {error}=await sb.from('daily_ratings').delete().eq('id',id);
+    const {error}=await sb.from('ratings_new').delete().eq('id',id);
     if(error){alert('Lỗi: '+error.message);return;}
   }
   RATINGS=RATINGS.filter(r=>r.id!==id);
@@ -1147,7 +1147,7 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
 
   if (SB_OK) {
     if(dailyRows.length > 0){
-        const {error: drErr} = await sb.from('daily_ratings').upsert(dailyRows, {onConflict: 'emp_id,date'});
+        const {error: drErr} = await sb.from('ratings_new').upsert(dailyRows, {onConflict: 'emp_id,date'});
         if(drErr) console.warn('Lỗi lưu daily ratings:', drErr);
     }
 
@@ -1161,7 +1161,7 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
        MONTHLY_REVIEWS = MONTHLY_REVIEWS.filter(r => !(r.emp_id === emp_id && r.month_key === month_key));
        MONTHLY_REVIEWS.push(data[0]);
 
-       const {data:rr} = await sb.from('daily_ratings').select('*').eq('emp_id', emp_id).like('date', `${month_key}-%`);
+       const {data:rr} = await sb.from('ratings_new').select('*').eq('emp_id', emp_id).like('date', `${month_key}-%`);
        if(rr){
           RATINGS = RATINGS.filter(r => !(r.emp_id === emp_id && r.date.startsWith(month_key)));
           RATINGS = RATINGS.concat(rr);
