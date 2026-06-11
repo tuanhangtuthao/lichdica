@@ -531,8 +531,11 @@ function renderResults(){
 
   // Lấy danh sách nhân viên: kết hợp nhân viên hiện tại + nhân viên có rating cũ
   const empsMap = {};
-  allEmps(0).forEach(e => { empsMap[e.id] = e; });
-  Object.assign(empsMap, empDataMap); // Thêm nhân viên bị xóa
+  allEmps(0).forEach(e => { empsMap[e.id] = e; }); // Nhân viên hiện tại (có kíp)
+  // Chỉ thêm nhân viên bị xóa nếu chưa có
+  Object.entries(empDataMap).forEach(([id, emp]) => {
+    if(!empsMap[id]) empsMap[id] = emp;
+  });
   let emps = Object.values(empsMap).filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
 
   // Monthly Reviews map
