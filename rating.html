@@ -849,15 +849,20 @@ async function scoreAllMonth(btn) {
 
   const dailyRows = [];
   let hasError = false;
+  const empsMap = {};
+  allEmps(0).forEach(e => { empsMap[e.id] = e; }); // Map nhân viên để lấy kíp
+
   inputs.forEach(el => {
      let v = el.value.trim();
      if(v !== '') {
         const sc = parseFloat(v);
         if(isNaN(sc) || sc < 0 || sc > 12) hasError = true;
         else {
+           const emp = empsMap[el.dataset.empid];
            dailyRows.push({
               emp_id: el.dataset.empid,
               emp_name: el.dataset.empname,
+              kip: emp?.kip || 0,
               date: el.dataset.date,
               score: sc,
               note: el.dataset.note || ''
