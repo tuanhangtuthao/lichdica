@@ -2984,6 +2984,7 @@ async function toggleVangMat(empId, empName, dk){
       EMP_SCHED.push({...row, id: Date.now()});
     }
   }
+  renderTable();
   renderSummary();
 }
 
