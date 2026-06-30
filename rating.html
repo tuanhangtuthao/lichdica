@@ -198,6 +198,7 @@ input.sc-note:focus{border-color:#4a148c}
   .kip-head{margin:0 24px 6px}
   .res-wrap{padding:0 24px 24px}
 }
+td:hover .del-btn{display:inline-block!important}
 </style>
 </head>
 <body>
@@ -823,14 +824,19 @@ function renderScoring(){
          const sVal = st.scores[dk] !== undefined ? st.scores[dk] : '';
          const nVal = st.notes[dk] || '';
          const noteHint = nVal ? '2px solid red' : '1px solid transparent';
+         const ratingRecord = RATINGS.find(r => r.emp_id === e.id && r.date === dk);
+         const ratingId = ratingRecord ? ratingRecord.id : '';
 
-         html += `<td style="text-align:center;padding:4px 0">
-           <input type="number" min="0" max="12" step="0.1" title="${nVal}" data-note="${nVal}"
-                  data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}"
-                  class="sc-input" placeholder="-" value="${sVal}"
-                  ondblclick="editDailyNote(this)" oninput="handleScoreChange(this)"
-                  onfocus="this.select()"
-                  style="width:38px;text-align:center;border:none;border-bottom:${noteHint};background:none;font-size:.88rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none">
+         html += `<td style="text-align:center;padding:2px 0;position:relative;group">
+           <div style="display:flex;align-items:center;justify-content:center;gap:2px;position:relative">
+             <input type="number" min="0" max="12" step="0.1" title="${nVal}" data-note="${nVal}"
+                    data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}" data-rating-id="${ratingId}"
+                    class="sc-input" placeholder="-" value="${sVal}"
+                    ondblclick="editDailyNote(this)" oninput="handleScoreChange(this)"
+                    onfocus="this.select()"
+                    style="width:38px;text-align:center;border:none;border-bottom:${noteHint};background:none;font-size:.88rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none">
+             ${sVal && ratingId ? `<button type="button" onclick="deleteSingleDay('${ratingId}','${e.name}','${dk}')" style="padding:0;width:16px;height:16px;background:#ff5252;color:#fff;border:none;border-radius:2px;cursor:pointer;font-size:.6rem;line-height:1;display:none" class="del-btn" title="Xóa điểm ngày này">×</button>` : ''}
+           </div>
          </td>`;
       }
       html+=`<td style="text-align:center;padding:4px 6px;background:#fff8e1;min-width:50px;font-weight:700;color:${avgScore !== null ? scoreColor(avgScore) : '#ccc'};border-left:2px solid #ffb74d;font-size:.88rem">${avgScore !== null ? avgScore : '-'}</td>`;
@@ -919,6 +925,16 @@ async function scoreAllMonth(btn) {
       btn.textContent = "💾 Lưu điểm Tháng";
       btn.disabled = false;
   }
+}
+
+async function deleteSingleDay(ratingId, empName, dk){
+  if(!confirm(`Xóa điểm ngày ${dk.split('-')[2]} của ${empName}?`)) return;
+  if(SB_OK){
+    const {error}=await sb.from('ratings_new').delete().eq('id',parseInt(ratingId));
+    if(error){alert('Lỗi: '+error.message);return;}
+  }
+  RATINGS=RATINGS.filter(r=>r.id!==parseInt(ratingId));
+  renderScoring();
 }
 
 async function deleteRating(id,fromScoring=false){
