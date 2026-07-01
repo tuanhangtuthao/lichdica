@@ -1168,7 +1168,7 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
 
   // Lấy hạng được chỉnh (nếu có)
   const selectedGrade = document.querySelector(`input[name="appr-grade-${emp_id}"]:checked`)?.value || '';
-  const gradeToSave = selectedGrade || null;
+  const gradeToSave = selectedGrade || gradeToCheck; // Nếu không chọn → dùng grade tính từ điểm
 
   if (SB_OK) {
     if(dailyRows.length > 0){
