@@ -1182,7 +1182,7 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
 
     // Lưu với violation_note, final_score, và grade
     const reviewRecord = {emp_id: emp_id, month_key: month_key, note: note, approved: true, violation_note: violNote || null, final_score: finalScore, grade: gradeToSave};
-    const {data, error} = await sb.from('monthly_reviews').upsert(reviewRecord, {onConflict: 'emp_id,month_key'}).select();
+    const {data, error} = await sb.from('monthly_reviews').upsert(reviewRecord).select();
     
     if(error){
       alert('Lỗi lưu ghi chú tháng: ' + error.message);
