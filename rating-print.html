@@ -201,10 +201,10 @@ async function loadPrintData(){
       statMap[r.emp_id].cnt++;
     });
 
-    // Map monthly reviews
+    // Map monthly reviews (chỉ lấy bản ghi đã duyệt)
     const reviewMap = {};
-    (mr.data||[]).forEach(r=>{
-      reviewMap[r.emp_id] = r.note || '';
+    (mr.data||[]).filter(r=>r.approved).forEach(r=>{
+      reviewMap[r.emp_id] = {note: r.note, grade: r.grade, final_score: r.final_score};
     });
 
     // Collect unique departments from employees

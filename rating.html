@@ -539,10 +539,10 @@ function renderResults(){
   });
   let emps = Object.values(empsMap).filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
 
-  // Monthly Reviews map (lưu cả note và grade override)
+  // Monthly Reviews map (lưu note, grade override, và final_score)
   const reviewMap = {};
   MONTHLY_REVIEWS.filter(r => r.month_key === mVal && r.approved).forEach(r => {
-    reviewMap[r.emp_id] = {note: r.note, grade: r.grade};
+    reviewMap[r.emp_id] = {note: r.note, grade: r.grade, final_score: r.final_score};
   });
 
   // Grade counts
@@ -574,7 +574,6 @@ function renderResults(){
     const review = reviewMap[e.id] || {};
     const hasFinal = review.final_score !== null && review.final_score !== undefined;
     const avg = hasFinal ? parseFloat(review.final_score) : baseAvg;
-    if(e.id === '2729') console.log('DEBUG 2729:', {baseAvg, review, final_score: review.final_score, hasFinal, avg}); // Debug
     return{...e,avg,cnt:st?st.cnt:0,dayScores:st?st.dayScores:{}};
   }).sort((a,b)=>{
     if(a.avg===null&&b.avg===null) return 0;
@@ -1182,7 +1181,7 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
 
     // Lưu với violation_note, final_score, và grade
     const reviewRecord = {emp_id: emp_id, month_key: month_key, note: note, approved: true, violation_note: violNote || null, final_score: finalScore, grade: gradeToSave};
-    const {data, error} = await sb.from('monthly_reviews').upsert(reviewRecord).select();
+    const {data, error} = await sb.from('monthly_reviews').upsert(reviewRecord, {onConflict: 'emp_id,month_key'}).select();
     
     if(error){
       alert('Lỗi lưu ghi chú tháng: ' + error.message);
