@@ -539,10 +539,10 @@ function renderResults(){
   });
   let emps = Object.values(empsMap).filter(e => !search || e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
 
-  // Monthly Reviews map
+  // Monthly Reviews map (lưu cả note và grade override)
   const reviewMap = {};
   MONTHLY_REVIEWS.filter(r => r.month_key === mVal && r.approved).forEach(r => {
-    reviewMap[r.emp_id] = r.note;
+    reviewMap[r.emp_id] = {note: r.note, grade: r.grade};
   });
 
   // Grade counts
@@ -593,11 +593,12 @@ function renderResults(){
     const avgTxt=e.avg!==null
       ?`<b style="font-size:1rem;color:${scoreColor(e.avg)}">${e.avg}</b>`
       :`<span style="color:#ccc">–</span>`;
-    const grade = e.avg!==null ? getGrade(e.avg) : null;
+    const review = reviewMap[e.id] || {};
+    const grade = review.grade || (e.avg!==null ? getGrade(e.avg) : null);
     const grHtml=grade
       ?`<span class="gb ${gbClass(grade)}">${grade}</span>`
       :`<span style="color:#ccc">–</span>`;
-    const mNote = reviewMap[e.id] || '';
+    const mNote = review.note || '';
     const defaultNote = grade === 'B' ? 'Tròn vai' : '';
     const displayNote = mNote || defaultNote;
 
