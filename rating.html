@@ -570,7 +570,9 @@ function renderResults(){
 
   const sorted=emps.map(e=>{
     const st=statMap[e.id];
-    const avg=st&&st.cnt>0?round1(st.sum/st.cnt):null;
+    const baseAvg=st&&st.cnt>0?round1(st.sum/st.cnt):null;
+    const review = reviewMap[e.id] || {};
+    const avg = review.final_score !== null && review.final_score !== undefined ? parseFloat(review.final_score) : baseAvg;
     return{...e,avg,cnt:st?st.cnt:0,dayScores:st?st.dayScores:{}};
   }).sort((a,b)=>{
     if(a.avg===null&&b.avg===null) return 0;
