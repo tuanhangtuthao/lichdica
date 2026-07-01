@@ -237,8 +237,10 @@ async function loadPrintData(){
           if(filterDepartment && e.role !== filterDepartment) return;
 
           const st = statMap[e.id];
-          const avg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
+          const baseAvg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
           const review = reviewMap[e.id] || {};
+          // Lấy final_score từ duyệt nếu có, nếu không dùng avg
+          const avg = review.final_score !== null && review.final_score !== undefined ? parseFloat(review.final_score) : baseAvg;
           // Nếu có hạng được chỉnh → dùng nó, không thì tính từ điểm
           let grade = review.grade ? review.grade : (avg !== '-' ? getGrade(avg) : '-');
           let note = review.note || '';
