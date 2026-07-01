@@ -1196,6 +1196,7 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
        
        alert('Đã lưu & duyệt thành công!');
        renderApproval();
+       renderResults(); // Cập nhật tab kết quả
     }
   } else {
     alert('Lưu cục bộ không được hỗ trợ cho chức năng này (Cần DB).');
