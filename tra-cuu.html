@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tra Cứu Cá Nhân - Phân Xưởng 1</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;line-height:1.5;padding-bottom:40px}
+.hdr{background:linear-gradient(135deg,#1a237e,#4a148c);color:#fff;padding:18px 16px;text-align:center}
+.hdr h1{font-size:1.25rem}
+.hdr p{font-size:.78rem;opacity:.85}
+.wrap{max-width:520px;margin:0 auto;padding:14px}
+.search-box{display:flex;gap:8px;margin-bottom:14px}
+.search-box input{flex:1;padding:12px;border:2px solid #c5cae9;border-radius:12px;font-size:1.05rem;text-align:center;font-weight:700;letter-spacing:2px;outline:none}
+.search-box input:focus{border-color:#1a237e}
+.search-box button{padding:12px 20px;background:#1a237e;color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer}
+.card{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);padding:14px;margin-bottom:12px}
+.card h3{font-size:.85rem;color:#1a237e;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:6px}
+.emp-name{font-size:1.2rem;font-weight:800;color:#1a237e}
+.emp-sub{font-size:.8rem;color:#777}
+.day-row{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px dashed #f0f0f0;font-size:.85rem}
+.day-row:last-child{border-bottom:none}
+.day-row.today{background:#fff8e1;border-radius:8px;font-weight:700}
+.day-d{width:105px;color:#555}
+.chip{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.78rem;font-weight:700}
+.chS{background:#fff3e0;color:#e65100}.chC{background:#e8eaf6;color:#283593}
+.chN{background:#f3e5f5;color:#6a1b9a}.chL{background:#ffebee;color:#b71c1c}
+.chHC{background:#e0f2f1;color:#00695c}.chNP{background:#e1f5fe;color:#0277bd}
+.chVM{background:#ffcdd2;color:#b71c1c}.chUN{background:#f5f5f5;color:#999}
+.chC1{background:#b2dfdb;color:#00695c}.chC2{background:#ffe082;color:#e65100}.chC3{background:#ce93d8;color:#4a148c}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{text-align:center;padding:10px 4px;background:#fafafa;border-radius:10px}
+.stat b{display:block;font-size:1.3rem;color:#1a237e}
+.stat span{font-size:.68rem;color:#888}
+.gb{display:inline-block;padding:2px 12px;border-radius:8px;font-weight:800;font-size:1rem}
+.gb-Ap{background:#e8f5e9;color:#1b5e20}.gb-A{background:#c8e6c9;color:#2e7d32}
+.gb-B{background:#bbdefb;color:#1565c0}.gb-C{background:#fff9c4;color:#e65100}.gb-D{background:#ffcdd2;color:#b71c1c}
+.ot-row{display:flex;justify-content:space-between;font-size:.82rem;padding:6px 4px;border-bottom:1px dashed #f0f0f0}
+.err{text-align:center;color:#c62828;padding:20px;font-weight:700}
+.muted{text-align:center;color:#aaa;font-size:.8rem;padding:10px}
+.loading{text-align:center;color:#888;padding:30px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>🔍 Tra Cứu Cá Nhân</h1>
+  <p>Phân Xưởng 1 · Lịch ca, điểm, tăng ca của bạn</p>
+</div>
+
+<div class="wrap">
+  <div class="search-box">
+    <input type="text" id="msnv" placeholder="Nhập MSNV..." inputmode="numeric" onkeydown="if(event.key==='Enter')lookup()">
+    <button onclick="lookup()">Xem</button>
+  </div>
+  <div id="result"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ── TÍNH CA (đồng bộ với index.html) ─────────
+const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
+const REF   = new Date(2026, 3, 12);
+const PHASE = {1:3, 2:11, 3:7};
+function getShift(k, d){
+  const len=CYCLE.length;
+  const d0=new Date(d); d0.setHours(0,0,0,0);
+  const n=Math.round((d0-REF)/864e5);
+  return CYCLE[((n+PHASE[k])%len+len)%len];
+}
+const SLBL = {S:'☀️ Ca Sáng',C:'🌙 Ca Chiều',N:'🏠 Nghỉ',L:'🎌 Nghỉ Lễ',HC:'🏢 Hành Chính',NP:'🏖️ Nghỉ Phép',VM:'🔴 Vắng Mặt',UN:'– Chưa phân ca',C1:'① Ca 1',C2:'② Ca 2',C3:'③ Ca 3'};
+const GRP_LABEL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',4:'HC / Ca Xoay'};
+const DFUL=['CN','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+
+function dKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function round1(v){return Math.round(parseFloat(v)*10)/10;}
+function gbClass(g){return 'gb-'+(g==='A+'?'Ap':g);}
+
+let GRADE_CFG=[];
+function getGrade(score){
+  const s=[...GRADE_CFG].sort((a,b)=>(b.min_score||0)-(a.min_score||0));
+  for(const g of s){ if(score>=(g.min_score||0)) return g.grade; }
+  return 'D';
+}
+
+function empShiftFor(e, d, dk, HOLS, SCHED){
+  if(HOLS.some(h=>h.date===dk)) return 'L';
+  const isSun = d.getDay()===0;
+  const ov = SCHED.filter(s=>s.start_date<=dk && dk<=s.end_date);
+  if(ov.length){ ov.sort((a,b)=>b.id-a.id); return ov[0].shift; }
+  if(e.fixed_shift==='HC') return isSun?'N':'HC';
+  if(e.fixed_shift==='S')  return isSun?'N':'S';
+  if(e.fixed_shift==='C')  return isSun?'N':'C';
+  if(e.kip===4) return isSun?'N':'UN';
+  if(e.kip>=1&&e.kip<=3) return getShift(e.kip,d);
+  return 'UN';
+}
+
+function otHours(o){
+  let hours=null;
+  if(o.note){ const mx=o.note.match(/^([\d.]+)h/); if(mx) hours=parseFloat(mx[1]); }
+  if(!hours && o.start_time && o.end_time){
+    const [h1,m1]=o.start_time.split(':').map(Number),[h2,m2]=o.end_time.split(':').map(Number);
+    const diff=((h2*60+m2)-(h1*60+m1))/60; if(diff>0) hours=diff;
+  }
+  return hours;
+}
+
+async function lookup(){
+  const id = document.getElementById('msnv').value.trim();
+  const box = document.getElementById('result');
+  if(!id){ box.innerHTML='<div class="err">Vui lòng nhập MSNV!</div>'; return; }
+  box.innerHTML = '<div class="loading">⏳ Đang tải...</div>';
+  localStorage.setItem('tracuu_msnv', id);
+
+  const t = new Date(); t.setHours(0,0,0,0);
+  const monthKey = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+
+  try{
+    const [er, rr, mr, or_, sr, hr, gr] = await Promise.all([
+      sb.from('employees').select('*').eq('id', id),
+      sb.from('ratings_new').select('*').eq('emp_id', id).like('date', monthKey+'-%'),
+      sb.from('monthly_reviews').select('*').eq('emp_id', id).eq('month_key', monthKey),
+      sb.from('overtime').select('*').eq('emp_id', id).like('date', monthKey+'-%').order('date'),
+      sb.from('emp_schedule').select('*').eq('emp_id', id),
+      sb.from('holidays').select('*'),
+      sb.from('rating_config').select('*'),
+    ]);
+
+    const emp = (er.data||[])[0];
+    if(!emp){ box.innerHTML = `<div class="err">Không tìm thấy MSNV "${id}".<br>Kiểm tra lại mã số nhân viên!</div>`; return; }
+    if((gr.data||[]).length) GRADE_CFG = gr.data;
+    const HOLS = hr.data||[], SCHED = sr.data||[];
+
+    // ── Lịch 7 ngày ──
+    let daysHtml='';
+    for(let i=0;i<7;i++){
+      const d=new Date(t); d.setDate(d.getDate()+i);
+      const dk=dKey(d);
+      const s=empShiftFor(emp,d,dk,HOLS,SCHED);
+      daysHtml+=`<div class="day-row${i===0?' today':''}">
+        <span class="day-d">${i===0?'Hôm nay':DFUL[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}</span>
+        <span class="chip ch${s}">${SLBL[s]||s}</span>
+      </div>`;
+    }
+
+    // ── Điểm tháng ──
+    const ratings = rr.data||[];
+    const cnt = ratings.length;
+    const baseAvg = cnt>0 ? round1(ratings.reduce((a,r)=>a+parseFloat(r.score),0)/cnt) : null;
+    const review = (mr.data||[]).find(r=>r.approved) || {};
+    const avg = (review.final_score!==null && review.final_score!==undefined) ? parseFloat(review.final_score) : baseAvg;
+    const grade = review.grade || (avg!==null ? getGrade(avg) : null);
+    const pct = avg!==null ? Math.round(avg/10*100) : null;
+
+    // ── Tăng ca tháng ──
+    const ots = or_.data||[];
+    let totH=0, otRows='';
+    ots.forEach(o=>{
+      const h=otHours(o); if(h) totH+=h;
+      const [yy,mm,dd]=o.date.split('-');
+      otRows+=`<div class="ot-row"><span>${dd}/${mm} · ${o.shift==='C'?'Chiều':'Sáng'}</span><span style="font-weight:700;color:#e65100">${h?h+'h':(o.start_time?o.start_time+'-'+(o.end_time||''):'')}</span></div>`;
+    });
+
+    // ── Nghỉ phép / vắng mặt tháng này ──
+    let npRows='';
+    SCHED.filter(s=>(s.shift==='NP'||s.shift==='VM') && s.start_date.startsWith(monthKey)).forEach(s=>{
+      const lbl = s.shift==='NP'?'🏖️ Nghỉ phép':'🔴 Vắng mặt';
+      const d1=s.start_date.split('-'), d2=s.end_date.split('-');
+      const range = s.start_date===s.end_date ? `${d1[2]}/${d1[1]}` : `${d1[2]}/${d1[1]} → ${d2[2]}/${d2[1]}`;
+      npRows+=`<div class="ot-row"><span>${range}</span><span>${lbl}</span></div>`;
+    });
+
+    box.innerHTML = `
+      <div class="card">
+        <div class="emp-name">${emp.name}</div>
+        <div class="emp-sub">MSNV: ${emp.id} · ${GRP_LABEL[emp.kip]||''} ${emp.role?('· '+emp.role):''}</div>
+      </div>
+      <div class="card">
+        <h3>📅 Lịch 7 ngày tới</h3>
+        ${daysHtml}
+      </div>
+      <div class="card">
+        <h3>⭐ Đánh giá tháng ${String(t.getMonth()+1).padStart(2,'0')}/${t.getFullYear()}</h3>
+        <div class="stat-grid">
+          <div class="stat"><b>${cnt}</b><span>Ngày đã chấm</span></div>
+          <div class="stat"><b style="color:${avg!==null?'#e65100':'#ccc'}">${pct!==null?pct+'%':'–'}</b><span>% Đánh giá</span></div>
+          <div class="stat">${grade?`<span class="gb ${gbClass(grade)}">${grade}</span>`:'<b style="color:#ccc">–</b>'}<span>Xếp hạng${review.grade||review.final_score!==undefined&&review.final_score!==null?' (đã duyệt)':''}</span></div>
+        </div>
+        ${review.note?`<div style="margin-top:10px;font-size:.8rem;color:#555;background:#fafafa;padding:8px;border-radius:8px">📝 ${review.note}</div>`:''}
+      </div>
+      <div class="card">
+        <h3>⏰ Tăng ca tháng này ${totH>0?`· <span style="color:#e65100">${totH%1===0?totH:totH.toFixed(1)} giờ</span>`:''}</h3>
+        ${otRows||'<div class="muted">Không có tăng ca</div>'}
+      </div>
+      <div class="card">
+        <h3>🏖️ Nghỉ phép / Vắng mặt tháng này</h3>
+        ${npRows||'<div class="muted">Không có</div>'}
+      </div>`;
+  }catch(e){
+    box.innerHTML = '<div class="err">Lỗi tải dữ liệu: '+e.message+'</div>';
+  }
+}
+
+// Tự tra cứu lại MSNV đã lưu
+const saved = localStorage.getItem('tracuu_msnv');
+if(saved){ document.getElementById('msnv').value = saved; lookup(); }
+</script>
+</body>
+</html>

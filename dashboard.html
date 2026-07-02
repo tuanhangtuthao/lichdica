@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Quản Đốc - Phân Xưởng 1</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;line-height:1.5;padding-bottom:40px}
+.hdr{background:linear-gradient(135deg,#1a237e,#4a148c);color:#fff;padding:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hdr h1{font-size:1.2rem}
+.hdr .date-lbl{font-size:.8rem;opacity:.85}
+.hdr input[type=date]{padding:7px 10px;border:none;border-radius:8px;font-size:.85rem;font-weight:700}
+.wrap{max-width:1100px;margin:0 auto;padding:14px}
+.hol-banner{background:#ffebee;color:#b71c1c;font-weight:700;text-align:center;padding:10px;border-radius:10px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:12px}
+.card{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden}
+.card-hd{padding:10px 14px;color:#fff;font-weight:800;font-size:.9rem;display:flex;justify-content:space-between;align-items:center}
+.k1{background:#1565c0}.k2{background:#2e7d32}.k3{background:#6a1b9a}.k4{background:#00695c}
+.kot{background:#e65100}.kmc{background:#37474f}.kdon{background:#ad1457}
+.card-bd{padding:12px 14px}
+.shift-badge{font-size:.75rem;background:rgba(255,255,255,.25);padding:2px 10px;border-radius:12px;font-weight:700}
+.cnt-row{display:flex;justify-content:space-between;font-size:.83rem;padding:5px 0;border-bottom:1px dashed #f0f0f0}
+.cnt-row:last-child{border-bottom:none}
+.cnt-row b{font-size:.95rem}
+.big-num{font-size:2rem;font-weight:800;text-align:center;color:#1a237e}
+.sub-lbl{text-align:center;font-size:.72rem;color:#888}
+.name-list{font-size:.78rem;color:#555;margin-top:8px;line-height:1.7}
+.name-tag{display:inline-block;background:#fafafa;border:1px solid #eee;border-radius:8px;padding:1px 8px;margin:1px}
+.name-tag.vm{background:#ffebee;border-color:#ffcdd2;color:#b71c1c}
+.name-tag.np{background:#e1f5fe;border-color:#b3e5fc;color:#0277bd}
+.name-tag.ot{background:#fff3e0;border-color:#ffe0b2;color:#e65100}
+.name-tag.mc{background:#eceff1;border-color:#cfd8dc;color:#455a64}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.links a{flex:1;min-width:130px;text-align:center;background:#fff;border:2px solid #c5cae9;color:#1a237e;text-decoration:none;font-weight:700;font-size:.8rem;padding:10px;border-radius:12px}
+.links a:hover{background:#1a237e;color:#fff}
+.muted{color:#aaa;font-size:.78rem;text-align:center;padding:6px}
+.loading{text-align:center;color:#888;padding:40px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <h1>📊 Dashboard Quản Đốc</h1>
+    <div class="date-lbl" id="dateLbl"></div>
+  </div>
+  <input type="date" id="dPick" onchange="loadDash()">
+</div>
+
+<div class="wrap">
+  <div id="holBanner"></div>
+  <div id="dash"><div class="loading">⏳ Đang tải...</div></div>
+  <div class="links">
+    <a href="index.html">📅 Lịch Đi Ca</a>
+    <a href="rating.html">⭐ Đánh Giá</a>
+    <a href="nhansu-ca.html">🏭 Sơ Đồ Máy</a>
+    <a href="tra-cuu.html">🔍 Tra Cứu NV</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ── TÍNH CA (đồng bộ với index.html) ─────────
+const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
+const REF   = new Date(2026, 3, 12);
+const PHASE = {1:3, 2:11, 3:7};
+function getShift(k, d){
+  const len=CYCLE.length;
+  const d0=new Date(d); d0.setHours(0,0,0,0);
+  const n=Math.round((d0-REF)/864e5);
+  return CYCLE[((n+PHASE[k])%len+len)%len];
+}
+function getBlockStatus(k, d){
+  const d0=new Date(d); d0.setHours(0,0,0,0);
+  const n=Math.round((d0-REF)/864e5);
+  const pos=((n+PHASE[k])%12+12)%12;
+  if(pos<=3) return {type:'work',day:pos+1,total:4};
+  if(pos<=5) return {type:'rest',day:pos-3,total:2};
+  if(pos<=9) return {type:'work',day:pos-5,total:4};
+  return {type:'rest',day:pos-9,total:2};
+}
+function getKipByShift(d, targetS){
+  for(let k=1;k<=3;k++){ if(getShift(k,d)===targetS) return k; }
+  for(let k=1;k<=3;k++){ if(getShift(k,d)!=='N') return k; }
+  return 1;
+}
+const SLBL={S:'☀️ Ca Sáng',C:'🌙 Ca Chiều',N:'🏠 Nghỉ',L:'🎌 Nghỉ Lễ'};
+const DFUL=['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+function dKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+function empShiftFor(e, d, dk, HOLS, SCHED){
+  if(HOLS.some(h=>h.date===dk)) return 'L';
+  const isSun=d.getDay()===0;
+  const ov=SCHED.filter(s=>s.emp_id===e.id&&s.start_date<=dk&&dk<=s.end_date);
+  if(ov.length){ov.sort((a,b)=>b.id-a.id);return ov[0].shift;}
+  if(e.fixed_shift==='HC')return isSun?'N':'HC';
+  if(e.fixed_shift==='S')return isSun?'N':'S';
+  if(e.fixed_shift==='C')return isSun?'N':'C';
+  if(e.kip===4)return isSun?'N':'UN';
+  if(e.kip>=1&&e.kip<=3)return getShift(e.kip,d);
+  return 'UN';
+}
+function otHours(o){
+  let hours=null;
+  if(o.note){const mx=o.note.match(/^([\d.]+)h/);if(mx)hours=parseFloat(mx[1]);}
+  if(!hours&&o.start_time&&o.end_time){
+    const [h1,m1]=o.start_time.split(':').map(Number),[h2,m2]=o.end_time.split(':').map(Number);
+    const diff=((h2*60+m2)-(h1*60+m1))/60;if(diff>0)hours=diff;
+  }
+  return hours;
+}
+
+async function loadDash(){
+  const dVal=document.getElementById('dPick').value;
+  const d=new Date(dVal+'T00:00:00');
+  const dk=dVal;
+  document.getElementById('dateLbl').textContent=`${DFUL[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  const box=document.getElementById('dash');
+  box.innerHTML='<div class="loading">⏳ Đang tải...</div>';
+
+  try{
+    const [er,hr,sr,or_,lr,flr]=await Promise.all([
+      sb.from('employees').select('*').order('kip').order('sort_order'),
+      sb.from('holidays').select('*'),
+      sb.from('emp_schedule').select('*'),
+      sb.from('overtime').select('*').eq('date',dk),
+      sb.from('leave_requests').select('*').eq('status','pending'),
+      sb.from('factory_layout').select('*'),
+    ]);
+    const EMPS=er.data||[], HOLS=hr.data||[], SCHED=sr.data||[], OTS=or_.data||[], REQS=lr.data||[];
+
+    // Banner lễ
+    const hol=HOLS.find(h=>h.date===dk);
+    document.getElementById('holBanner').innerHTML=hol?`<div class="hol-banner">🎌 ${hol.name}</div>`:'';
+
+    let html='<div class="grid">';
+
+    // ── Card kíp 1-3 ──
+    for(let k=1;k<=3;k++){
+      const kEmps=EMPS.filter(e=>e.kip===k);
+      const s=hol?'L':getShift(k,d);
+      const bs=getBlockStatus(k,d);
+      const bsLbl=bs.type==='work'?`ngày làm ${bs.day}/${bs.total}`:`ngày nghỉ ${bs.day}/${bs.total}`;
+      let w=0; const vmN=[],npN=[];
+      kEmps.forEach(e=>{
+        const st=empShiftFor(e,d,dk,HOLS,SCHED);
+        if(st==='VM')vmN.push(e.name);
+        else if(st==='NP')npN.push(e.name);
+        else if(st!=='N'&&st!=='L')w++;
+      });
+      html+=`<div class="card"><div class="card-hd k${k}">KÍP ${k} <span class="shift-badge">${SLBL[s]||s} · ${bsLbl}</span></div>
+        <div class="card-bd">
+          <div class="cnt-row"><span>Tổng nhân viên</span><b>${kEmps.length}</b></div>
+          <div class="cnt-row"><span>✅ Đi làm</span><b style="color:#2e7d32">${(s==='N'||s==='L')?0:w}</b></div>
+          <div class="cnt-row"><span>🏖️ Nghỉ phép</span><b style="color:#0277bd">${npN.length}</b></div>
+          <div class="cnt-row"><span>🔴 Vắng mặt</span><b style="color:#b71c1c">${vmN.length}</b></div>
+          ${vmN.length?`<div class="name-list">${vmN.map(n=>`<span class="name-tag vm">${n}</span>`).join('')}</div>`:''}
+          ${npN.length?`<div class="name-list">${npN.map(n=>`<span class="name-tag np">${n}</span>`).join('')}</div>`:''}
+        </div></div>`;
+    }
+
+    // ── Card HC / Ca xoay ──
+    const k4=EMPS.filter(e=>e.kip===4);
+    if(k4.length){
+      let w4=0; const vm4=[],np4=[];
+      k4.forEach(e=>{
+        const st=empShiftFor(e,d,dk,HOLS,SCHED);
+        if(st==='VM')vm4.push(e.name);
+        else if(st==='NP')np4.push(e.name);
+        else if(st!=='N'&&st!=='L')w4++;
+      });
+      html+=`<div class="card"><div class="card-hd k4">🏢 HC / CA XOAY <span class="shift-badge">${k4.length} NV</span></div>
+        <div class="card-bd">
+          <div class="cnt-row"><span>✅ Đi làm</span><b style="color:#2e7d32">${w4}</b></div>
+          <div class="cnt-row"><span>🏖️ Nghỉ phép</span><b style="color:#0277bd">${np4.length}</b></div>
+          <div class="cnt-row"><span>🔴 Vắng mặt</span><b style="color:#b71c1c">${vm4.length}</b></div>
+          ${vm4.length?`<div class="name-list">${vm4.map(n=>`<span class="name-tag vm">${n}</span>`).join('')}</div>`:''}
+          ${np4.length?`<div class="name-list">${np4.map(n=>`<span class="name-tag np">${n}</span>`).join('')}</div>`:''}
+        </div></div>`;
+    }
+    html+='</div><div class="grid">';
+
+    // ── Card tăng ca hôm nay ──
+    const otIds=[...new Set(OTS.map(o=>o.emp_id))];
+    let totH=0; OTS.forEach(o=>{const h=otHours(o);if(h)totH+=h;});
+    html+=`<div class="card"><div class="card-hd kot">⏰ TĂNG CA ${d.getDate()}/${d.getMonth()+1}</div>
+      <div class="card-bd">
+        <div class="big-num">${otIds.length}</div>
+        <div class="sub-lbl">người tăng ca${totH>0?` · ${totH%1===0?totH:totH.toFixed(1)} giờ`:''}</div>
+        ${OTS.length?`<div class="name-list" style="margin-top:10px">${OTS.map(o=>`<span class="name-tag ot">${o.emp_name} (${o.shift==='C'?'C':'S'}${otHours(o)?'·'+otHours(o)+'h':''})</span>`).join('')}</div>`:''}
+      </div></div>`;
+
+    // ── Card đơn xin nghỉ chờ duyệt ──
+    html+=`<div class="card"><div class="card-hd kdon">📮 ĐƠN XIN NGHỈ CHỜ DUYỆT</div>
+      <div class="card-bd">
+        <div class="big-num" style="color:${REQS.length?'#ad1457':'#1a237e'}">${REQS.length}</div>
+        <div class="sub-lbl">đơn đang chờ</div>
+        ${REQS.length?`<div class="name-list" style="margin-top:10px">${REQS.slice(0,10).map(r=>`<span class="name-tag">${r.emp_name||r.emp_id}</span>`).join('')}</div>`:''}
+      </div></div>`;
+
+    // ── Card máy trống (từ sơ đồ + roster) ──
+    try{
+      const layout=flr.data||[];
+      let machineCells=[];
+      layout.forEach(z=>{
+        try{
+          const grid=JSON.parse(z.grid_json);
+          grid.forEach(row=>row.forEach(item=>{
+            const code=(item&&typeof item==='object')?item.c:item;
+            if(code) machineCells.push(code);
+          }));
+        }catch(e){}
+      });
+      if(machineCells.length){
+        const kipS=getKipByShift(d,'S'), kipC=getKipByShift(d,'C');
+        const [rsS,rsC]=await Promise.all([
+          sb.from('shift_roster').select('*').eq('date',dk).eq('kip',kipS),
+          sb.from('shift_roster').select('*').eq('date',dk).eq('kip',kipC),
+        ]);
+        const staffedS=(rsS.data||[]).filter(r=>r.worker_name).length;
+        const staffedC=(rsC.data||[]).filter(r=>r.worker_name).length;
+        html+=`<div class="card"><div class="card-hd kmc">🏭 MÁY CÓ NGƯỜI ĐỨNG</div>
+          <div class="card-bd">
+            <div class="cnt-row"><span>☀️ Ca Sáng (Kíp ${kipS})</span><b>${staffedS} / ${machineCells.length} máy</b></div>
+            <div class="cnt-row"><span>🌙 Ca Chiều (Kíp ${kipC})</span><b>${staffedC} / ${machineCells.length} máy</b></div>
+            <div class="muted" style="margin-top:6px">Chi tiết xem <a href="nhansu-ca.html" style="color:#1a237e;font-weight:700">Sơ Đồ Máy</a></div>
+          </div></div>`;
+      }
+    }catch(e){console.warn('Máy trống:',e);}
+
+    html+='</div>';
+    box.innerHTML=html;
+  }catch(e){
+    box.innerHTML='<div class="loading" style="color:#c62828">Lỗi tải dữ liệu: '+e.message+'</div>';
+  }
+}
+
+// Khởi động: mặc định hôm nay
+const t=new Date();
+document.getElementById('dPick').value=dKey(t);
+loadDash();
+</script>
+</body>
+</html>
