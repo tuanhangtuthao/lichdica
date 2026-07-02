@@ -913,10 +913,21 @@ function onInput(cellId,code,field,val){
 }
 
 // ── LAYOUT EDIT MODE ──────────────────────────────────────
-function toggleLayoutEdit(){
+// Kiểm tra mật khẩu phía server (Supabase RPC) - không còn mật khẩu trong mã nguồn
+async function verifyAppPass(v){
+  if(!SB_OK) return false;
+  try{
+    const {data, error} = await sb.rpc('check_app_password', {pw: v});
+    if(error){ console.warn('Lỗi kiểm tra mật khẩu:', error); return false; }
+    return data === true;
+  }catch(e){ return false; }
+}
+
+async function toggleLayoutEdit(){
   const pw = prompt('Nhập mật khẩu quản trị để sửa sơ đồ:');
-  if(pw !== '741852') {
-    if(pw !== null) alert('Sai mật khẩu!');
+  if(pw === null) return;
+  if(!(await verifyAppPass(pw))) {
+    alert('Sai mật khẩu!');
     return;
   }
   
