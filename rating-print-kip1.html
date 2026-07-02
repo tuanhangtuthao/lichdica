@@ -171,7 +171,7 @@ async function loadPrintData(){
     const monthPrefix = monthVal + '-';
     const [er,rr,mr,gr] = await Promise.all([
       sb.from('employees').select('*').eq('kip',KIP_FILTER).order('sort_order'),
-      sb.from('daily_ratings').select('*').like('date',monthPrefix+'%'),
+      sb.from('ratings_new').select('*').like('date',monthPrefix+'%'),
       sb.from('monthly_reviews').select('*').eq('month_key',monthVal),
       sb.from('rating_config').select('*').order('sort_order'),
     ]);
@@ -202,10 +202,10 @@ async function loadPrintData(){
       statMap[r.emp_id].cnt++;
     });
 
-    // Map monthly reviews
+    // Map monthly reviews (chỉ lấy bản ghi đã duyệt)
     const reviewMap = {};
-    (mr.data||[]).forEach(r=>{
-      reviewMap[r.emp_id] = r.note || '';
+    (mr.data||[]).filter(r=>r.approved).forEach(r=>{
+      reviewMap[r.emp_id] = {note: r.note, grade: r.grade, final_score: r.final_score};
     });
 
     // Collect unique departments from employees
@@ -235,10 +235,13 @@ async function loadPrintData(){
         if(filterDepartment && e.role !== filterDepartment) return;
 
         const st = statMap[e.id];
-        const avg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
+        const baseAvg = st && st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
+        const review = reviewMap[e.id] || {};
+        // Lấy final_score từ duyệt nếu có, nếu không dùng avg
+        const avg = review.final_score !== null && review.final_score !== undefined ? parseFloat(review.final_score) : baseAvg;
         // Nếu có hạng được chỉnh → dùng nó, không thì tính từ điểm
         let grade = review.grade ? review.grade : (avg !== '-' ? getGrade(avg) : '-');
-        let note = reviewMap[e.id] || '';
+        let note = review.note || '';
         // Default note for grade B
         if(grade === 'B' && !note) note = 'Tròn vai';
         const pct = avg !== '-' ? Math.round(parseFloat(avg)/10*100) : '-';

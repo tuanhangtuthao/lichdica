@@ -170,7 +170,7 @@ async function loadPrintData(){
     const monthPrefix = monthVal + '-';
     const [er,rr,mr,gr] = await Promise.all([
       sb.from('employees').select('*').order('kip').order('sort_order'),
-      sb.from('daily_ratings').select('*').like('date',monthPrefix+'%'),
+      sb.from('ratings_new').select('*').like('date',monthPrefix+'%'),
       sb.from('monthly_reviews').select('*').eq('month_key',monthVal),
       sb.from('rating_config').select('*').order('sort_order'),
     ]);
