@@ -498,17 +498,21 @@ async function loadData(){
   if(!SB_OK){return;}
   try{
     // Các bảng bắt buộc
-    const [er,rr,gr]=await Promise.all([
+    const [er,rr,gr,hr,esr]=await Promise.all([
       sb.from('employees').select('*').order('kip').order('sort_order'),
       loadAllRatings(),
       sb.from('rating_config').select('*').order('sort_order'),
+      sb.from('holidays').select('*').order('date'),
+      sb.from('emp_schedule').select('*').order('start_date'),
     ]);
     EMPS={1:[],2:[],3:[],4:[]};
     (er.data||[]).forEach(e=>{
-      if(EMPS[e.kip]) EMPS[e.kip].push({id:e.id,name:e.name,role:e.role||'',kip:e.kip});
+      if(EMPS[e.kip]) EMPS[e.kip].push({id:e.id,name:e.name,role:e.role||'',fixed_shift:e.fixed_shift||null,kip:e.kip});
     });
     RATINGS=rr||[];
     if((gr.data||[]).length>0) GRADE_CFG=gr.data;
+    HOLS=hr.data||[];
+    EMP_SCHED=esr.data||[];
   }catch(e){console.warn('Load error (core):', e);}
 
   // Bảng monthly_reviews – chưa bắt buộc, bỏ qua nếu chưa tạo
@@ -517,6 +521,38 @@ async function loadData(){
     MONTHLY_REVIEWS=mr.data||[];
   }catch(e){MONTHLY_REVIEWS=[];console.warn('monthly_reviews chưa tạo, bỏ qua.');}
 }
+
+// ── TÍNH CA (đồng bộ với index.html) ─────────
+// Chu kỳ 12 ngày: S×4 → N×2 → C×4 → N×2
+const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
+const REF   = new Date(2026, 3, 12); // 12/04/2026 – mốc tham chiếu
+const PHASE = {1:3, 2:11, 3:7};
+let HOLS = [];
+let EMP_SCHED = [];
+
+function getShift(k, d) {
+  const len = CYCLE.length;
+  const d0 = new Date(d); d0.setHours(0,0,0,0);
+  const n = Math.round((d0 - REF) / 864e5);
+  return CYCLE[((n + PHASE[k]) % len + len) % len];
+}
+
+// Trả về ca của nhân viên vào ngày d (dk = 'YYYY-MM-DD')
+function empShiftFor(e, d, dk){
+  if(HOLS.some(h => h.date === dk)) return 'L';
+  const isSun = d.getDay() === 0;
+  // Lịch tay (phân ca/nghỉ phép/vắng mặt) ưu tiên cao nhất
+  const ov = EMP_SCHED.filter(s => s.emp_id === e.id && s.start_date <= dk && dk <= s.end_date);
+  if(ov.length){ ov.sort((a,b) => b.id - a.id); return ov[0].shift; }
+  if(e.fixed_shift === 'HC') return isSun ? 'N' : 'HC';
+  if(e.fixed_shift === 'S')  return isSun ? 'N' : 'S';
+  if(e.fixed_shift === 'C')  return isSun ? 'N' : 'C';
+  if(e.kip === 4) return isSun ? 'N' : 'UN';
+  if(e.kip >= 1 && e.kip <= 3) return getShift(e.kip, d);
+  return 'UN';
+}
+// Các trạng thái bị khóa không cho chấm điểm
+const LOCK_SHIFTS = {N:'Ngày nghỉ', L:'Nghỉ lễ', NP:'Nghỉ phép', VM:'Vắng mặt'};
 
 // ── TAB 1: KẾT QUẢ ────────────────────────
 
@@ -820,7 +856,10 @@ function renderScoring(){
     let kEmps = emps.filter(e => e.kip === k);
     if(!kEmps.length) return;
     html+=`<div class="kip-group-wrap">
-      <div class="kip-head kh-k${k}">${GRP_LABEL[k]||'Kíp '+k} <span style="font-weight:400;font-size:.75rem;opacity:.85">(${kEmps.length} người)</span></div>
+      <div class="kip-head kh-k${k}">${GRP_LABEL[k]||'Kíp '+k} <span style="font-weight:400;font-size:.75rem;opacity:.85">(${kEmps.length} người)</span>
+        <button type="button" onclick="fillTodayScores(${k})" title="Điền 10 điểm vào các ô trống hôm nay của nhóm này (ngày nghỉ tự bỏ qua)"
+          style="float:right;padding:3px 10px;border:none;border-radius:6px;background:rgba(255,255,255,.25);color:#fff;font-size:.72rem;font-weight:700;cursor:pointer">⚡ Điền 10 hôm nay</button>
+      </div>
       <div style="overflow-x:auto; margin: 0 12px; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);">
         <table class="res-table" style="width:100%; min-width: max-content; box-shadow:none; border-radius:0;">
           <thead>
@@ -855,14 +894,33 @@ function renderScoring(){
          const ratingRecord = RATINGS.find(r => r.emp_id === e.id && r.date === dk);
          const ratingId = ratingRecord ? ratingRecord.id : '';
 
-         html += `<td style="text-align:center;padding:2px 0;position:relative;group">
+         // Kiểm tra ngày nghỉ/lễ/phép/vắng mặt → khóa ô
+         const dateObj = new Date(Number(y), Number(m)-1, i);
+         const shift = empShiftFor(e, dateObj, dk);
+         const lockLbl = LOCK_SHIFTS[shift];
+
+         if(lockLbl && sVal === ''){
+            // Ngày nghỉ chưa có điểm → khóa hoàn toàn
+            const isVM = shift === 'VM';
+            html += `<td title="${lockLbl}" style="text-align:center;padding:2px 0;background:${isVM?'#ffebee':'#f1f1f1'}">
+              <span style="font-size:.62rem;color:${isVM?'#c62828':'#bbb'};font-weight:700">${shift==='L'?'Lễ':shift}</span>
+            </td>`;
+            continue;
+         }
+
+         // Ngày nghỉ nhưng LỠ có điểm → cảnh báo đỏ, khóa nhập, vẫn xóa được bằng nút ×
+         const lockWarn = lockLbl && sVal !== '';
+         const inpBorder = lockWarn ? '2px solid #e53935' : noteHint;
+         const inpTitle = lockWarn ? `⚠️ Điểm chấm nhầm vào ${lockLbl} - hover để xóa` : nVal;
+
+         html += `<td style="text-align:center;padding:2px 0;position:relative;${lockWarn?'background:#ffebee':''}">
            <div style="display:flex;align-items:center;justify-content:center;gap:2px;position:relative">
-             <input type="number" min="0" max="12" step="0.1" title="${nVal}" data-note="${nVal}"
+             <input type="number" min="0" max="12" step="0.1" title="${inpTitle}" data-note="${nVal}"
                     data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}" data-rating-id="${ratingId}"
-                    class="sc-input" placeholder="-" value="${sVal}"
+                    class="sc-input" placeholder="-" value="${sVal}" ${lockWarn?'disabled':''}
                     ondblclick="editDailyNote(this)" oninput="handleScoreChange(this)"
                     onfocus="this.select()"
-                    style="width:38px;text-align:center;border:none;border-bottom:${noteHint};background:none;font-size:.88rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none">
+                    style="width:38px;text-align:center;border:none;border-bottom:${inpBorder};background:none;font-size:.88rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none">
              ${sVal && ratingId ? `<button type="button" onclick="deleteSingleDay('${ratingId}','${e.name}','${dk}')" style="padding:0;width:16px;height:16px;background:#ff5252;color:#fff;border:none;border-radius:2px;cursor:pointer;font-size:.6rem;line-height:1;display:none" class="del-btn" title="Xóa điểm ngày này">×</button>` : ''}
            </div>
          </td>`;
@@ -875,6 +933,34 @@ function renderScoring(){
   });
   if(!html) html='<div style="text-align:center;padding:40px;color:#aaa">Không có nhân viên.</div>';
   document.getElementById('scoringTable').innerHTML=html;
+}
+
+// Điền nhanh 10 điểm cho các ô trống hôm nay của 1 kíp (ngày nghỉ đã bị khóa nên tự bỏ qua)
+function fillTodayScores(k){
+  const mVal = document.getElementById('scoreMonth').value;
+  const t = new Date();
+  const curM = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+  if(mVal !== curM){
+    alert('Chỉ điền nhanh được cho tháng hiện tại. Hãy chọn tháng ' + `${String(t.getMonth()+1).padStart(2,'0')}/${t.getFullYear()}` + '!');
+    return;
+  }
+  const dk = `${curM}-${String(t.getDate()).padStart(2,'0')}`;
+  let n = 0;
+  document.querySelectorAll(`tr.score-row[data-kip="${k}"]`).forEach(row => {
+    if(row.style.display === 'none') return; // Bỏ qua dòng đang bị lọc ẩn
+    const inp = row.querySelector(`input.sc-input[data-date="${dk}"]`);
+    if(!inp || inp.disabled) return;          // Ô khóa (ngày nghỉ) không có input
+    if(inp.value.trim() !== '') return;       // Đã có điểm → không đè
+    inp.value = '10';
+    inp.dataset.changed = '1';
+    inp.style.color = scoreColor(10);
+    n++;
+  });
+  if(n === 0){
+    alert('Không có ô trống nào để điền (đã chấm hết, hôm nay nhóm nghỉ, hoặc đang bị bộ lọc ẩn).');
+    return;
+  }
+  alert(`⚡ Đã điền 10 điểm cho ${n} người (ngày ${t.getDate()}/${t.getMonth()+1}).\nKiểm tra lại, sửa các trường hợp ngoại lệ, rồi bấm "💾 Lưu điểm Tháng"!`);
 }
 
 async function scoreAllMonth(btn) {
@@ -1042,7 +1128,10 @@ function renderApproval(){
   document.getElementById('apprProgress').innerHTML=
     `Đang xem: <b style="color:#4a148c">${emps.length}</b> nhân viên`;
 
-  let html = statsHtml + '<div style="display:flex;flex-direction:column;gap:12px">';
+  let html = statsHtml + `<div style="padding:0 12px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-pri" onclick="bulkApproveB(this)">⚡ Duyệt nhanh hạng B (danh sách đang xem)</button>
+    <span style="font-size:.73rem;color:#888">Chỉ duyệt người chưa duyệt, có điểm, hạng tự động B. Hạng khác phải duyệt tay kèm lý do.</span>
+  </div>` + '<div style="display:flex;flex-direction:column;gap:12px">';
   emps.forEach(e => {
     const st = statMap[e.id] || {sum:0, cnt:0, scores:{}};
     const avg = st.cnt > 0 ? round1(st.sum/st.cnt) : '-';
@@ -1228,6 +1317,58 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
   }
   btn.disabled = false;
   btn.textContent = '💾 Lưu & Cập Nhật';
+}
+
+// Duyệt hàng loạt: chỉ những người chưa duyệt, có điểm, hạng tự động = B
+async function bulkApproveB(btn){
+  const mVal = document.getElementById('apprMonth').value;
+  if(!mVal){ alert('Chọn tháng duyệt trước!'); return; }
+  if(!SB_OK){ alert('Không kết nối được DB.'); return; }
+
+  // Lấy đúng danh sách đang hiển thị (theo kíp + ô tìm kiếm)
+  const search = document.getElementById('apprSearch').value.trim().toLowerCase();
+  let emps = allEmps(apprKip);
+  if(search) emps = emps.filter(e => e.name.toLowerCase().includes(search) || e.id.toLowerCase().includes(search));
+
+  const monthPrefix = mVal + '-';
+  const statMap = {};
+  RATINGS.filter(r => r.date.startsWith(monthPrefix)).forEach(r => {
+    if(!statMap[r.emp_id]) statMap[r.emp_id] = {sum:0, cnt:0};
+    statMap[r.emp_id].sum += parseFloat(r.score);
+    statMap[r.emp_id].cnt++;
+  });
+  const reviewed = new Set(MONTHLY_REVIEWS.filter(r => r.month_key === mVal).map(r => r.emp_id));
+
+  const rows = [];
+  let skipReviewed = 0, skipNoScore = 0, skipGrade = 0;
+  emps.forEach(e => {
+    if(reviewed.has(e.id)){ skipReviewed++; return; }
+    const st = statMap[e.id];
+    if(!st || st.cnt === 0){ skipNoScore++; return; }
+    const avg = round1(st.sum / st.cnt);
+    if(getGrade(avg) !== 'B'){ skipGrade++; return; }
+    rows.push({emp_id: e.id, month_key: mVal, note: '', approved: true, violation_note: null, final_score: null, grade: 'B'});
+  });
+
+  if(rows.length === 0){
+    alert(`Không có ai đủ điều kiện duyệt nhanh.\n- Đã duyệt rồi: ${skipReviewed}\n- Chưa có điểm: ${skipNoScore}\n- Hạng khác B (cần duyệt tay kèm lý do): ${skipGrade}`);
+    return;
+  }
+  if(!confirm(`Duyệt nhanh ${rows.length} nhân viên hạng B?\n\nBỏ qua: ${skipReviewed} đã duyệt, ${skipNoScore} chưa có điểm, ${skipGrade} hạng khác B.`)) return;
+
+  if(btn){ btn.disabled = true; btn.textContent = 'Đang duyệt...'; }
+  const {data, error} = await sb.from('monthly_reviews').upsert(rows, {onConflict: 'emp_id,month_key'}).select();
+  if(error){
+    alert('Lỗi duyệt hàng loạt: ' + error.message);
+  } else {
+    (data||[]).forEach(d => {
+      MONTHLY_REVIEWS = MONTHLY_REVIEWS.filter(r => !(r.emp_id === d.emp_id && r.month_key === d.month_key));
+      MONTHLY_REVIEWS.push(d);
+    });
+    alert(`✅ Đã duyệt ${rows.length} nhân viên hạng B!`);
+    renderApproval();
+  }
+  if(btn){ btn.disabled = false; btn.textContent = '⚡ Duyệt nhanh hạng B (danh sách đang xem)'; }
 }
 
 // ── TAB 4: CÀI ĐẶT ────────────────────────
