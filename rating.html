@@ -857,8 +857,8 @@ function renderScoring(){
     if(!kEmps.length) return;
     html+=`<div class="kip-group-wrap">
       <div class="kip-head kh-k${k}">${GRP_LABEL[k]||'Kíp '+k} <span style="font-weight:400;font-size:.75rem;opacity:.85">(${kEmps.length} người)</span>
-        <button type="button" onclick="fillTodayScores(${k})" title="Điền 10 điểm vào các ô trống hôm nay của nhóm này (ngày nghỉ tự bỏ qua)"
-          style="float:right;padding:3px 10px;border:none;border-radius:6px;background:rgba(255,255,255,.25);color:#fff;font-size:.72rem;font-weight:700;cursor:pointer">⚡ Điền 10 hôm nay</button>
+        <button type="button" onclick="fillTodayScores(${k})" title="Điền 9 điểm vào các ô trống hôm nay của nhóm này (ngày nghỉ tự bỏ qua)"
+          style="float:right;padding:3px 10px;border:none;border-radius:6px;background:rgba(255,255,255,.25);color:#fff;font-size:.72rem;font-weight:700;cursor:pointer">⚡ Điền 9 hôm nay</button>
       </div>
       <div style="overflow-x:auto; margin: 0 12px; background:#fff; border-radius:var(--radius); box-shadow:var(--shadow);">
         <table class="res-table" style="width:100%; min-width: max-content; box-shadow:none; border-radius:0;">
@@ -935,7 +935,7 @@ function renderScoring(){
   document.getElementById('scoringTable').innerHTML=html;
 }
 
-// Điền nhanh 10 điểm cho các ô trống hôm nay của 1 kíp (ngày nghỉ đã bị khóa nên tự bỏ qua)
+// Điền nhanh 9 điểm cho các ô trống hôm nay của 1 kíp (ngày nghỉ đã bị khóa nên tự bỏ qua)
 function fillTodayScores(k){
   const mVal = document.getElementById('scoreMonth').value;
   const t = new Date();
@@ -951,16 +951,16 @@ function fillTodayScores(k){
     const inp = row.querySelector(`input.sc-input[data-date="${dk}"]`);
     if(!inp || inp.disabled) return;          // Ô khóa (ngày nghỉ) không có input
     if(inp.value.trim() !== '') return;       // Đã có điểm → không đè
-    inp.value = '10';
+    inp.value = '9';
     inp.dataset.changed = '1';
-    inp.style.color = scoreColor(10);
+    inp.style.color = scoreColor(9);
     n++;
   });
   if(n === 0){
     alert('Không có ô trống nào để điền (đã chấm hết, hôm nay nhóm nghỉ, hoặc đang bị bộ lọc ẩn).');
     return;
   }
-  alert(`⚡ Đã điền 10 điểm cho ${n} người (ngày ${t.getDate()}/${t.getMonth()+1}).\nKiểm tra lại, sửa các trường hợp ngoại lệ, rồi bấm "💾 Lưu điểm Tháng"!`);
+  alert(`⚡ Đã điền 9 điểm cho ${n} người (ngày ${t.getDate()}/${t.getMonth()+1}).\nKiểm tra lại, sửa các trường hợp ngoại lệ, rồi bấm "💾 Lưu điểm Tháng"!`);
 }
 
 async function scoreAllMonth(btn) {
