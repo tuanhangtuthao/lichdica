@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://xtutpuwesganunktrxcv.supabase.co" crossorigin>
 <title>Đánh Giá Nhân Viên</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -498,12 +500,14 @@ async function loadData(){
   if(!SB_OK){return;}
   try{
     // Các bảng bắt buộc
-    const [er,rr,gr,hr,esr]=await Promise.all([
+    // Gọi tất cả song song 1 lần - tránh chờ nối tiếp làm chậm trang
+    const [er,rr,gr,hr,esr,mr]=await Promise.all([
       sb.from('employees').select('*').order('kip').order('sort_order'),
       loadAllRatings(),
       sb.from('rating_config').select('*').order('sort_order'),
       sb.from('holidays').select('*').order('date'),
       sb.from('emp_schedule').select('*').order('start_date'),
+      sb.from('monthly_reviews').select('*'),
     ]);
     EMPS={1:[],2:[],3:[],4:[]};
     (er.data||[]).forEach(e=>{
@@ -513,13 +517,8 @@ async function loadData(){
     if((gr.data||[]).length>0) GRADE_CFG=gr.data;
     HOLS=hr.data||[];
     EMP_SCHED=esr.data||[];
-  }catch(e){console.warn('Load error (core):', e);}
-
-  // Bảng monthly_reviews – chưa bắt buộc, bỏ qua nếu chưa tạo
-  try{
-    const mr=await sb.from('monthly_reviews').select('*');
     MONTHLY_REVIEWS=mr.data||[];
-  }catch(e){MONTHLY_REVIEWS=[];console.warn('monthly_reviews chưa tạo, bỏ qua.');}
+  }catch(e){console.warn('Load error (core):', e);}
 }
 
 // ── TÍNH CA (đồng bộ với index.html) ─────────

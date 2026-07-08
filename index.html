@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://xtutpuwesganunktrxcv.supabase.co" crossorigin>
 <title>Lịch Làm Việc Phân Xưởng 1</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1116,20 +1118,21 @@ async function loadData() {
     EMPS=d; HOLS=cp(DEF_HOLS); return;
   }
   try {
-    const [er, hr] = await Promise.all([
+    // Gọi tất cả song song 1 lần - tránh chờ nối tiếp làm chậm trang
+    const [er, hr, otr, esr, reqr] = await Promise.all([
       sb.from('employees').select('*').order('kip').order('sort_order'),
-      sb.from('holidays').select('*').order('date')
+      sb.from('holidays').select('*').order('date'),
+      sb.from('overtime').select('*').order('date').order('created_at'),
+      sb.from('emp_schedule').select('*').order('start_date'),
+      sb.from('leave_requests').select('*').eq('status','pending').order('created_at',{ascending:false})
     ]);
     if (er.error || hr.error) throw new Error((er.error||hr.error).message);
     EMPS = {1:[],2:[],3:[],4:[]};
     (er.data||[]).forEach(e => { if(EMPS[e.kip]) EMPS[e.kip].push({id:e.id,name:e.name,role:e.role,fixed_shift:e.fixed_shift||null,kip:e.kip}); });
     HOLS = hr.data || [];
-    const {data:otData} = await sb.from('overtime').select('*').order('date').order('created_at');
-    OVERTIME = otData || [];
-    const {data:esData} = await sb.from('emp_schedule').select('*').order('start_date');
-    EMP_SCHED = esData || [];
-    const {data:reqData} = await sb.from('leave_requests').select('*').eq('status','pending').order('created_at',{ascending:false});
-    LEAVE_REQS = reqData || [];
+    OVERTIME = otr.data || [];
+    EMP_SCHED = esr.data || [];
+    LEAVE_REQS = reqr.data || [];
   } catch(e) {
     console.warn('Lỗi Supabase:', e.message, '– dùng dữ liệu mặc định');
     const d=cp(DEF_EMPS);
