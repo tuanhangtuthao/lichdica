@@ -201,6 +201,7 @@ th.wk{background:#546e7a !important;color:#fff !important}
 .ot-kip-bar{padding:5px 14px;font-size:.7rem;font-weight:800;letter-spacing:.5px;color:#fff}
 .ot-kip-bar.k1{background:#1565c0}.ot-kip-bar.k2{background:#6a1b9a}
 .ot-kip-bar.k3{background:#2e7d32}.ot-kip-bar.k4{background:#00695c}.ot-kip-bar.k0{background:#455a64}
+.ot-kip-bar.knp{background:#e65100}
 /* Timeline employee row */
 .ot-tl-row{display:grid;grid-template-columns:1fr auto;align-items:start;
   padding:8px 14px;border-bottom:1px solid #f5f5f5;background:#fff;gap:8px}
@@ -219,6 +220,7 @@ th.wk{background:#546e7a !important;color:#fff !important}
 .ot-tl-type.tc{background:#ffe0b2;color:#bf360c}
 .ot-tl-type.thc{background:#e0f2f1;color:#00695c}
 .ot-tl-type.thr{background:#fce4ec;color:#c62828}
+.ot-tl-type.tnp{background:#fff3e0;color:#e65100}
 .ot-tl-note{font-size:.68rem;color:#90a4ae;max-width:160px;text-align:right;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Today pulsing dot */
@@ -2234,13 +2236,32 @@ function renderOtBoard(){
     <div class="ot-stat-chip" style="border-left:1px solid #e0e0e0"><span class="val" style="color:#e65100">${totalDays}</span>Ngày OT</div>
     <div class="ot-stat-chip" style="border-left:1px solid #e0e0e0"><span class="val" style="color:#2e7d32">${totalH%1===0?totalH:totalH.toFixed(1)}h</span>Tổng giờ</div>`;
 
-  if(!empsArr.length){
+  // NV nghỉ phép đã xác nhận trong tháng (chỉ áp dụng cho chế độ Theo ngày)
+  const leaveByDate = otBoardMode==='day' ? _leaveByDate(prefix, daysInMonth, empMeta, searchQ) : {};
+  const hasLeave = Object.keys(leaveByDate).length > 0;
+
+  if(!empsArr.length && !hasLeave){
     contentEl.innerHTML=`<div style="text-align:center;padding:50px 20px;color:#aaa">📋 Không có dữ liệu tăng ca tháng này</div>`;
     return;
   }
 
   if(otBoardMode==='grid') _renderGrid(contentEl, empsArr, y, m, daysInMonth, empFull);
-  else                      _renderByDay(contentEl, validOT, empMeta, y, m, searchQ);
+  else                      _renderByDay(contentEl, validOT, empMeta, y, m, searchQ, leaveByDate);
+}
+
+// Gom NV nghỉ phép đã xác nhận (emp_schedule, shift=NP) theo từng ngày trong tháng
+function _leaveByDate(prefix, daysInMonth, empMeta, searchQ){
+  const byDate = {};
+  for(let d=1; d<=daysInMonth; d++){
+    const dk = prefix + String(d).padStart(2,'0');
+    EMP_SCHED.filter(s => s.shift==='NP' && s.start_date<=dk && s.end_date>=dk).forEach(s=>{
+      const nm = s.emp_name || empMeta[s.emp_id]?.name || '?';
+      if(searchQ && !nm.toLowerCase().includes(searchQ) && !String(s.emp_id||'').toLowerCase().includes(searchQ)) return;
+      if(!byDate[dk]) byDate[dk]=[];
+      byDate[dk].push({emp_id:s.emp_id, emp_name:nm, kip: empMeta[s.emp_id]?.kip||0});
+    });
+  }
+  return byDate;
 }
 
 // ── MODE A: GRID TABLE ────────────────────────
@@ -2381,7 +2402,7 @@ function _renderGrid(el, empsArr, y, m, days, empFull={}){
 }
 
 // ── MODE D: THEO NGÀY (TIMELINE) ─────────────
-function _renderByDay(el, validOT, empMeta, y, m, searchQ){
+function _renderByDay(el, validOT, empMeta, y, m, searchQ, leaveByDate={}){
   const DN_FULL = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
   const KIP_FG  = {1:'var(--k1)',2:'var(--k2)',3:'var(--k3)',4:'var(--k4)'};
   const KIP_BGL = {1:'var(--k1l)',2:'var(--k2l)',3:'var(--k3l)',4:'var(--k4l)'};
@@ -2398,7 +2419,7 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
     if(!byDate[o.date]) byDate[o.date]=[];
     byDate[o.date].push(o);
   });
-  const sortedDates = Object.keys(byDate).sort();
+  const sortedDates = Array.from(new Set([...Object.keys(byDate), ...Object.keys(leaveByDate)])).sort();
   if(!sortedDates.length){ el.innerHTML=`<div style="text-align:center;padding:50px;color:#aaa">Không có dữ liệu</div>`; return; }
 
   const KIP_LBL2 = {1:'KÍP 1',2:'KÍP 2',3:'KÍP 3',4:'HÀNH CHÍNH',0:'CỐ ĐỊNH / KHÁC'};
@@ -2413,7 +2434,8 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
     const isW  = date.getDay()===0||date.getDay()===6;
     const isTd = dk===todayDk;
     const hdrBg = isTd?'linear-gradient(90deg,#e65100,#f57c00)':(isW?'#546e7a':'#37474f');
-    const dayOts = byDate[dk];
+    const dayOts = byDate[dk] || [];
+    const dayLeaves = leaveByDate[dk] || [];
 
     // Nhóm theo kíp
     const byKip = {};
@@ -2425,10 +2447,13 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
 
     const tdDot = isTd?`<span class="ot-td-dot"></span>`:'';
     const tdPfx = isTd?'Hôm nay — ':'';
+    const cntLbl = dayOts.length && dayLeaves.length ? `${dayOts.length} TC · ${dayLeaves.length} nghỉ`
+                 : dayOts.length ? `${dayOts.length} người`
+                 : `${dayLeaves.length} nghỉ`;
     h += `<div class="ot-day-card">
       <div class="ot-day-hdr" style="background:${hdrBg};color:#fff">
         <span style="font-weight:800;font-size:.9rem;display:flex;align-items:center">${tdDot}${tdPfx}${dn}, ${date.getDate()}/${m}/${y}</span>
-        <span class="ot-day-cnt">${dayOts.length} người</span>
+        <span class="ot-day-cnt">${cntLbl}</span>
       </div>`;
 
     Object.keys(byKip).sort().forEach(kip=>{
@@ -2460,6 +2485,17 @@ function _renderByDay(el, validOT, empMeta, y, m, searchQ){
         </div>`;
       });
     });
+
+    if(dayLeaves.length){
+      h += `<div class="ot-kip-bar knp">🏖️ NGHỈ PHÉP</div>`;
+      [...dayLeaves].sort((a,b)=>String(a.emp_name).localeCompare(String(b.emp_name))).forEach(lv=>{
+        h += `<div class="ot-tl-row">
+          <div class="ot-tl-name">${lv.emp_name}</div>
+          <div class="ot-tl-right"><span class="ot-tl-type tnp">Nghỉ phép</span></div>
+        </div>`;
+      });
+    }
+
     h += `</div>`;
   });
   el.innerHTML = h;
