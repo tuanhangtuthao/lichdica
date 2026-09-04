@@ -110,9 +110,15 @@ const SCHED_OVR = {
 };
 function ovrKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
+// Từ 01/10/2026 chưa chốt lịch (chờ thông tin chính thức) -> hiện "UN" (chưa có lịch)
+// thay vì đoán theo chu kỳ 12 ngày cũ. Khi có lịch: nối ngày vào SCHED_OVR ở trên
+// rồi đẩy mốc này lên, hoặc bỏ hẳn nếu đã đổi CYCLE/REF sang chu kỳ mới.
+const SCHED_UNKNOWN_FROM = '2026-10-01';
+
 function getShift(k, d){
   const _ov = SCHED_OVR[ovrKey(d)];
   if (_ov && _ov[k-1]) return _ov[k-1];
+  if (ovrKey(d) >= SCHED_UNKNOWN_FROM) return 'UN';
   const len=CYCLE.length;
   const d0=new Date(d); d0.setHours(0,0,0,0);
   const n=Math.round((d0-REF)/864e5);
@@ -123,16 +129,20 @@ function getShift(k, d){
 function getBlockStatus(k, d) {
   const isRest = s => s === 'N' || s === 'L';
   const d0 = new Date(d); d0.setHours(0,0,0,0);
-  const rest = isRest(getShift(k, d0));
+  const cur = getShift(k, d0);
+  if (cur === 'UN') return { type:'none', day:0, total:0 };
+  const rest = isRest(cur);
   let back = 0, fwd = 0;
   for (let i = 1; i <= 14; i++) {
     const p = new Date(d0); p.setDate(p.getDate() - i);
-    if (isRest(getShift(k, p)) !== rest) break;
+    const sp = getShift(k, p);
+    if (sp === 'UN' || isRest(sp) !== rest) break;
     back++;
   }
   for (let i = 1; i <= 14; i++) {
     const nx = new Date(d0); nx.setDate(nx.getDate() + i);
-    if (isRest(getShift(k, nx)) !== rest) break;
+    const sn = getShift(k, nx);
+    if (sn === 'UN' || isRest(sn) !== rest) break;
     fwd++;
   }
   return { type: rest ? 'rest' : 'work', day: back + 1, total: back + 1 + fwd };
@@ -142,7 +152,7 @@ function getKipByShift(d, targetS){
   for(let k=1;k<=3;k++){ if(getShift(k,d)!=='N') return k; }
   return 1;
 }
-const SLBL={S:'☀️ Ca Sáng',C:'🌙 Ca Chiều',N:'🏠 Nghỉ',L:'🎌 Nghỉ Lễ'};
+const SLBL={S:'☀️ Ca Sáng',C:'🌙 Ca Chiều',N:'🏠 Nghỉ',L:'🎌 Nghỉ Lễ',UN:'– Chưa có lịch'};
 const DFUL=['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
 function dKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 
@@ -198,7 +208,8 @@ async function loadDash(){
       const kEmps=EMPS.filter(e=>e.kip===k);
       const s=hol?'L':getShift(k,d);
       const bs=getBlockStatus(k,d);
-      const bsLbl=bs.type==='work'?`ngày làm ${bs.day}/${bs.total}`:`ngày nghỉ ${bs.day}/${bs.total}`;
+      const bsLbl=bs.type==='none'?'chưa chốt lịch'
+        :bs.type==='work'?`ngày làm ${bs.day}/${bs.total}`:`ngày nghỉ ${bs.day}/${bs.total}`;
       let w=0; const vmN=[],npN=[];
       kEmps.forEach(e=>{
         const st=empShiftFor(e,d,dk,HOLS,SCHED);

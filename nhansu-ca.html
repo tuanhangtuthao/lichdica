@@ -417,10 +417,16 @@ const SCHED_OVR = {
 };
 function ovrKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
+// Từ 01/10/2026 chưa chốt lịch (chờ thông tin chính thức) -> hiện "UN" (chưa có lịch)
+// thay vì đoán theo chu kỳ 12 ngày cũ. Khi có lịch: nối ngày vào SCHED_OVR ở trên
+// rồi đẩy mốc này lên, hoặc bỏ hẳn nếu đã đổi CYCLE/REF sang chu kỳ mới.
+const SCHED_UNKNOWN_FROM = '2026-10-01';
+
 
 function getShift(k, d) {
   const _ov = SCHED_OVR[ovrKey(d)];
   if (_ov && _ov[k-1]) return _ov[k-1];
+  if (ovrKey(d) >= SCHED_UNKNOWN_FROM) return 'UN';
   const d0 = new Date(d); d0.setHours(0,0,0,0);
   const n = Math.round((d0 - REF) / 864e5);
   return CYCLE[((n + PHASE[k]) % 12 + 12) % 12];

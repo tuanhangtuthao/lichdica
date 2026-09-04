@@ -629,6 +629,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     <div class="leg-item"><span class="leg-box" style="background:var(--n-bg)"></span>N – Nghỉ</div>
     <div class="leg-item"><span class="leg-box" style="background:var(--h-bg)"></span>L – Nghỉ Lễ</div>
     <div class="leg-item"><span class="leg-box" style="background:var(--hc-bg)"></span>HC – Hành Chính</div>
+    <div class="leg-item"><span class="leg-box" style="background:#f5f5f5;border:1px solid #ddd"></span>UN – Chưa có lịch</div>
   </div>
   <div class="tbl-wrap"><table id="tbl"></table></div>
 </div>
@@ -1084,9 +1085,15 @@ const SCHED_OVR = {
 };
 function ovrKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
+// Từ 01/10/2026 chưa chốt lịch (chờ thông tin chính thức) -> hiện "UN" (chưa có lịch)
+// thay vì đoán theo chu kỳ 12 ngày cũ. Khi có lịch: nối ngày vào SCHED_OVR ở trên
+// rồi đẩy mốc này lên, hoặc bỏ hẳn nếu đã đổi CYCLE/REF sang chu kỳ mới.
+const SCHED_UNKNOWN_FROM = '2026-10-01';
+
 function getShift(k, d) {
   const _ov = SCHED_OVR[ovrKey(d)];
   if (_ov && _ov[k-1]) return _ov[k-1];
+  if (ovrKey(d) >= SCHED_UNKNOWN_FROM) return 'UN';
   const len = CYCLE.length;
   const d0 = new Date(d); d0.setHours(0,0,0,0);
   const n = Math.round((d0 - REF) / 864e5);
@@ -1097,16 +1104,20 @@ function getShift(k, d) {
 function getBlockStatus(k, d) {
   const isRest = s => s === 'N' || s === 'L';
   const d0 = new Date(d); d0.setHours(0,0,0,0);
-  const rest = isRest(getShift(k, d0));
+  const cur = getShift(k, d0);
+  if (cur === 'UN') return { type:'none', day:0, total:0 };
+  const rest = isRest(cur);
   let back = 0, fwd = 0;
   for (let i = 1; i <= 14; i++) {
     const p = new Date(d0); p.setDate(p.getDate() - i);
-    if (isRest(getShift(k, p)) !== rest) break;
+    const sp = getShift(k, p);
+    if (sp === 'UN' || isRest(sp) !== rest) break;
     back++;
   }
   for (let i = 1; i <= 14; i++) {
     const nx = new Date(d0); nx.setDate(nx.getDate() + i);
-    if (isRest(getShift(k, nx)) !== rest) break;
+    const sn = getShift(k, nx);
+    if (sn === 'UN' || isRest(sn) !== rest) break;
     fwd++;
   }
   return { type: rest ? 'rest' : 'work', day: back + 1, total: back + 1 + fwd };
@@ -1199,7 +1210,7 @@ const MN    = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6'
 const SNAME = {S:'Ca Sáng (6h-18h)',C:'Ca Chiều (18h-6h hôm sau)',N:'Nghỉ',L:'Nghỉ Lễ',
                HC:'Hành Chính (7:30–16:30)',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',UN:'Chưa phân ca',NP:'Nghỉ Phép',VM:'Vắng Mặt'};
 const SICON = {S:'☀️',C:'🌙',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③',NP:'🏖️',VM:'🔴'};
-const SLBL  = s => ({S:'Sáng',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',NP:'Nghỉ Phép',VM:'Vắng Mặt'}[s]||'Nghỉ');
+const SLBL  = s => ({S:'Sáng',UN:'Chưa có lịch',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',NP:'Nghỉ Phép',VM:'Vắng Mặt'}[s]||'Nghỉ');
 // Tính ca cho từng nhân viên (hỗ trợ ca cố định)
 function empShift(e, d) {
   if (isHol(d)) return 'L';
@@ -1432,7 +1443,8 @@ function renderTable(){
     if(kipF!==0&&kipF!==k) continue;
     const ts = dShift(k,today);
     const bs = getBlockStatus(k,today);
-    const bsLbl = bs.type==='work' ? `(Ngày làm ${bs.day}/${bs.total})` : `(Ngày nghỉ ${bs.day}/${bs.total})`;
+    const bsLbl = bs.type==='none' ? '(chưa có lịch)'
+      : bs.type==='work' ? `(Ngày làm ${bs.day}/${bs.total})` : `(Ngày nghỉ ${bs.day}/${bs.total})`;
     h += `<tr class="kh k${k}"><td colspan="${3+NDAYS}"><span>▣ KÍP ${k} - Hôm nay: ${SICON[ts]} ${SLBL(ts)} <span style="font-size:0.9em;opacity:0.9;font-weight:normal">${bsLbl}</span></span></td></tr>`;
     sortEmpByRole(EMPS[k]||[]).forEach(e => {
       if(q&&!e.name.toLowerCase().includes(q)&&!e.id.includes(q)) return;
@@ -1538,7 +1550,9 @@ function renderSummary(){
   for(let k=1;k<=3;k++){
     const s = dShift(k,today);
     const bs = getBlockStatus(k,today);
-    const bsLbl = bs.type==='work'
+    const bsLbl = bs.type==='none'
+      ? `– Chưa có lịch`
+      : bs.type==='work'
       ? `📅 Ngày làm ${bs.day}/${bs.total}`
       : `💤 Ngày nghỉ ${bs.day}/${bs.total}`;
     const kipEmps = EMPS[k] || [];
@@ -1660,7 +1674,8 @@ function renderLookup(){
     if(emps.length===0&&q) continue;
     const ts = dShift(k,today);
     const bs = getBlockStatus(k,today);
-    const bsLbl = bs.type==='work' ? `(Ngày làm ${bs.day}/${bs.total})` : `(Ngày nghỉ ${bs.day}/${bs.total})`;
+    const bsLbl = bs.type==='none' ? '(chưa có lịch)'
+      : bs.type==='work' ? `(Ngày làm ${bs.day}/${bs.total})` : `(Ngày nghỉ ${bs.day}/${bs.total})`;
     html += `<div class="kip-section"><div class="kip-section-head k${k}">
       <span>▣ Kíp ${k}</span>
       <span style="font-size:.78rem;opacity:.9">${emps.length} NV · Hôm nay: ${SICON[ts]} ${SLBL(ts)} ${bsLbl}</span>
