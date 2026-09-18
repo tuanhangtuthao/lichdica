@@ -70,12 +70,15 @@ const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
 const REF   = new Date(2026, 3, 12);
 const PHASE = {1:3, 2:11, 3:7};
 
-// ── ĐÈ LỊCH TẠM THỜI THÁNG 9/2026 ──────────
-// Tháng 9/2026 chuyển tiếp sang chu kỳ 28 ngày (file "Lich_ca_3_team_tu_24-08_den_30-11_2026.xlsx")
-// nên KHÔNG theo quy tắc chu kỳ 12 ngày ở trên. Tháng 10 chờ thông tin -> tạm giữ quy tắc cũ.
+// ── ĐÈ LỊCH TẠM THỜI THÁNG 9 + 10/2026 ─────
+// Hai tháng này là giai đoạn chuyển tiếp sang chu kỳ 28 ngày nên KHÔNG theo
+// quy tắc chu kỳ 12 ngày ở trên. Nguồn:
+//   T9 : Lich_ca_3_team_tu_24-08_den_30-11_2026.xlsx
+//   T10: Lich_ca_thang_10_2026_2_phuong_an_ca_lien_mach.xlsx (sheet "PA1 - Giữ ngày nghỉ")
 // Mỗi ngày: [Kíp 1, Kíp 2, Kíp 3] — quy đổi từ file: D(Đêm)->C (Chiều 18h-6h),
-// N(Ngày)->S (Sáng 6h-18h), OFF->N (Nghỉ); 01+02/09 -> L (Nghỉ Lễ)
+// N(Ngày)->S (Sáng 6h-18h), OFF->N (Nghỉ), C1->C8 (ca 8h 6h-14h); 01+02/09 -> L (Nghỉ Lễ)
 const SCHED_OVR = {
+  // ── tháng 9/2026 ──
   '2026-09-01':['L','L','L'], // T3 01/09
   '2026-09-02':['L','L','L'], // T4 02/09
   '2026-09-03':['C','N','S'], // T5 03/09
@@ -106,13 +109,45 @@ const SCHED_OVR = {
   '2026-09-28':['S','N','C'], // T2 28/09
   '2026-09-29':['S','C','N'], // T3 29/09
   '2026-09-30':['S','C','N'], // T4 30/09
+  // ── tháng 10/2026 ──
+  '2026-10-01':['N','C','S'], // T5 01/10
+  '2026-10-02':['S','C','N'], // T6 02/10
+  '2026-10-03':['S','C','N'], // T7 03/10
+  '2026-10-04':['N','N','N'], // CN 04/10
+  '2026-10-05':['S','N','C'], // T2 05/10
+  '2026-10-06':['N','S','C'], // T3 06/10
+  '2026-10-07':['N','S','C'], // T4 07/10
+  '2026-10-08':['N','S','C'], // T5 08/10
+  '2026-10-09':['C','S','N'], // T6 09/10
+  '2026-10-10':['C','S','N'], // T7 10/10
+  '2026-10-11':['N','N','C8'], // CN 11/10
+  '2026-10-12':['C','N','S'], // T2 12/10
+  '2026-10-13':['C','N','S'], // T3 13/10
+  '2026-10-14':['N','C','S'], // T4 14/10
+  '2026-10-15':['N','C','S'], // T5 15/10
+  '2026-10-16':['S','C','N'], // T6 16/10
+  '2026-10-17':['S','C','N'], // T7 17/10
+  '2026-10-18':['N','N','N'], // CN 18/10
+  '2026-10-19':['S','N','C'], // T2 19/10
+  '2026-10-20':['S','N','C'], // T3 20/10
+  '2026-10-21':['N','S','C'], // T4 21/10
+  '2026-10-22':['N','S','C'], // T5 22/10
+  '2026-10-23':['C','S','N'], // T6 23/10
+  '2026-10-24':['C','S','N'], // T7 24/10
+  '2026-10-25':['N','C8','N'], // CN 25/10
+  '2026-10-26':['C','N','S'], // T2 26/10
+  '2026-10-27':['C','N','S'], // T3 27/10
+  '2026-10-28':['C','N','S'], // T4 28/10
+  '2026-10-29':['C','N','S'], // T5 29/10
+  '2026-10-30':['C','S','N'], // T6 30/10
+  '2026-10-31':['N','N','N'], // T7 31/10
 };
 function ovrKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
 // Từ 01/10/2026 chưa chốt lịch (chờ thông tin chính thức) -> hiện "UN" (chưa có lịch)
 // thay vì đoán theo chu kỳ 12 ngày cũ. Khi có lịch: nối ngày vào SCHED_OVR ở trên
 // rồi đẩy mốc này lên, hoặc bỏ hẳn nếu đã đổi CYCLE/REF sang chu kỳ mới.
-const SCHED_UNKNOWN_FROM = '2026-10-01';
+const SCHED_UNKNOWN_FROM = '2026-11-01';
 
 function getShift(k, d){
   const _ov = SCHED_OVR[ovrKey(d)];
@@ -123,7 +158,7 @@ function getShift(k, d){
   const n=Math.round((d0-REF)/864e5);
   return CYCLE[((n+PHASE[k])%len+len)%len];
 }
-const SLBL = {S:'☀️ Ca Sáng',C:'🌙 Ca Chiều',N:'🏠 Nghỉ',L:'🎌 Nghỉ Lễ',HC:'🏢 Hành Chính',NP:'🏖️ Nghỉ Phép',VM:'🔴 Vắng Mặt',UN:'– Chưa phân ca',C1:'① Ca 1',C2:'② Ca 2',C3:'③ Ca 3'};
+const SLBL = {S:'☀️ Ca Sáng',C:'🌙 Ca Chiều',C8:'🌤️ Ca 8h (6h-14h)',N:'🏠 Nghỉ',L:'🎌 Nghỉ Lễ',HC:'🏢 Hành Chính',NP:'🏖️ Nghỉ Phép',VM:'🔴 Vắng Mặt',UN:'– Chưa phân ca',C1:'① Ca 1',C2:'② Ca 2',C3:'③ Ca 3'};
 const GRP_LABEL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',4:'HC / Ca Xoay'};
 const DFUL=['CN','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
 

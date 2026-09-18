@@ -12,6 +12,7 @@
   --s-bg:#c8e6c9;--s-fg:#1b5e20;
   --c-bg:#ffe0b2;--c-fg:#bf360c;
   --n-bg:#ffcdd2;--n-fg:#b71c1c;
+  --c8-bg:#b3e5fc;--c8-fg:#01579b;
   --np-bg:#bbdefb;--np-fg:#0d47a1;
   --h-bg:#e1bee7;--h-fg:#6a1b9a;
   --k1:#1565c0;--k1l:#e3f2fd;
@@ -275,6 +276,7 @@ td.shHC{background:var(--hc-bg);color:var(--hc-fg);font-weight:700}
 td.shC1{background:#b2dfdb;color:#00695c;font-weight:700}
 td.shC2{background:#ffe082;color:#e65100;font-weight:700}
 td.shC3{background:#ce93d8;color:#4a148c;font-weight:700}
+td.shC8{background:var(--c8-bg);color:var(--c8-fg);font-weight:700}
 td.shUN{background:#f5f5f5;color:#ccc;font-style:italic}
 tbody tr:nth-child(even) td{background-color:#f1f3f5}
 tbody tr:nth-child(even) td.c1,
@@ -291,6 +293,7 @@ tbody tr td.shHC{background-color:var(--hc-bg)!important}
 tbody tr td.shC1{background-color:#b2dfdb!important}
 tbody tr td.shC2{background-color:#ffe082!important}
 tbody tr td.shC3{background-color:#ce93d8!important}
+tbody tr td.shC8{background-color:var(--c8-bg)!important}
 tbody tr td.today-c{outline:2px solid #f9a825!important}
 
 /* QUICK EDIT MODAL */
@@ -629,6 +632,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     <div class="leg-item"><span class="leg-box" style="background:var(--n-bg)"></span>N – Nghỉ</div>
     <div class="leg-item"><span class="leg-box" style="background:var(--h-bg)"></span>L – Nghỉ Lễ</div>
     <div class="leg-item"><span class="leg-box" style="background:var(--hc-bg)"></span>HC – Hành Chính</div>
+    <div class="leg-item"><span class="leg-box" style="background:var(--c8-bg)"></span>C8 – Ca 8h (6h-14h)</div>
     <div class="leg-item"><span class="leg-box" style="background:#f5f5f5;border:1px solid #ddd"></span>UN – Chưa có lịch</div>
   </div>
   <div class="tbl-wrap"><table id="tbl"></table></div>
@@ -1047,12 +1051,15 @@ const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
 const REF   = new Date(2026, 3, 12); // 12/04/2026 – mốc tham chiếu
 const PHASE = {1:3, 2:11, 3:7}; // 12/04: Kíp1=S, Kíp2=N, Kíp3=C – theo lịch thực tế
 
-// ── ĐÈ LỊCH TẠM THỜI THÁNG 9/2026 ──────────
-// Tháng 9/2026 chuyển tiếp sang chu kỳ 28 ngày (file "Lich_ca_3_team_tu_24-08_den_30-11_2026.xlsx")
-// nên KHÔNG theo quy tắc chu kỳ 12 ngày ở trên. Tháng 10 chờ thông tin -> tạm giữ quy tắc cũ.
+// ── ĐÈ LỊCH TẠM THỜI THÁNG 9 + 10/2026 ─────
+// Hai tháng này là giai đoạn chuyển tiếp sang chu kỳ 28 ngày nên KHÔNG theo
+// quy tắc chu kỳ 12 ngày ở trên. Nguồn:
+//   T9 : Lich_ca_3_team_tu_24-08_den_30-11_2026.xlsx
+//   T10: Lich_ca_thang_10_2026_2_phuong_an_ca_lien_mach.xlsx (sheet "PA1 - Giữ ngày nghỉ")
 // Mỗi ngày: [Kíp 1, Kíp 2, Kíp 3] — quy đổi từ file: D(Đêm)->C (Chiều 18h-6h),
-// N(Ngày)->S (Sáng 6h-18h), OFF->N (Nghỉ); 01+02/09 -> L (Nghỉ Lễ)
+// N(Ngày)->S (Sáng 6h-18h), OFF->N (Nghỉ), C1->C8 (ca 8h 6h-14h); 01+02/09 -> L (Nghỉ Lễ)
 const SCHED_OVR = {
+  // ── tháng 9/2026 ──
   '2026-09-01':['L','L','L'], // T3 01/09
   '2026-09-02':['L','L','L'], // T4 02/09
   '2026-09-03':['C','N','S'], // T5 03/09
@@ -1083,13 +1090,45 @@ const SCHED_OVR = {
   '2026-09-28':['S','N','C'], // T2 28/09
   '2026-09-29':['S','C','N'], // T3 29/09
   '2026-09-30':['S','C','N'], // T4 30/09
+  // ── tháng 10/2026 ──
+  '2026-10-01':['N','C','S'], // T5 01/10
+  '2026-10-02':['S','C','N'], // T6 02/10
+  '2026-10-03':['S','C','N'], // T7 03/10
+  '2026-10-04':['N','N','N'], // CN 04/10
+  '2026-10-05':['S','N','C'], // T2 05/10
+  '2026-10-06':['N','S','C'], // T3 06/10
+  '2026-10-07':['N','S','C'], // T4 07/10
+  '2026-10-08':['N','S','C'], // T5 08/10
+  '2026-10-09':['C','S','N'], // T6 09/10
+  '2026-10-10':['C','S','N'], // T7 10/10
+  '2026-10-11':['N','N','C8'], // CN 11/10
+  '2026-10-12':['C','N','S'], // T2 12/10
+  '2026-10-13':['C','N','S'], // T3 13/10
+  '2026-10-14':['N','C','S'], // T4 14/10
+  '2026-10-15':['N','C','S'], // T5 15/10
+  '2026-10-16':['S','C','N'], // T6 16/10
+  '2026-10-17':['S','C','N'], // T7 17/10
+  '2026-10-18':['N','N','N'], // CN 18/10
+  '2026-10-19':['S','N','C'], // T2 19/10
+  '2026-10-20':['S','N','C'], // T3 20/10
+  '2026-10-21':['N','S','C'], // T4 21/10
+  '2026-10-22':['N','S','C'], // T5 22/10
+  '2026-10-23':['C','S','N'], // T6 23/10
+  '2026-10-24':['C','S','N'], // T7 24/10
+  '2026-10-25':['N','C8','N'], // CN 25/10
+  '2026-10-26':['C','N','S'], // T2 26/10
+  '2026-10-27':['C','N','S'], // T3 27/10
+  '2026-10-28':['C','N','S'], // T4 28/10
+  '2026-10-29':['C','N','S'], // T5 29/10
+  '2026-10-30':['C','S','N'], // T6 30/10
+  '2026-10-31':['N','N','N'], // T7 31/10
 };
 function ovrKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
 // Từ 01/10/2026 chưa chốt lịch (chờ thông tin chính thức) -> hiện "UN" (chưa có lịch)
 // thay vì đoán theo chu kỳ 12 ngày cũ. Khi có lịch: nối ngày vào SCHED_OVR ở trên
 // rồi đẩy mốc này lên, hoặc bỏ hẳn nếu đã đổi CYCLE/REF sang chu kỳ mới.
-const SCHED_UNKNOWN_FROM = '2026-10-01';
+const SCHED_UNKNOWN_FROM = '2026-11-01';
 
 function getShift(k, d) {
   const _ov = SCHED_OVR[ovrKey(d)];
@@ -1208,10 +1247,10 @@ async function loadData() {
 const DN    = ['CN','T2','T3','T4','T5','T6','T7'];
 const DFUL  = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
 const MN    = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
-const SNAME = {S:'Ca Sáng (6h-18h)',C:'Ca Chiều (18h-6h hôm sau)',N:'Nghỉ',L:'Nghỉ Lễ',
+const SNAME = {S:'Ca Sáng (6h-18h)',C:'Ca Chiều (18h-6h hôm sau)',C8:'Ca 8h (6h-14h)',N:'Nghỉ',L:'Nghỉ Lễ',
                HC:'Hành Chính (7:30–16:30)',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',UN:'Chưa phân ca',NP:'Nghỉ Phép',VM:'Vắng Mặt'};
-const SICON = {S:'☀️',C:'🌙',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③',NP:'🏖️',VM:'🔴'};
-const SLBL  = s => ({S:'Sáng',UN:'Chưa có lịch',C:'Chiều',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',NP:'Nghỉ Phép',VM:'Vắng Mặt'}[s]||'Nghỉ');
+const SICON = {S:'☀️',C:'🌙',C8:'🌤️',N:'🏠',L:'🎌',HC:'🏢',C1:'①',C2:'②',C3:'③',NP:'🏖️',VM:'🔴'};
+const SLBL  = s => ({S:'Sáng',UN:'Chưa có lịch',C:'Chiều',C8:'Ca 8h',L:'Nghỉ Lễ',HC:'Hành Chính',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3',NP:'Nghỉ Phép',VM:'Vắng Mặt'}[s]||'Nghỉ');
 // Tính ca cho từng nhân viên (hỗ trợ ca cố định)
 function empShift(e, d) {
   if (isHol(d)) return 'L';
@@ -1256,7 +1295,7 @@ let EMP_SCHED = [];
 let LEAVE_REQS = [];
 
 // ── GIỜ TĂNG CA MẶC ĐỊNH THEO CA ──────────
-const OT_START = { C1:'14:00', C2:'10:00', C3:'18:00', S:'14:00', C:'22:00', HC1:'06:00', HC2:'17:00' };
+const OT_START = { C1:'14:00', C2:'10:00', C3:'18:00', S:'14:00', C:'22:00', C8:'14:00', HC1:'06:00', HC2:'17:00' };
 // Tính giờ kết thúc = giờ bắt đầu + số giờ (có thể lẻ 0.5)
 function calcOtEnd(startStr, hours) {
   if(!startStr || !hours) return null;
@@ -1623,7 +1662,7 @@ function renderSummary(){
     if(cdE.length>0){
       let cdW=0,cdRest=0;
       cdE.forEach(e=>{const st=getTodayStatus(e, today, dk);if(st==='W')cdW++;else cdRest++;});
-      const SHIFT_ORD = {S:0,C1:1,C2:2,C3:3,C:4,HC:5,N:6,NP:7,L:8,UN:9};
+      const SHIFT_ORD = {S:0,C8:1,C1:2,C2:3,C3:4,C:5,HC:6,N:7,NP:8,L:9,UN:10};
       const cdeSorted = [...cdE].sort((a,b)=>{
         const sa=empShift(a,today), sb=empShift(b,today);
         return (SHIFT_ORD[sa]??9)-(SHIFT_ORD[sb]??9);
@@ -2339,8 +2378,8 @@ function _renderGrid(el, empsArr, y, m, days, empFull={}){
   const CELL_BG = {S:'#c8e6c9',C:'#ffe0b2',C1:'#b3e5fc',C2:'#e1bee7',C3:'#c8e6c9',HC:'#e0f2f1',HC1:'#e0f2f1',HC2:'#e0f2f1'};
   const CELL_FG = {S:'#1b5e20',C:'#bf360c',C1:'#01579b',C2:'#4a148c',C3:'#1b5e20',HC:'#00695c',HC1:'#00695c',HC2:'#00695c'};
   // Màu ca làm việc nền ô (giống lịch ca)
-  const SHIFT_BG = {S:'var(--s-bg)',C:'var(--c-bg)',N:'var(--n-bg)',L:'var(--h-bg)',HC:'var(--hc-bg)'};
-  const SHIFT_FG = {S:'var(--s-fg)',C:'var(--c-fg)',N:'var(--n-fg)',L:'var(--h-fg)',HC:'var(--hc-fg)'};
+  const SHIFT_BG = {S:'var(--s-bg)',C:'var(--c-bg)',C8:'var(--c8-bg)',N:'var(--n-bg)',L:'var(--h-bg)',HC:'var(--hc-bg)'};
+  const SHIFT_FG = {S:'var(--s-fg)',C:'var(--c-fg)',C8:'var(--c8-fg)',N:'var(--n-fg)',L:'var(--h-fg)',HC:'var(--hc-fg)'};
 
   // Xác định ngày hôm nay trong tháng này
   const now = new Date(); now.setHours(0,0,0,0);
