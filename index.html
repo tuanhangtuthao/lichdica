@@ -612,7 +612,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     </div>
   </div>
   <div class="search-row">
-    <input class="search" type="text" placeholder="🔍 Tìm nhân viên, MSNV..." oninput="setSearch(this.value)">
+    <input class="search" type="text" placeholder="🔍 Tìm nhân viên, MSNV..." autocomplete="off" data-clear-on-load oninput="setSearch(this.value)">
   </div>
   <div class="kip-row" id="kipBtns">
     <button class="kb all" onclick="setKip(0)">Tất cả</button>
@@ -695,7 +695,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
         <button class="btn btn-sec btn-sm" onclick="resetEmps()">↺ Khôi phục</button>
       </div>
       <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;background:#fafafa">
-        <input type="text" id="empSearchFilter" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." oninput="filterEmpList()" style="width:100%;padding:8px 12px;font-size:.85rem">
+        <input type="text" id="empSearchFilter" class="form-input" placeholder="🔍 Tìm tên hoặc MSNV..." autocomplete="off" data-clear-on-load oninput="filterEmpList()" style="width:100%;padding:8px 12px;font-size:.85rem">
       </div>
       <div class="settings-body" style="padding:0 0 4px"><ul class="emp-list-manage" id="empMgList"></ul></div>
     </div>
@@ -770,7 +770,7 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
     <div class="ot-card">
       <div style="padding:10px 12px 6px;display:flex;gap:8px;flex-wrap:wrap">
         <input type="month" id="otBoardMonth" class="form-input" style="flex:0 0 auto;padding:7px 10px;font-size:.85rem" onchange="renderOtBoard()">
-        <input type="text"  id="otBoardSearch" class="form-input" placeholder="Tìm tên hoặc MSNV..." style="flex:1;min-width:120px;padding:7px 10px;font-size:.85rem" oninput="renderOtBoard()">
+        <input type="text"  id="otBoardSearch" class="form-input" placeholder="Tìm tên hoặc MSNV..." autocomplete="off" data-clear-on-load style="flex:1;min-width:120px;padding:7px 10px;font-size:.85rem" oninput="renderOtBoard()">
       </div>
       <div style="display:flex;gap:6px;padding:0 12px 10px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none" id="otShiftFilter">
         <button class="ot-sf-btn active"    data-sf=""   onclick="setOtShiftF(this,'')">Tất cả</button>
@@ -3176,6 +3176,17 @@ function renderAll(){
   }
   try { goToday(); } catch(e) { console.warn(e); }
 })();
+
+// ── Ô TÌM KIẾM LUÔN TRỐNG KHI TẢI TRANG ────
+// Trình duyệt có thể tự điền (autofill) hoặc khôi phục giá trị cũ khi F5 /
+// khi bấm Back (bfcache). autocomplete="off" chặn phần lớn, phần còn lại dọn ở
+// đây. Chỉ áp cho ô lọc/tìm kiếm - KHÔNG áp cho ô nhập liệu có giá trị thật.
+function clearSearchBoxes(){
+  document.querySelectorAll('input[data-clear-on-load]').forEach(el => { el.value = ''; });
+}
+clearSearchBoxes();
+addEventListener('DOMContentLoaded', clearSearchBoxes);
+addEventListener('pageshow', clearSearchBoxes);
 </script>
 </body>
 </html>

@@ -236,7 +236,7 @@ td:hover .del-btn{display:inline-block!important}
       <div class="card-head" style="background:#f8f9fa;">
         🔍 Tra cứu kết quả
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input type="text" class="form-input" id="rfSearch" placeholder="Tên nhân viên..." style="width:160px;min-width:160px" oninput="renderResults()">
+          <input type="text" class="form-input" id="rfSearch" placeholder="Tên nhân viên..." autocomplete="off" data-clear-on-load style="width:160px;min-width:160px" oninput="renderResults()">
           <input type="month" class="form-input" id="rfMonth" style="width:130px;min-width:130px" onchange="renderResults()">
           <select class="form-select" id="printKipSelect" style="width:120px;min-width:120px">
             <option value="0">Tất cả Kíp</option>
@@ -259,7 +259,7 @@ td:hover .del-btn{display:inline-block!important}
   <div class="score-ctrl">
     <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Tháng chấm:</label>
     <input type="month" class="form-input" id="scoreMonth" style="flex:0 0 auto" onchange="renderScoring()">
-    <input type="text" class="form-input" id="scoreSearch" placeholder="🔍 Tìm nhân viên..." style="width:160px" oninput="filterScoring()">
+    <input type="text" class="form-input" id="scoreSearch" placeholder="🔍 Tìm nhân viên..." autocomplete="off" data-clear-on-load style="width:160px" oninput="filterScoring()">
     <button class="btn btn-sm" style="background:#4a148c;color:#fff" onclick="scoreAllMonth(this)">💾 Lưu điểm Tháng</button>
   </div>
   <div class="kf-row" id="kipFilterRow">
@@ -279,7 +279,7 @@ td:hover .del-btn{display:inline-block!important}
   <div class="score-ctrl">
     <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Tháng duyệt:</label>
     <input type="month" class="form-input" id="apprMonth" style="flex:0 0 auto" onchange="renderApproval()">
-    <input type="text" class="form-input" id="apprSearch" placeholder="🔍 Tìm nhân viên..." style="width:160px" oninput="renderApproval()">
+    <input type="text" class="form-input" id="apprSearch" placeholder="🔍 Tìm nhân viên..." autocomplete="off" data-clear-on-load style="width:160px" oninput="renderApproval()">
   </div>
   <div class="kf-row" id="apprKipFilter">
     <button class="kf" id="akf-0" onclick="setApprKip(0)">Tất cả</button>
@@ -1467,7 +1467,7 @@ function renderConfig(){
       <td><input type="number" min="0" max="12" step="0.1" class="form-input"
         id="cfg-${key}" value="${cfg.min_score}" style="width:80px;flex:none;text-align:center"></td>
       <td><input type="text" class="form-input"
-        id="cfgd-${key}" placeholder="Mô tả..." value="${cfg.description||''}"></td>
+        id="cfgd-${key}" placeholder="Mô tả..." autocomplete="off" value="${cfg.description||''}"></td>
     </tr>`;
   });
   h+='</tbody>';
@@ -1643,6 +1643,17 @@ function exportResultsToExcel() {
   XLSX.writeFile(wb, filename);
 }
 
+
+// ── Ô TÌM KIẾM LUÔN TRỐNG KHI TẢI TRANG ────
+// Trình duyệt có thể tự điền (autofill) hoặc khôi phục giá trị cũ khi F5 /
+// khi bấm Back (bfcache). autocomplete="off" chặn phần lớn, phần còn lại dọn ở
+// đây. Chỉ áp cho ô lọc/tìm kiếm - KHÔNG áp cho ô nhập liệu có giá trị thật.
+function clearSearchBoxes(){
+  document.querySelectorAll('input[data-clear-on-load]').forEach(el => { el.value = ''; });
+}
+clearSearchBoxes();
+addEventListener('DOMContentLoaded', clearSearchBoxes);
+addEventListener('pageshow', clearSearchBoxes);
 </script>
 </body>
 </html>

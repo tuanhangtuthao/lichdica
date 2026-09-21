@@ -285,7 +285,7 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   <div style="font-size:.75rem;font-weight:700;color:#666;background:#eee;padding:4px 10px;border-radius:15px" id="activeKipLbl">...</div>
   <input type="date" class="ctrl-date" id="rDate" onchange="loadRoster()">
   <div class="ctrl-space" style="flex:1"></div>
-  <input type="text" class="ctrl-date" id="empSearch" placeholder="🔍 Tìm tên NV..." list="empList" oninput="searchEmp()" style="flex:1;min-width:130px;max-width:200px">
+  <input type="text" class="ctrl-date" id="empSearch" placeholder="🔍 Tìm tên NV..." autocomplete="off" data-clear-on-load list="empList" oninput="searchEmp()" style="flex:1;min-width:130px;max-width:200px">
   <button class="btn btn-sec" onclick="copyPrev()" title="Sao chép từ ngày hôm qua">📋 Copy</button>
   <button class="btn btn-sec" onclick="window.print()">🖨️ In</button>
   <button class="btn btn-sec" onclick="toggleLayoutEdit()" title="Chỉnh sửa sơ đồ máy móc">⚙️</button>
@@ -1131,6 +1131,17 @@ function showToast(msg){
   }catch(e){console.error(e);}
   finally{document.getElementById('loadingOverlay').classList.add('hide');}
 })();
+
+// ── Ô TÌM KIẾM LUÔN TRỐNG KHI TẢI TRANG ────
+// Trình duyệt có thể tự điền (autofill) hoặc khôi phục giá trị cũ khi F5 /
+// khi bấm Back (bfcache). autocomplete="off" chặn phần lớn, phần còn lại dọn ở
+// đây. Chỉ áp cho ô lọc/tìm kiếm - KHÔNG áp cho ô nhập liệu có giá trị thật.
+function clearSearchBoxes(){
+  document.querySelectorAll('input[data-clear-on-load]').forEach(el => { el.value = ''; });
+}
+clearSearchBoxes();
+addEventListener('DOMContentLoaded', clearSearchBoxes);
+addEventListener('pageshow', clearSearchBoxes);
 </script>
 </body>
 </html>
