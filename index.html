@@ -3181,8 +3181,22 @@ function renderAll(){
 // Trình duyệt có thể tự điền (autofill) hoặc khôi phục giá trị cũ khi F5 /
 // khi bấm Back (bfcache). autocomplete="off" chặn phần lớn, phần còn lại dọn ở
 // đây. Chỉ áp cho ô lọc/tìm kiếm - KHÔNG áp cho ô nhập liệu có giá trị thật.
+// Edge/Chrome có lúc bỏ qua autocomplete="off" và tự điền lại SAU khi trang đã
+// tải xong (giá trị cũ người dùng từng gõ ở ô khác). Cách chặn chắc ăn: để ô ở
+// trạng thái readonly - trình duyệt không tự điền vào ô readonly - rồi bỏ
+// readonly ngay khi người dùng chạm vào ô, nên gõ vẫn bình thường.
 function clearSearchBoxes(){
-  document.querySelectorAll('input[data-clear-on-load]').forEach(el => { el.value = ''; });
+  document.querySelectorAll('input[data-clear-on-load]').forEach(el => {
+    el.value = '';
+    if(el.dataset.armed) { el.setAttribute('readonly',''); return; }
+    el.dataset.armed = '1';
+    el.setAttribute('readonly','');
+    const unlock = () => el.removeAttribute('readonly');
+    el.addEventListener('pointerdown', unlock);
+    el.addEventListener('touchstart', unlock, {passive:true});
+    el.addEventListener('focus', unlock);
+    el.addEventListener('keydown', unlock);
+  });
 }
 clearSearchBoxes();
 addEventListener('DOMContentLoaded', clearSearchBoxes);
