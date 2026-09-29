@@ -701,19 +701,19 @@ function moPhieu(code, cellId, idx){
   cur = {
     code, cellId, idx,
     id: rec.id || null,                    // có id = đang sửa lượt cũ, null = lượt mới
+    inspectorGoc: rec.inspector || '',      // người đã kiểm lượt này, giữ nguyên khi sửa
     vals: Object.fromEntries(S_DEFS.map(s => [s.k, rec[s.k] === true])),
     photos: [...(rec.photos || [])],
     photosGoc: [...(rec.photos || [])],    // ảnh lúc mở phiếu, để dọn ảnh bị bỏ khi lưu
   };
   document.getElementById('shTitle').textContent = code;
-  document.getElementById('shSub').textContent =
-    curDate ? `${fmtDs(curDate)} · ${curShift==='S'?'Ca Sáng':'Ca Tối'} · Kíp ${curKip}` : '';
+  const nen = curDate ? `${fmtDs(curDate)} · ${curShift==='S'?'Ca Sáng':'Ca Tối'} · Kíp ${curKip}` : '';
+  document.getElementById('shSub').textContent = cur.id
+    ? `${nen} · Lượt ${idx+1}${cur.inspectorGoc ? ' do ' + cur.inspectorGoc + ' kiểm' : ''}`
+    : `${nen} · Lượt mới`;
   document.getElementById('shNote').value = rec.note || '';
   document.getElementById('btnClear').style.display = cur.id ? '' : 'none';
   document.getElementById('btnSave').textContent = cur.id ? '💾 Lưu' : '💾 Lưu lượt mới';
-
-  // người kiểm: sửa lượt cũ thì lấy lại tên đã ghi của lượt đó
-  if(cur.id && rec.inspector) document.getElementById('inspector').value = rec.inspector;
 
   // Lượt mới thì lấy tên của lượt trước (nếu lượt trước đã sửa lại người),
   // không quay về phân công gốc - tránh bắt sửa lại mỗi lượt.
@@ -877,7 +877,9 @@ function kiemTraNguoiKiem(){
 async function saveCheck(){
   if(!curDate){ toast('Chọn ngày trước', true); return; }
   if(!SB_OK){ toast('Chưa kết nối Supabase', true); return; }
-  const nguoiKiem = kiemTraNguoiKiem();
+  // Sửa lượt cũ: giữ nguyên người đã kiểm lượt đó - người vào sửa ghi chú
+  // không được thành người đi kiểm. Lượt mới: lấy tên người đang đi kiểm.
+  const nguoiKiem = (cur.id && cur.inspectorGoc) ? cur.inspectorGoc : kiemTraNguoiKiem();
   if(!nguoiKiem) return;
 
   const btn = document.getElementById('btnSave');
