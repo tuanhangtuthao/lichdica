@@ -167,6 +167,7 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 .ph-add{width:74px;height:74px;border:1.5px dashed #bbb;border-radius:9px;background:#fafafa;
   color:#888;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .ph-add:hover{border-color:var(--accent);color:var(--accent)}
+.ph-add.thieu{border-color:var(--ng);color:var(--ng);background:var(--ng-l)}
 
 /* ── LỊCH SỬ VI PHẠM ── */
 .hs-filter{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
@@ -328,10 +329,10 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
     <div class="fld-lbl">📝 Ghi chú / điểm chưa đạt</div>
     <textarea class="fld" id="shNote" rows="3" placeholder="Mô tả chỗ chưa đạt để bộ phận khắc phục..."></textarea>
 
-    <div class="fld-lbl">📷 Ảnh hiện trạng</div>
+    <div class="fld-lbl" id="shPhotoLbl">📷 Ảnh hiện trạng</div>
     <div class="ph-row" id="shPhotos"></div>
     <input type="file" id="phInput" accept="image/*" capture="environment" multiple style="display:none" onchange="onPickPhoto(event)">
-    <div style="font-size:.66rem;color:#999;margin-top:6px">Ảnh được nén nhỏ trước khi tải lên để đỡ tốn dung lượng.</div>
+    <div id="shPhotoHint" style="font-size:.66rem;color:#999;margin-top:6px">Ảnh được nén nhỏ trước khi tải lên để đỡ tốn dung lượng.</div>
 
     <div class="fld-lbl">📋 Lịch sử vi phạm của máy này</div>
     <div id="shHist"><div class="hs-empty" style="padding:12px">Đang tra...</div></div>
@@ -591,6 +592,28 @@ function statusOf(rec){
 }
 function failsOf(rec){ return S_DEFS.filter(s => rec[s.k] !== true); }
 
+// Phiếu đang mở có mục nào chưa đạt không (đọc từ bản nháp, không phải DB)
+function dangCoMucChuaDat(){ return !S_DEFS.every(s => cur.vals[s.k] === true); }
+
+// Chưa đạt thì phải có ảnh. Cập nhật nhãn + gợi ý để người dùng thấy TRƯỚC
+// khi bấm Lưu, thay vì bấm xong mới bị báo lỗi.
+function capNhatYeuCauAnh(){
+  if(!cur) return;
+  const chuaDat = dangCoMucChuaDat();
+  const thieu   = chuaDat && cur.photos.length === 0;
+  const lbl  = document.getElementById('shPhotoLbl');
+  const hint = document.getElementById('shPhotoHint');
+  const add  = document.querySelector('#shPhotos .ph-add');
+  lbl.innerHTML = chuaDat
+    ? '📷 Ảnh hiện trạng <span style="color:var(--ng)">* bắt buộc</span>'
+    : '📷 Ảnh hiện trạng';
+  hint.textContent = thieu
+    ? 'Có mục chưa đạt — phải chụp ít nhất 1 ảnh mới lưu được.'
+    : 'Ảnh được nén nhỏ trước khi tải lên để đỡ tốn dung lượng.';
+  hint.style.color = thieu ? 'var(--ng)' : '#999';
+  if(add) add.classList.toggle('thieu', thieu);
+}
+
 function eachCell(fn){
   FACTORY_DATA.forEach((z,zIdx) => z.grid.forEach((row,rIdx) => row.forEach((item,cIdx) => {
     const code = (item && typeof item==='object') ? item.c : item;
@@ -806,7 +829,7 @@ function renderSList(){
     const on = cur.vals[s.k];
     const it = document.createElement('div');
     it.className = 's-item ' + (on ? 'on' : 'off');
-    it.onclick = () => { cur.vals[s.k] = !cur.vals[s.k]; renderSList(); };
+    it.onclick = () => { cur.vals[s.k] = !cur.vals[s.k]; renderSList(); capNhatYeuCauAnh(); };
     it.innerHTML = `<div class="s-box">${on ? '✓' : '✕'}</div>
       <div class="s-txt"><div class="s-name">${s.name}</div><div class="s-desc">${s.desc}</div></div>`;
     box.appendChild(it);
@@ -828,6 +851,7 @@ function renderPhotos(){
   add.className='ph-add'; add.textContent='＋';
   add.onclick = () => document.getElementById('phInput').click();
   box.appendChild(add);
+  capNhatYeuCauAnh();
 }
 
 // Đường dẫn trong bucket, tách ngược từ link công khai
@@ -913,6 +937,14 @@ async function saveCheck(){
   const nguoiKiem = (cur.id && cur.inspectorGoc) ? cur.inspectorGoc : kiemTraNguoiKiem();
   if(!nguoiKiem) return;
 
+  // Chưa đạt thì phải có ảnh làm bằng chứng
+  if(dangCoMucChuaDat() && cur.photos.length === 0){
+    capNhatYeuCauAnh();
+    document.getElementById('shPhotoLbl').scrollIntoView({behavior:'smooth', block:'center'});
+    toast('Có mục chưa đạt — phải chụp ít nhất 1 ảnh mới lưu được', true);
+    return;
+  }
+
   const btn = document.getElementById('btnSave');
   const nhanCu = btn.textContent;
   btn.disabled = true; btn.textContent = '⏳ Đang lưu...';
@@ -944,8 +976,12 @@ async function saveCheck(){
     toast('✅ Đã lưu ' + row.machine_code);
   }catch(e){
     console.warn(e);
-    const thieuNguoi = /inspector_khong_rong/.test(e.message || '');
-    toast(thieuNguoi ? 'Thiếu tên người kiểm' : 'Lỗi lưu: ' + e.message, true);
+    const msg = e.message || '';
+    const thieuNguoi = /inspector_khong_rong/.test(msg);
+    const thieuAnh   = /khongdat_phai_co_anh/.test(msg);
+    toast(thieuNguoi ? 'Thiếu tên người kiểm'
+        : thieuAnh   ? 'Có mục chưa đạt — phải chụp ít nhất 1 ảnh mới lưu được'
+        : 'Lỗi lưu: ' + msg, true);
   }
   btn.disabled = false; btn.textContent = nhanCu;
 }
