@@ -657,6 +657,7 @@ function openSheet(code, cellId){
     code, cellId,
     vals: Object.fromEntries(S_DEFS.map(s => [s.k, rec[s.k] === true])),
     photos: [...(rec.photos || [])],
+    photosGoc: [...(rec.photos || [])],   // ảnh lúc mở phiếu, để dọn ảnh bị bỏ khi lưu
   };
   document.getElementById('shTitle').textContent = code;
   document.getElementById('shSub').textContent =
@@ -716,6 +717,24 @@ function renderPhotos(){
   box.appendChild(add);
 }
 
+// Đường dẫn trong bucket, tách ngược từ link công khai
+function pathCuaAnh(url){
+  const i = String(url).indexOf('/' + BUCKET + '/');
+  return i < 0 ? null : decodeURIComponent(String(url).slice(i + BUCKET.length + 2));
+}
+
+// Ảnh bị bỏ khỏi phiếu thì xoá luôn file, không để rác nằm lại ăn dung lượng.
+// Chỉ gọi SAU khi lưu thành công - bỏ ảnh rồi đóng phiếu không lưu thì file
+// vẫn còn nguyên, vì bản ghi cũ vẫn đang trỏ tới nó.
+async function donAnhBiBo(){
+  const bo = (cur.photosGoc || []).filter(u => !cur.photos.includes(u));
+  if(!bo.length) return;
+  const paths = bo.map(pathCuaAnh).filter(Boolean);
+  if(!paths.length) return;
+  const {error} = await sb.storage.from(BUCKET).remove(paths);
+  if(error) console.warn('Không xoá được ảnh cũ (thiếu quyền delete?):', error.message);
+}
+
 // Nén ảnh trước khi tải lên: cạnh dài tối đa 1280px, JPEG 75%
 function shrink(file){
   return new Promise((resolve,reject) => {
@@ -747,7 +766,14 @@ async function onPickPhoto(ev){
       if(error) throw error;
       cur.photos.push(sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
       renderPhotos();
-    }catch(e){ console.warn(e); toast('Lỗi tải ảnh: '+e.message, true); return; }
+    }catch(e){
+      console.warn(e);
+      const rls = /row-level security|policy/i.test(e.message || '');
+      toast(rls
+        ? 'Kho ảnh chưa mở quyền tải lên — chạy sql/5s-storage-fix.sql trên Supabase'
+        : 'Lỗi tải ảnh: ' + e.message, true);
+      return;
+    }
   }
   toast('✅ Đã tải ảnh xong. Nhớ bấm Lưu.');
 }
@@ -773,6 +799,7 @@ async function saveCheck(){
     const {data,error} = await sb.from(TABLE).upsert(row,{onConflict:'date,shift,cell_id'}).select();
     if(error) throw error;
     CHECKS[cur.cellId] = (data && data[0]) || row;
+    await donAnhBiBo();
     closeSheet(); renderFloor();
     toast('✅ Đã lưu ' + row.machine_code);
   }catch(e){ console.warn(e); toast('Lỗi lưu: '+e.message, true); }
