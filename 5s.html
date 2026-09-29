@@ -353,7 +353,7 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
     </div>
 
     <button class="btn btn-ok" id="btnDatHet" onclick="tickDatHet()"
-      style="width:100%;justify-content:center;margin-bottom:9px">✅ Đạt tất cả 4 mục</button>
+      style="width:100%;justify-content:center;margin-bottom:9px">✅ Đạt tất cả</button>
     <div id="sList"></div>
 
     <div class="fld-lbl">📝 Ghi chú / điểm chưa đạt</div>
@@ -410,10 +410,16 @@ const TABLE='s5_checks', BUCKET='s5-photos';
 // k = tên cột trong bảng s5_checks, giữ dạng s1..s4 cho trung tính vì nội
 // dung kiểm tra có thể còn đổi; ý nghĩa từng cột xem comment cột trong sql/5s-update.sql
 const S_DEFS = [
-  {k:'s1', name:'Tài liệu / Check sheet',   short:'Tài liệu',  desc:'Có đủ tài liệu, check sheet tại máy, điền đúng và cập nhật'},
-  {k:'s2', name:'Hiển thị thông tin tem nhãn', short:'Tem nhãn', desc:'Tem nhãn đầy đủ, rõ ràng, đúng vị trí, còn đọc được'},
-  {k:'s3', name:'Phân loại hàng hóa',       short:'Phân loại', desc:'Hàng để đúng khu, đúng loại, không để lẫn'},
-  {k:'s4', name:'Thân máy / Sàn nhà',       short:'Thân máy / Sàn', desc:'Thân máy và sàn sạch, không dầu, không phoi'},
+  {k:'s1', name:'Đường đi, sàn nhà, đường line', short:'Đường đi / Sàn',
+   desc:'Đường đi có rác không, có vết bẩn, dầu mỡ không'},
+  {k:'s2', name:'Bàn thao tác', short:'Bàn thao tác',
+   desc:'Bàn thao tác đã để đúng quy định chưa'},
+  {k:'s3', name:'Thân máy', short:'Thân máy',
+   desc:'Xung quanh máy có vật dụng thừa, vết bẩn, dầu nhớt bám trên máy không'},
+  {k:'s4', name:'Rổ đựng hàng', short:'Rổ đựng hàng',
+   desc:'Khi nhận máy đầu ca, các rổ đựng sản phẩm không được còn sản phẩm của ca trước'},
+  {k:'s5', name:'Bộ cấp phôi', short:'Bộ cấp phôi',
+   desc:'Kiểm tra tình trạng bộ cấp phôi, trên bộ cấp chỉ để 1 mã hàng'},
 ];
 const N_TC = S_DEFS.length;
 
@@ -1235,6 +1241,7 @@ addEventListener('keydown', e => {
     document.getElementById('todayLbl').textContent =
       `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;
     document.getElementById('rDate').value = dKeyOf(t);
+    document.getElementById('btnDatHet').textContent = `✅ Đạt tất cả ${N_TC} mục`;
     try{
       const saved = localStorage.getItem('s5_inspector');
       if(saved) document.getElementById('inspector').value = saved;
