@@ -58,6 +58,22 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 .btn-hist{background:#fff3e0;border:1.5px solid #ffb74d;color:#e65100}
 .btn:disabled{opacity:.55;cursor:not-allowed}
 
+/* ── CHẤM NHANH ── */
+.lbl-sm{display:none}
+.btn-quick{background:#fff8e1;border:1.5px solid #ffb300;color:#e65100}
+.btn-quick.on{background:#ff9800;border-color:#ef6c00;color:#fff}
+.quick-banner{display:none;align-items:center;gap:8px;padding:7px 14px;
+  background:#fff3e0;border-bottom:2px solid #ff9800;
+  font-size:.78rem;font-weight:700;color:#e65100}
+.quick-banner.show{display:flex}
+.quick-banner .qb-off{margin-left:auto;background:#e65100;color:#fff;border:none;
+  border-radius:7px;padding:4px 11px;font-size:.73rem;font-weight:700;cursor:pointer}
+.mc-cell.quick-ready{cursor:pointer;border-color:#ffb300;
+  box-shadow:0 0 0 2px rgba(255,179,0,.25)}
+.mc-cell.quick-ready:active{background:var(--ok-l);border-color:var(--ok)}
+.toast-act{margin-left:12px;background:rgba(255,255,255,.22);color:#fff;border:1px solid rgba(255,255,255,.5);
+  border-radius:14px;padding:3px 11px;font-size:.75rem;font-weight:800;cursor:pointer}
+
 /* ── TỔNG QUAN ── */
 .stat-bar{display:flex;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid #e0e0e0;flex-wrap:wrap}
 .stat{flex:1;min-width:92px;border-radius:10px;padding:7px 12px;text-align:center;border:1.5px solid}
@@ -225,6 +241,9 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   .ctrl-date{height:32px;padding:0 7px;font-size:.8rem}
   .btn{height:32px;padding:0 10px;font-size:.75rem}
   .sbtn{padding:4px 11px;font-size:.74rem}
+  .lbl-full{display:none}
+  .lbl-sm{display:inline}
+  .quick-banner{padding:5px 10px;font-size:.73rem}
   .kip-tag{padding:4px 9px;font-size:.68rem}
 
   /* 4 ô thống kê nằm gọn 1 hàng thay vì tràn xuống 2 hàng */
@@ -290,8 +309,17 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   <div style="flex:1"></div>
   <input type="text" class="ctrl-date" id="mcSearch" placeholder="🔍 Tìm mã máy..."
          autocomplete="off" data-clear-on-load oninput="filterCells()" style="flex:1;min-width:110px;max-width:170px">
-  <button class="btn btn-hist" onclick="openHistory()">📋 Lịch sử vi phạm</button>
+  <button class="btn btn-quick" id="btnQuick" onclick="toggleQuick()">
+    ⚡<span class="lbl-full"> Chấm nhanh</span><span class="lbl-sm"> Nhanh</span></button>
+  <button class="btn btn-hist" onclick="openHistory()">
+    📋<span class="lbl-full"> Lịch sử vi phạm</span><span class="lbl-sm"> Lịch sử</span></button>
   <button class="btn btn-sec" onclick="window.print()">🖨️ In</button>
+</div>
+
+<div class="quick-banner" id="quickBanner">
+  <span class="lbl-full">⚡ CHẤM NHANH — bấm vào máy là ghi ĐẠT ngay, không cần mở phiếu</span>
+  <span class="lbl-sm">⚡ Bấm vào máy là ghi ĐẠT</span>
+  <button class="qb-off" onclick="toggleQuick()">✕ Tắt</button>
 </div>
 
 <div class="stat-bar">
@@ -324,6 +352,8 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
       <div class="wk-hint" id="shWorkerHint"></div>
     </div>
 
+    <button class="btn btn-ok" id="btnDatHet" onclick="tickDatHet()"
+      style="width:100%;justify-content:center;margin-bottom:9px">✅ Đạt tất cả 4 mục</button>
     <div id="sList"></div>
 
     <div class="fld-lbl">📝 Ghi chú / điểm chưa đạt</div>
@@ -512,6 +542,7 @@ let ROSTER  = {};        // mã máy -> tên thợ, lấy từ shift_roster
 let EMPS    = [];        // danh sách nhân viên, để chọn lại khi lịch sai
 let HIST    = [];        // lịch sử vi phạm đã tải
 let curDate='', curShift='S', curKip=1, cur=null;
+let quickMode = false;      // chế độ bấm-là-ghi-ĐẠT
 
 async function loadLayout(){
   if(!SB_OK) return;
@@ -660,7 +691,8 @@ function buildCell(code, cellId){
   const cell = document.createElement('div');
   cell.className = `mc-cell st-${st}`;
   cell.dataset.code = code.toLowerCase();
-  cell.onclick = () => openSheet(code, cellId);
+  cell.onclick = () => quickMode ? chamNhanhDat(code, cellId) : openSheet(code, cellId);
+  if(quickMode && st !== 'ok') cell.classList.add('quick-ready');
 
   const c = document.createElement('div'); c.className='mc-code'; c.textContent=code;
   cell.appendChild(c);
@@ -702,6 +734,52 @@ function renderStats(){
   document.getElementById('stOk').textContent    = ok;
   document.getElementById('stNg').textContent    = ng;
   document.getElementById('stNone').textContent  = total-ok-ng;
+}
+
+// ── CHẤM NHANH ────────────────────────────────────────────
+// Đi một vòng xưởng, máy nào ổn thì bấm phát ghi ĐẠT luôn, khỏi mở phiếu.
+// Chỉ ghi được trạng thái ĐẠT; máy có vấn đề vẫn phải mở phiếu để ghi rõ
+// mục nào hỏng và chụp ảnh.
+function toggleQuick(){
+  if(!quickMode && !kiemTraNguoiKiem()) return;   // phải biết ai chấm trước đã
+  quickMode = !quickMode;
+  document.getElementById('btnQuick').className = 'btn btn-quick' + (quickMode ? ' on' : '');
+  document.getElementById('quickBanner').classList.toggle('show', quickMode);
+  renderFloor();
+}
+
+async function chamNhanhDat(code, cellId){
+  const nguoiKiem = kiemTraNguoiKiem();
+  if(!nguoiKiem) return;
+
+  // Đã đạt sẵn ở lượt gần nhất thì thôi, tránh bấm nhầm đẻ ra lượt trùng.
+  // Muốn chấm lại thì tắt chấm nhanh rồi mở phiếu.
+  if(statusOf(latestOf(cellId)) === 'ok'){ toast(code + ' đã đạt rồi'); return; }
+
+  const row = {
+    date: curDate, shift: curShift, kip: curKip,
+    cell_id: cellId, machine_code: code,
+    worker_name: workerOf(code, cellId),
+    note: '', photos: [], inspector: nguoiKiem,
+    checked_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    ...Object.fromEntries(S_DEFS.map(s => [s.k, true])),
+  };
+  try{
+    const {data,error} = await sb.from(TABLE).insert(row).select();
+    if(error) throw error;
+    await loadChecks(); renderFloor();
+    const id = data && data[0] && data[0].id;
+    toast('✅ ' + code + ' — ĐẠT', false, id ? {label:'Hoàn tác', fn:() => hoanTac(id)} : null);
+  }catch(e){ console.warn(e); toast('Lỗi lưu ' + code + ': ' + e.message, true); }
+}
+
+async function hoanTac(id){
+  try{
+    const {error} = await sb.from(TABLE).delete().eq('id', id);
+    if(error) throw error;
+    await loadChecks(); renderFloor();
+    toast('Đã hoàn tác');
+  }catch(e){ toast('Lỗi hoàn tác: ' + e.message, true); }
 }
 
 function filterCells(){
@@ -821,6 +899,13 @@ async function closeSheet(){
   cur = null;
 }
 function closeAll(){ closeSheet(); closeHistory(); }
+
+// Tick hết 4 mục trong phiếu (vẫn phải bấm Lưu)
+function tickDatHet(){
+  S_DEFS.forEach(s => cur.vals[s.k] = true);
+  renderSList();
+  capNhatYeuCauAnh();
+}
 
 function renderSList(){
   const box = document.getElementById('sList');
@@ -1099,12 +1184,18 @@ function openLightbox(url){
 function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); }
 
 let toastTimer;
-function toast(msg, isErr){
+function toast(msg, isErr, action){
   const t = document.getElementById('toast');
   t.textContent = msg;
+  if(action){
+    const b = document.createElement('button');
+    b.className = 'toast-act'; b.textContent = action.label;
+    b.onclick = () => { t.classList.remove('show'); action.fn(); };
+    t.appendChild(b);
+  }
   t.className = 'toast show' + (isErr ? ' err' : '');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), isErr ? 5000 : 2200);
+  toastTimer = setTimeout(() => t.classList.remove('show'), isErr ? 5000 : (action ? 5000 : 2200));
 }
 
 function rememberInspector(){
