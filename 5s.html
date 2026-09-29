@@ -216,17 +216,48 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 
 /* ── MOBILE ── */
 @media(max-width:680px){
-  :root{--cw:118px;--ch:46px;--gap:5px}
-  .floor{flex-direction:column;gap:18px;align-items:center}
-  .floor-divider{width:90%;height:3px;min-height:0;align-self:auto;
+  :root{--ch:44px;--gap:5px}
+
+  /* Thanh điều khiển + thống kê trước đây ăn 320px/812px, chỉ còn 492px
+     để nhìn sơ đồ. Bóp lại còn khoảng 210px. */
+  .ctrl-bar{padding:6px 8px;gap:5px}
+  .ctrl-date{height:32px;padding:0 7px;font-size:.8rem}
+  .btn{height:32px;padding:0 10px;font-size:.75rem}
+  .sbtn{padding:4px 11px;font-size:.74rem}
+  .kip-tag{padding:4px 9px;font-size:.68rem}
+
+  /* 4 ô thống kê nằm gọn 1 hàng thay vì tràn xuống 2 hàng */
+  .stat-bar{padding:6px 8px;gap:4px}
+  .stat{flex:1;min-width:0;padding:5px 3px;border-radius:8px}
+  .stat .n{font-size:1rem}
+  .stat .l{font-size:.53rem;letter-spacing:0}
+
+  /* Ô máy giãn theo bề ngang màn hình thay vì cố định 118px, nhờ đó
+     tên thợ dài đọc được. Tên nào vẫn dài quá thì xuống tối đa 2 dòng
+     chứ không cắt cụt giữa chừng như trước (25/55 ô bị cắt). */
+  .floor-wrap{padding:8px 6px 80px}
+  .floor{flex-direction:column;gap:14px;align-items:stretch;width:100%;padding:0}
+  .floor-divider{width:90%;height:3px;min-height:0;align-self:center;
     background:linear-gradient(90deg,transparent,#b2dfdb 20%,#b2dfdb 80%,transparent)}
-  .ctrl-bar{padding:10px}
-  .floor-wrap{padding:10px 10px 80px}
+  .section{width:100%}
+  .mc-grid{grid-template-columns:1fr 1fr;width:100%}
+  .mc-cell,.mc-spacer{width:auto}
+  .mc-worker{white-space:normal;line-height:1.15;display:-webkit-box;
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .mc-sub{white-space:normal;display:-webkit-box;
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* Phiếu chấm dâng từ đáy màn hình cho dễ với ngón tay */
   .sheet{top:auto;bottom:0;left:0;transform:translateY(100%);width:100%;
     max-height:92vh;border-radius:18px 18px 0 0}
   .sheet.show{transform:translateY(0)}
   .sheet.wide{width:100%}
   .sh-head{border-radius:18px 18px 0 0}
+  .sh-body{padding:12px}
+  .sh-foot{padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .s-item{padding:11px 10px}          /* vùng chạm to hơn cho ngón tay */
+  .wk-sel,.fld{font-size:16px}        /* >=16px để iOS không tự phóng to trang khi gõ */
+  .rd-chip{padding:6px 12px}
 }
 @media(min-width:1200px){:root{--cw:230px;--ch:62px;--gap:10px}.floor{gap:90px}}
 </style>
