@@ -327,13 +327,17 @@ const sb=SB_OK?supabase.createClient(SB_URL,SB_KEY):null;
 
 const TABLE='s5_checks', BUCKET='s5-photos';
 
+// Nội dung kiểm tra. Đổi/thêm/bớt mục thì sửa DUY NHẤT danh sách này -
+// mọi chỗ khác (số điểm, thẻ vi phạm, bộ lọc lịch sử) đều tự suy ra theo nó.
+// k = tên cột trong bảng s5_checks, giữ dạng s1..s4 cho trung tính vì nội
+// dung kiểm tra có thể còn đổi; ý nghĩa từng cột xem comment cột trong sql/5s-update.sql
 const S_DEFS = [
-  {k:'s1', name:'S1 – Sàng lọc',  short:'Sàng lọc', desc:'Bỏ thứ không cần, chỉ giữ thứ đang dùng'},
-  {k:'s2', name:'S2 – Sắp xếp',   short:'Sắp xếp',  desc:'Mọi thứ có chỗ, đúng chỗ, dễ lấy'},
-  {k:'s3', name:'S3 – Sạch sẽ',   short:'Sạch sẽ',  desc:'Máy và khu vực sạch, không dầu, không phoi'},
-  {k:'s4', name:'S4 – Săn sóc',   short:'Săn sóc',  desc:'Duy trì được 3S trên, có nhãn/vạch rõ ràng'},
-  {k:'s5', name:'S5 – Sẵn sàng',  short:'Sẵn sàng', desc:'Thành nề nếp, không cần nhắc vẫn làm'},
+  {k:'s1', name:'Tài liệu / Check sheet',   short:'Tài liệu',  desc:'Có đủ tài liệu, check sheet tại máy, điền đúng và cập nhật'},
+  {k:'s2', name:'Hiển thị thông tin tem nhãn', short:'Tem nhãn', desc:'Tem nhãn đầy đủ, rõ ràng, đúng vị trí, còn đọc được'},
+  {k:'s3', name:'Phân loại hàng hóa',       short:'Phân loại', desc:'Hàng để đúng khu, đúng loại, không để lẫn'},
+  {k:'s4', name:'Thân máy / Sàn nhà',       short:'Thân máy / Sàn', desc:'Thân máy và sàn sạch, không dầu, không phoi'},
 ];
+const N_TC = S_DEFS.length;
 
 // ══════════════════════════════════════════════
 // LỊCH CA – trích nguyên từ nhansu-ca.html để suy ra kíp nào trực ca nào
@@ -586,8 +590,8 @@ function buildCell(code, cellId){
   s.className = `mc-st st-${st}`;
   if(st === 'none') s.textContent = '— Chưa kiểm';
   else {
-    const nOk = 5 - failsOf(rec).length;
-    let t = st==='ok' ? '✅ Đạt 5/5' : `⚠️ ${nOk}/5`;
+    const nOk = N_TC - failsOf(rec).length;
+    let t = st==='ok' ? `✅ Đạt ${N_TC}/${N_TC}` : `⚠️ ${nOk}/${N_TC}`;
     if(rec.note) t += ' 📝';
     if((rec.photos||[]).length) t += ' 📷'+rec.photos.length;
     s.textContent = t;
@@ -791,7 +795,7 @@ async function clearCheck(){
 // LỊCH SỬ VI PHẠM
 // ══════════════════════════════════════════════
 // Chỉ lấy các lần còn mục chưa đạt (ít nhất 1 trong 5 S là false)
-const VI_PHAM_FILTER = 's1.eq.false,s2.eq.false,s3.eq.false,s4.eq.false,s5.eq.false';
+const VI_PHAM_FILTER = S_DEFS.map(s => s.k + '.eq.false').join(',');
 
 function daysAgo(n){
   const d = new Date(); d.setDate(d.getDate()-n);
