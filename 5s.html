@@ -354,6 +354,9 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 
     <button class="btn btn-ok" id="btnDatHet" onclick="tickDatHet()"
       style="width:100%;justify-content:center;margin-bottom:9px">✅ Đạt tất cả</button>
+    <div style="font-size:.68rem;color:#78909c;margin-bottom:7px">
+      Mặc định đạt hết — bấm vào mục nào <b style="color:var(--ng)">chưa đạt</b> để bỏ tick.
+    </div>
     <div id="sList"></div>
 
     <div class="fld-lbl">📝 Ghi chú / điểm chưa đạt</div>
@@ -840,7 +843,9 @@ function moPhieu(code, cellId, idx){
     code, cellId, idx,
     id: rec.id || null,                    // có id = đang sửa lượt cũ, null = lượt mới
     inspectorGoc: rec.inspector || '',      // người đã kiểm lượt này, giữ nguyên khi sửa
-    vals: Object.fromEntries(S_DEFS.map(s => [s.k, rec[s.k] === true])),
+    // Lượt mới mặc định ĐẠT hết - đi kiểm thì đa số máy đều ổn, chỉ bấm
+    // vào mục nào hỏng. Lượt cũ thì giữ nguyên giá trị đã lưu.
+    vals: Object.fromEntries(S_DEFS.map(s => [s.k, idx >= 0 ? rec[s.k] === true : true])),
     photos: [...(rec.photos || [])],
     photosGoc: [...(rec.photos || [])],    // ảnh lúc mở phiếu, để dọn ảnh bị bỏ khi lưu
   };
