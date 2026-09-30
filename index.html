@@ -592,13 +592,14 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 
 <!-- TOP TABS (desktop) -->
 <div class="top-tabs">
-  <div class="tab active" onclick="showTab('schedule')">📅 Lịch Ca</div>
-  <div class="tab"        onclick="showTab('summary')">📊 Hôm Nay</div>
-  <div class="tab"        onclick="showTab('tanca')">⏰ Tăng Ca</div>
+  <div class="tab active" data-tab="schedule" onclick="showTab('schedule')">📅 Lịch Ca</div>
+  <div class="tab"        data-tab="summary"  onclick="showTab('summary')">📊 Hôm Nay</div>
+  <div class="tab"        data-tab="tanca"    onclick="showTab('tanca')">⏰ Tăng Ca</div>
   <a href="xin-nghi.html" class="tab tab-rating" title="Tạo đơn xin nghỉ online">🏖️ Xin Nghỉ</a>
   <a href="rating.html" class="tab tab-rating" title="Đánh giá nhân viên">🏆 Đánh Giá</a>
   <a href="nhansu-ca.html" class="tab tab-rating" style="color:#2e7d32!important" title="Nhân sự trong ca">👷 Nhân Sự Ca</a>
-  <div class="tab" style="position:relative" onclick="showTab('settings')">⚙️ Quản Lý<span id="settingsBadgeTop" style="display:none;position:absolute;top:6px;right:6px;background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span></div>
+  <a href="huong-dan.html" class="tab tab-rating" style="color:#1565c0!important" title="Video hướng dẫn công việc">🎬 Hướng Dẫn</a>
+  <div class="tab" data-tab="settings" style="position:relative" onclick="showTab('settings')">⚙️ Quản Lý<span id="settingsBadgeTop" style="display:none;position:absolute;top:6px;right:6px;background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span></div>
 </div>
 
 <!-- TAB 1: LỊCH CA -->
@@ -793,16 +794,16 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bot-nav">
-  <button class="bnav active" onclick="showTab('schedule')">
+  <button class="bnav active" data-tab="schedule" onclick="showTab('schedule')">
     <span class="bicon">📅</span><span class="blabel">Lịch</span>
   </button>
-  <button class="bnav" onclick="showTab('summary')">
+  <button class="bnav" data-tab="summary" onclick="showTab('summary')">
     <span class="bicon">📊</span><span class="blabel">Hôm Nay</span>
   </button>
-  <button class="bnav" onclick="showTab('tanca')">
+  <button class="bnav" data-tab="tanca" onclick="showTab('tanca')">
     <span class="bicon">⏰</span><span class="blabel">Tăng Ca</span>
   </button>
-  <button class="bnav" onclick="showTab('settings')">
+  <button class="bnav" data-tab="settings" onclick="showTab('settings')">
     <span class="bicon">⚙️</span><span class="blabel">Quản Lý</span>
     <span id="settingsBadgeBot" style="display:none;position:absolute;top:5px;right:calc(50% - 18px);background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span>
   </button>
@@ -2679,8 +2680,8 @@ function showSettingsGroup(g) {
 }
 function _goTab(tab){
   activeTab=tab;
-  document.querySelectorAll('.top-tabs .tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===tab));
-  document.querySelectorAll('.bot-nav .bnav').forEach((b,i)=>b.classList.toggle('active',TABS[i]===tab));
+  document.querySelectorAll('.top-tabs .tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.querySelectorAll('.bot-nav .bnav[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+tab).classList.add('active');
   if(tab==='summary')  renderSummary();
