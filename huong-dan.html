@@ -5,13 +5,23 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Video Hướng Dẫn - Phân Xưởng 1</title>
 <link rel="preconnect" href="https://drive.google.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://xtutpuwesganunktrxcv.supabase.co">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --accent:#1565c0;--accent-l:#e3f2fd;--accent-d:#0d47a1;
+  --ng:#c62828;
   --hdr-h:52px;--radius:10px;
 }
 html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
+
+.loading-overlay{position:fixed;inset:0;background:var(--accent-d);z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff}
+.loading-overlay.hide{display:none}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── HEADER ── */
 .hdr{height:var(--hdr-h);background:linear-gradient(135deg,var(--accent-d),var(--accent));
@@ -19,10 +29,12 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   padding:0 16px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .hdr-left h1{font-size:.95rem;font-weight:700;line-height:1.2}
 .hdr-left .sub{font-size:.68rem;opacity:.8;margin-top:2px}
-.btn-back{color:#fff;opacity:.85;font-size:.78rem;text-decoration:none;
-  border:1px solid rgba(255,255,255,.4);padding:6px 10px;border-radius:8px;
-  display:inline-flex;align-items:center;gap:4px;transition:.15s;white-space:nowrap}
-.btn-back:hover{opacity:1;background:rgba(255,255,255,.2)}
+.hdr-right{display:flex;gap:7px;align-items:center}
+.btn-back,.btn-key{color:#fff;opacity:.85;font-size:.78rem;text-decoration:none;
+  border:1px solid rgba(255,255,255,.4);padding:6px 10px;border-radius:8px;background:none;
+  display:inline-flex;align-items:center;gap:4px;transition:.15s;white-space:nowrap;cursor:pointer;font-family:inherit}
+.btn-back:hover,.btn-key:hover{opacity:1;background:rgba(255,255,255,.2)}
+.btn-key.on{background:#fff;color:var(--accent-d);opacity:1;font-weight:700;border-color:#fff}
 
 /* ── THANH LỌC ── */
 .ctrl{background:#fff;border-bottom:1px solid #e0e0e0;padding:9px 16px;
@@ -37,6 +49,15 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 .chip.on{background:var(--accent-l);border-color:var(--accent);color:var(--accent-d)}
 .chip .n{opacity:.6;font-weight:600}
 
+/* ── BĂNG QUẢN LÝ ── */
+.admin-bar{display:none;align-items:center;gap:9px;padding:7px 16px;flex-wrap:wrap;
+  background:#fff8e1;border-bottom:2px solid #ffb300;font-size:.78rem;font-weight:700;color:#e65100}
+.admin-bar.show{display:flex}
+.admin-bar .ab-add{margin-left:auto;background:#2e7d32;color:#fff;border:none;border-radius:8px;
+  padding:6px 13px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit}
+.admin-bar .ab-off{background:#e65100;color:#fff;border:none;border-radius:8px;
+  padding:6px 11px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:inherit}
+
 /* ── DANH SÁCH ── */
 .wrap{padding:14px 16px 40px;max-width:1200px;margin:0 auto}
 .grp-lbl{font-size:.68rem;font-weight:800;color:#90a4ae;letter-spacing:.09em;
@@ -45,7 +66,7 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
 
 .card{background:#fff;border:1.5px solid #e3e7ec;border-radius:var(--radius);
-  overflow:hidden;cursor:pointer;transition:.15s;display:flex;flex-direction:column}
+  overflow:hidden;cursor:pointer;transition:.15s;display:flex;flex-direction:column;position:relative}
 .card:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(21,101,192,.14);transform:translateY(-2px)}
 .thumb{position:relative;width:100%;aspect-ratio:16/9;background:#263238;overflow:hidden}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -65,17 +86,25 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card-nhom{font-size:.64rem;font-weight:800;color:var(--accent);text-transform:uppercase;
   letter-spacing:.04em;margin-top:auto;padding-top:5px}
+.card-tools{position:absolute;top:6px;left:6px;display:none;gap:5px;z-index:5}
+.card.admin .card-tools{display:flex}
+.card-tools button{width:30px;height:30px;border:none;border-radius:7px;cursor:pointer;
+  font-size:.82rem;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.94);box-shadow:0 1px 5px rgba(0,0,0,.3)}
+.card-tools .bt-xoa{color:var(--ng)}
 
 .empty{text-align:center;color:#90a4ae;padding:50px 20px;font-size:.88rem;line-height:1.6}
 
-/* ── TRÌNH PHÁT ── */
+/* ── TRÌNH PHÁT + FORM ── */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:400;
   opacity:0;pointer-events:none;transition:opacity .2s}
 .ov.show{opacity:1;pointer-events:all}
-.player{position:fixed;z-index:410;top:50%;left:50%;transform:translate(-50%,-50%) scale(.97);
-  width:min(900px,95vw);background:#fff;border-radius:14px;overflow:hidden;
+.player,.form{position:fixed;z-index:410;top:50%;left:50%;transform:translate(-50%,-50%) scale(.97);
+  background:#fff;border-radius:14px;overflow:hidden;
   opacity:0;pointer-events:none;transition:.2s;display:flex;flex-direction:column;max-height:94vh}
-.player.show{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+.player{width:min(900px,95vw)}
+.form{width:min(480px,94vw)}
+.player.show,.form.show{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
 .pl-head{padding:11px 14px;background:linear-gradient(135deg,var(--accent-d),var(--accent));
   color:#fff;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .pl-head h3{font-size:.95rem;font-weight:800;line-height:1.3}
@@ -88,44 +117,88 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   border:1.5px solid var(--accent);padding:5px 11px;border-radius:8px;white-space:nowrap}
 .pl-foot a:hover{background:var(--accent-l)}
 
+/* ── FORM THÊM/SỬA ── */
+.fm-body{padding:14px 16px;overflow-y:auto;flex:1}
+.fm-lbl{font-size:.7rem;font-weight:800;color:#666;text-transform:uppercase;
+  letter-spacing:.05em;margin:12px 0 5px}
+.fm-lbl:first-child{margin-top:0}
+.fm-lbl .sao{color:var(--ng)}
+.fm-in{width:100%;border:1.5px solid #ccc;border-radius:8px;padding:9px 11px;
+  font-size:16px;font-family:inherit;outline:none}
+.fm-in:focus{border-color:var(--accent)}
+.fm-hint{font-size:.66rem;color:#90a4ae;margin-top:4px;line-height:1.4}
+.fm-hint.loi{color:var(--ng);font-weight:700}
+.fm-hint.ok{color:#2e7d32;font-weight:700}
+.fm-row{display:flex;gap:9px}
+.fm-row>div{flex:1}
+.fm-foot{padding:11px 16px;border-top:1px solid #eee;display:flex;gap:8px}
+.fm-foot button{flex:1;height:40px;border:none;border-radius:9px;cursor:pointer;
+  font-size:.85rem;font-weight:700;font-family:inherit}
+.fm-foot .huy{background:#fff;border:1.5px solid #ccc;color:#555}
+.fm-foot .luu{background:#2e7d32;color:#fff}
+.fm-foot button:disabled{opacity:.55;cursor:not-allowed}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:700;
+  background:#1b5e20;color:#fff;padding:10px 20px;border-radius:24px;
+  font-size:.82rem;font-weight:700;display:none;box-shadow:0 4px 14px rgba(0,0,0,.28);
+  max-width:92vw;text-align:center}
+.toast.show{display:block}
+.toast.err{background:#b71c1c}
+
 /* ── ĐIỆN THOẠI ── */
 @media(max-width:680px){
   .wrap{padding:12px 10px 40px}
   .grid{grid-template-columns:1fr 1fr;gap:9px}
   .card-ten{font-size:.78rem}
-  .card-mo{font-size:.67rem;-webkit-line-clamp:2}
+  .card-mo{font-size:.67rem}
   .card-nhom{font-size:.6rem}
   .play span{width:38px;height:38px;font-size:.9rem}
   .ctrl{padding:8px 10px}
-  .player{top:auto;bottom:0;left:0;transform:translateY(100%);width:100%;
+  .player,.form{top:auto;bottom:0;left:0;transform:translateY(100%);width:100%;
     max-height:96vh;border-radius:16px 16px 0 0}
-  .player.show{transform:translateY(0)}
+  .player.show,.form.show{transform:translateY(0)}
   .pl-foot a{margin-left:0;width:100%;text-align:center}
+  .admin-bar .ab-add{margin-left:0;width:100%}
 }
-/* Chỉ về 1 cột ở máy rất hẹp; 375px (iPhone phổ biến) vẫn giữ 2 cột
-   để mỗi màn hình thấy được nhiều video hơn khi danh sách dài */
+/* Chỉ về 1 cột ở máy rất hẹp; 375px (iPhone phổ biến) vẫn giữ 2 cột */
 @media(max-width:330px){ .grid{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="font-size:.9rem;opacity:.85">Đang tải...</div>
+</div>
 
 <div class="hdr">
   <div class="hdr-left">
     <h1>🎬 Video Hướng Dẫn</h1>
     <div class="sub" id="sub"></div>
   </div>
-  <a href="index.html" class="btn-back">← Lịch Ca</a>
+  <div class="hdr-right">
+    <button class="btn-key" id="btnKey" onclick="moKhoa()" title="Thêm/sửa video">🔑</button>
+    <a href="index.html" class="btn-back">← Lịch Ca</a>
+  </div>
+</div>
+
+<div class="admin-bar" id="adminBar">
+  ⚙️ Đang ở chế độ quản lý
+  <button class="ab-add" onclick="moForm(null)">➕ Thêm video</button>
+  <button class="ab-off" onclick="khoaLai()">✕ Thoát</button>
 </div>
 
 <div class="ctrl">
-  <input type="text" class="search" id="q" placeholder="🔍 Tìm theo tên video, mã máy, nội dung..."
+  <input type="text" class="search" id="q" placeholder="🔍 Tìm theo tên video, thư mục, nội dung..."
          autocomplete="off" data-clear-on-load oninput="render()">
   <div class="chips" id="chips"></div>
 </div>
 
 <div class="wrap"><div id="ds"></div></div>
 
-<div class="ov" id="ov" onclick="dong()"></div>
+<div class="ov" id="ov" onclick="dongTatCa()"></div>
+
+<!-- TRÌNH PHÁT -->
 <div class="player" id="player">
   <div class="pl-head">
     <div><h3 id="plTen">—</h3><div class="pl-sub" id="plNhom"></div></div>
@@ -138,46 +211,92 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   </div>
 </div>
 
-<script>
-// ═══════════════════════════════════════════════════════════════
-// DANH SÁCH VIDEO
-// ═══════════════════════════════════════════════════════════════
-// CÁCH THÊM VIDEO:
-//
-// 1) Tải video lên Google Drive.
-//
-// 2) Bấm chuột phải vào video -> Chia sẻ -> đổi "Bị hạn chế" thành
-//    "Bất kỳ ai có đường liên kết". BẮT BUỘC, nếu không nhân viên mở ra
-//    chỉ thấy màn hình đòi đăng nhập Google.
-//
-// 3) Copy đường liên kết, dạng:
-//      https://drive.google.com/file/d/1AbC...XyZ/view?usp=sharing
-//                                      └──────────┘
-//    Đoạn giữa /d/ và /view chính là id. Dán vào ô id bên dưới.
-//
-// 4) Thêm một dòng vào danh sách, theo mẫu:
-//      { id:'1AbC...XyZ', ten:'Tên video', nhom:'Nhóm', mota:'Mô tả ngắn', thoiluong:'3:20' },
-//    Trong đó nhom dùng để gom nhóm và lọc; thoiluong có thể bỏ trống ''.
-//
-// Muốn đổi thứ tự hiển thị thì đổi thứ tự dòng trong danh sách này.
-// ═══════════════════════════════════════════════════════════════
-const VIDEOS = [
-  { id:'1x8xihpv8zu4nKyWNX8KIdxA-cRzF8cqb',
-    ten:'Hướng dẫn sử dụng tem trạng thái',
-    nhom:'Hướng dẫn công việc',
-    mota:'', thoiluong:'' },
-];
+<!-- FORM THÊM / SỬA -->
+<div class="form" id="form">
+  <div class="pl-head">
+    <div><h3 id="fmTitle">Thêm video</h3><div class="pl-sub">Dán link Drive, điền tên và thư mục</div></div>
+    <button class="pl-close" onclick="dongForm()">✕</button>
+  </div>
+  <div class="fm-body">
+    <div class="fm-lbl">Link Google Drive <span class="sao">*</span></div>
+    <input type="text" class="fm-in" id="fmLink" placeholder="https://drive.google.com/file/d/..." oninput="soatLink()">
+    <div class="fm-hint" id="fmLinkHint">Nhớ đổi quyền chia sẻ video thành "Bất kỳ ai có đường liên kết", nếu không nhân viên mở ra sẽ bị đòi đăng nhập.</div>
 
-// ═══════════════════════════════════════════════════════════════
+    <div class="fm-lbl">Tên video <span class="sao">*</span></div>
+    <input type="text" class="fm-in" id="fmTen" placeholder="Vd: Hướng dẫn thay dao máy tiện">
+
+    <div class="fm-lbl">Thư mục <span class="sao">*</span></div>
+    <input type="text" class="fm-in" id="fmNhom" list="dsNhom" placeholder="Vd: Hướng dẫn công việc">
+    <datalist id="dsNhom"></datalist>
+    <div class="fm-hint">Gõ trùng tên thư mục đã có thì video vào chung nhóm. Lệch một chữ là thành thư mục mới.</div>
+
+    <div class="fm-row">
+      <div>
+        <div class="fm-lbl">Mô tả</div>
+        <input type="text" class="fm-in" id="fmMota" placeholder="Không bắt buộc">
+      </div>
+      <div style="flex:0 0 110px">
+        <div class="fm-lbl">Thời lượng</div>
+        <input type="text" class="fm-in" id="fmThoiLuong" placeholder="3:20">
+      </div>
+    </div>
+  </div>
+  <div class="fm-foot">
+    <button class="huy" onclick="dongForm()">Huỷ</button>
+    <button class="luu" id="fmLuu" onclick="luuVideo()">💾 Lưu</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL='https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const SB_OK=SB_URL.startsWith('https://')&&!SB_URL.includes('PASTE');
+const sb=SB_OK?supabase.createClient(SB_URL,SB_KEY):null;
+
+const TABLE='huong_dan_videos';
+
+let VIDEOS = [];
+let nhomDangChon = '';
+let quanLy = false;      // đã mở khoá bằng mật khẩu chưa
+let dangSua = null;      // bản ghi đang sửa; null = thêm mới
+
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// Drive: link nhúng và link ảnh đại diện đều dựng từ id
 const linkNhung = id => `https://drive.google.com/file/d/${id}/preview`;
 const linkMo    = id => `https://drive.google.com/file/d/${id}/view`;
 const linkAnh   = id => `https://drive.google.com/thumbnail?id=${id}&sz=w480`;
 
-let nhomDangChon = '';
+// Tách id từ link Drive. Nhận các dạng link Drive hay gặp, và cả khi
+// người dùng dán thẳng id.
+function tachId(s){
+  s = (s || '').trim();
+  if(!s) return '';
+  const m = s.match(/\/file\/d\/([A-Za-z0-9_-]{20,})/)   // .../file/d/<id>/view
+         || s.match(/[?&]id=([A-Za-z0-9_-]{20,})/)       // ...open?id=<id>
+         || s.match(/\/d\/([A-Za-z0-9_-]{20,})/);        // dạng khác
+  if(m) return m[1];
+  if(/^[A-Za-z0-9_-]{20,}$/.test(s)) return s;           // dán thẳng id
+  return '';
+}
+
+// ══════════════════════════════════════════════
+// DỮ LIỆU
+// ══════════════════════════════════════════════
+async function tai(){
+  if(!SB_OK) return;
+  try{
+    const {data,error} = await sb.from(TABLE).select('*').order('nhom').order('sort_order').order('id');
+    if(error) throw error;
+    VIDEOS = data || [];
+  }catch(e){
+    console.warn(e);
+    toast('Lỗi tải danh sách video: ' + e.message, true);
+  }
+}
 
 function cacNhom(){
   const m = new Map();
@@ -187,7 +306,6 @@ function cacNhom(){
 
 function veChips(){
   const box = document.getElementById('chips');
-  const nhom = cacNhom();
   box.innerHTML = '';
   const them = (ten, nhan, so) => {
     const b = document.createElement('button');
@@ -197,7 +315,10 @@ function veChips(){
     box.appendChild(b);
   };
   them('', 'Tất cả', VIDEOS.length);
-  nhom.forEach(([ten, so]) => them(ten, ten, so));
+  cacNhom().forEach(([ten, so]) => them(ten, ten, so));
+  // gợi ý thư mục cho ô nhập trong form
+  document.getElementById('dsNhom').innerHTML =
+    cacNhom().map(([t]) => `<option value="${esc(t)}">`).join('');
 }
 
 function render(){
@@ -210,17 +331,16 @@ function render(){
   });
 
   document.getElementById('sub').textContent =
-    `${VIDEOS.length} video · ${cacNhom().length} nhóm`;
+    `${VIDEOS.length} video · ${cacNhom().length} thư mục`;
 
   const ds = document.getElementById('ds');
   if(!loc.length){
     ds.innerHTML = VIDEOS.length
       ? '<div class="empty">Không tìm thấy video nào khớp.</div>'
-      : '<div class="empty">Chưa có video nào.<br>Xem hướng dẫn thêm video ở đầu phần mã nguồn của trang.</div>';
+      : '<div class="empty">Chưa có video nào.<br>Bấm 🔑 ở góc trên, nhập mật khẩu rồi bấm "Thêm video".</div>';
     return;
   }
 
-  // gom theo nhóm, giữ nguyên thứ tự trong danh sách
   const theoNhom = new Map();
   loc.forEach(v => {
     const n = v.nhom || 'Khác';
@@ -232,11 +352,14 @@ function render(){
   theoNhom.forEach((list, nhom) => {
     h += `<div class="grp-lbl">${esc(nhom)} · ${list.length}</div><div class="grid">`;
     list.forEach(v => {
-      const i = VIDEOS.indexOf(v);
-      const anh = v.id
-        ? `<img src="${linkAnh(v.id)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      const anh = v.drive_id
+        ? `<img src="${linkAnh(v.drive_id)}" alt="" loading="lazy" onerror="this.style.display='none'">`
         : `<div class="noimg">🎬</div>`;
-      h += `<div class="card" onclick="mo(${i})">
+      h += `<div class="card${quanLy ? ' admin' : ''}" onclick="mo(${v.id})">
+        <div class="card-tools">
+          <button title="Sửa" onclick="event.stopPropagation();moForm(${v.id})">✏️</button>
+          <button class="bt-xoa" title="Xoá" onclick="event.stopPropagation();xoaVideo(${v.id})">🗑</button>
+        </div>
         <div class="thumb">${anh}
           <div class="play"><span>▶</span></div>
           ${v.thoiluong ? `<div class="dur">${esc(v.thoiluong)}</div>` : ''}
@@ -253,29 +376,158 @@ function render(){
   ds.innerHTML = h;
 }
 
-function mo(i){
-  const v = VIDEOS[i];
-  if(!v.id){
-    alert('Video này chưa gắn link Google Drive.\n\nXem hướng dẫn thêm video ở đầu phần mã nguồn của trang.');
-    return;
-  }
+// ══════════════════════════════════════════════
+// TRÌNH PHÁT
+// ══════════════════════════════════════════════
+function mo(id){
+  const v = VIDEOS.find(x => x.id === id);
+  if(!v) return;
+  if(!v.drive_id){ toast('Video này chưa có link Drive', true); return; }
   document.getElementById('plTen').textContent  = v.ten;
   document.getElementById('plNhom').textContent = (v.nhom || 'Khác') + (v.thoiluong ? ' · ' + v.thoiluong : '');
   document.getElementById('plMo').textContent   = v.mota || '';
-  document.getElementById('plDrive').href       = linkMo(v.id);
-  document.getElementById('plFrame').src        = linkNhung(v.id);
+  document.getElementById('plDrive').href       = linkMo(v.drive_id);
+  document.getElementById('plFrame').src        = linkNhung(v.drive_id);
   document.getElementById('ov').classList.add('show');
   document.getElementById('player').classList.add('show');
 }
 
 function dong(){
   document.getElementById('player').classList.remove('show');
-  document.getElementById('ov').classList.remove('show');
+  if(!document.getElementById('form').classList.contains('show'))
+    document.getElementById('ov').classList.remove('show');
   // gỡ src để video ngừng phát, không thì tiếng vẫn chạy sau khi đóng
   document.getElementById('plFrame').src = '';
 }
 
-addEventListener('keydown', e => { if(e.key === 'Escape') dong(); });
+function dongTatCa(){ dong(); dongForm(); }
+
+// ══════════════════════════════════════════════
+// QUẢN LÝ
+// ══════════════════════════════════════════════
+// Dùng lại hàm kiểm mật khẩu sẵn có trên Supabase - cùng mật khẩu với nút
+// sửa sơ đồ bên Nhân Sự Ca. Nhờ vậy mật khẩu KHÔNG nằm trong mã nguồn
+// trang; nhúng thẳng vào đây thì ai xem mã nguồn cũng đọc được.
+async function moKhoa(){
+  if(quanLy){ khoaLai(); return; }
+  const pw = prompt('Nhập mật khẩu quản trị để thêm/sửa video:');
+  if(pw === null) return;
+  if(!SB_OK){ toast('Chưa kết nối Supabase', true); return; }
+  try{
+    const {data,error} = await sb.rpc('check_app_password', {pw});
+    if(error) throw error;
+    if(data !== true){ toast('Sai mật khẩu', true); return; }
+  }catch(e){ toast('Lỗi kiểm tra mật khẩu: ' + e.message, true); return; }
+  quanLy = true;
+  document.getElementById('btnKey').classList.add('on');
+  document.getElementById('adminBar').classList.add('show');
+  render();
+  toast('✅ Đã mở chế độ quản lý');
+}
+
+function khoaLai(){
+  quanLy = false;
+  document.getElementById('btnKey').classList.remove('on');
+  document.getElementById('adminBar').classList.remove('show');
+  render();
+}
+
+// Soát link ngay khi gõ, báo nhận diện được hay chưa - đỡ phải bấm Lưu
+// mới biết link sai
+function soatLink(){
+  const v  = document.getElementById('fmLink').value.trim();
+  const id = tachId(v);
+  const h  = document.getElementById('fmLinkHint');
+  if(!v){
+    h.className = 'fm-hint';
+    h.textContent = 'Nhớ đổi quyền chia sẻ video thành "Bất kỳ ai có đường liên kết", nếu không nhân viên mở ra sẽ bị đòi đăng nhập.';
+  }else if(id){
+    h.className = 'fm-hint ok';
+    h.textContent = '✓ Nhận diện được video · id: ' + id;
+  }else{
+    h.className = 'fm-hint loi';
+    h.textContent = 'Chưa nhận ra link Drive. Link phải có dạng https://drive.google.com/file/d/…/view';
+  }
+  return id;
+}
+
+function moForm(id){
+  dangSua = id ? VIDEOS.find(v => v.id === id) : null;
+  document.getElementById('fmTitle').textContent = dangSua ? 'Sửa video' : 'Thêm video';
+  document.getElementById('fmLink').value      = dangSua ? linkMo(dangSua.drive_id) : '';
+  document.getElementById('fmTen').value       = dangSua ? dangSua.ten : '';
+  document.getElementById('fmNhom').value      = dangSua ? dangSua.nhom : '';
+  document.getElementById('fmMota').value      = dangSua ? (dangSua.mota || '') : '';
+  document.getElementById('fmThoiLuong').value = dangSua ? (dangSua.thoiluong || '') : '';
+  soatLink();
+  document.getElementById('ov').classList.add('show');
+  document.getElementById('form').classList.add('show');
+}
+
+function dongForm(){
+  document.getElementById('form').classList.remove('show');
+  if(!document.getElementById('player').classList.contains('show'))
+    document.getElementById('ov').classList.remove('show');
+  dangSua = null;
+}
+
+async function luuVideo(){
+  const drive_id  = tachId(document.getElementById('fmLink').value);
+  const ten       = document.getElementById('fmTen').value.trim();
+  const nhom      = document.getElementById('fmNhom').value.trim();
+  const mota      = document.getElementById('fmMota').value.trim();
+  const thoiluong = document.getElementById('fmThoiLuong').value.trim();
+
+  if(!drive_id){ soatLink(); toast('Link Drive chưa đúng', true); document.getElementById('fmLink').focus(); return; }
+  if(!ten){  toast('Chưa nhập tên video', true); document.getElementById('fmTen').focus();  return; }
+  if(!nhom){ toast('Chưa nhập thư mục', true);   document.getElementById('fmNhom').focus(); return; }
+
+  const btn = document.getElementById('fmLuu');
+  btn.disabled = true; btn.textContent = '⏳ Đang lưu...';
+  try{
+    const row = {drive_id, ten, nhom, mota, thoiluong};
+    let error;
+    if(dangSua){
+      ({error} = await sb.from(TABLE).update(row).eq('id', dangSua.id));
+    }else{
+      // xếp xuống cuối thư mục của nó
+      const cuoi = VIDEOS.filter(v => (v.nhom || 'Khác') === nhom)
+                         .reduce((m, v) => Math.max(m, v.sort_order || 0), -1);
+      ({error} = await sb.from(TABLE).insert({...row, sort_order: cuoi + 1}));
+    }
+    if(error) throw error;
+    const themMoi = !dangSua;
+    await tai(); dongForm(); render();
+    toast(themMoi ? '✅ Đã thêm video' : '✅ Đã sửa');
+  }catch(e){ console.warn(e); toast('Lỗi lưu: ' + e.message, true); }
+  btn.disabled = false; btn.textContent = '💾 Lưu';
+}
+
+async function xoaVideo(id){
+  const v = VIDEOS.find(x => x.id === id);
+  if(!v) return;
+  if(!confirm('Xoá video "' + v.ten + '" khỏi danh sách?\n\nFile trên Google Drive KHÔNG bị xoá.')) return;
+  try{
+    const {error} = await sb.from(TABLE).delete().eq('id', id);
+    if(error) throw error;
+    await tai(); render();
+    toast('Đã xoá khỏi danh sách');
+  }catch(e){ toast('Lỗi xoá: ' + e.message, true); }
+}
+
+// ══════════════════════════════════════════════
+// LẶT VẶT
+// ══════════════════════════════════════════════
+let toastTimer;
+function toast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), isErr ? 5000 : 2200);
+}
+
+addEventListener('keydown', e => { if(e.key === 'Escape') dongTatCa(); });
 
 // Ô tìm kiếm luôn trống khi tải trang (xem ghi chú ở nhansu-ca.html)
 function clearSearchBoxes(){
@@ -295,7 +547,11 @@ clearSearchBoxes();
 addEventListener('DOMContentLoaded', clearSearchBoxes);
 addEventListener('pageshow', clearSearchBoxes);
 
-render();
+(async () => {
+  try{ await tai(); render(); }
+  catch(e){ console.error(e); toast('Lỗi khởi động: ' + e.message, true); }
+  finally{ document.getElementById('loadingOverlay').classList.add('hide'); }
+})();
 </script>
 </body>
 </html>
