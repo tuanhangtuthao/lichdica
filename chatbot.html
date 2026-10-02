@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://xtutpuwesganunktrxcv.supabase.co" crossorigin>
+<title>Trợ Lý Phân Xưởng 1</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;line-height:1.5;
+  display:flex;flex-direction:column}
+
+.hdr{background:linear-gradient(135deg,#1a237e,#4a148c);color:#fff;padding:12px 16px;
+  display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hdr .back{color:#fff;text-decoration:none;font-size:1.3rem;line-height:1;opacity:.85}
+.hdr-body{flex:1;min-width:0}
+.hdr h1{font-size:1.05rem;line-height:1.2}
+.hdr p{font-size:.72rem;opacity:.85}
+.hdr .who{background:rgba(255,255,255,.18);border:none;color:#fff;font-family:inherit;
+  font-size:.72rem;font-weight:700;padding:6px 11px;border-radius:20px;cursor:pointer;
+  white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+
+.wrap{flex:1;display:flex;flex-direction:column;max-width:620px;width:100%;margin:0 auto;
+  min-height:0}
+
+.log{flex:1;overflow-y:auto;padding:14px 12px 4px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:10px 13px;border-radius:14px;font-size:.88rem;white-space:pre-wrap;
+  word-wrap:break-word;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.msg.bot{background:#fff;align-self:flex-start;border-bottom-left-radius:4px}
+.msg.me{background:#1a237e;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.sys{align-self:center;background:#fff8e1;color:#8d6e00;font-size:.76rem;max-width:95%;
+  text-align:center;border-radius:10px}
+.msg b{color:#1a237e}
+.msg.me b{color:#fff}
+.msg table{border-collapse:collapse;margin-top:6px;font-size:.82rem;width:100%}
+.msg td{padding:3px 6px;border-bottom:1px dashed #eee}
+.msg td:first-child{color:#666;white-space:nowrap}
+.msg .chip{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.76rem;font-weight:700}
+.chS{background:#fff3e0;color:#e65100}.chC{background:#e8eaf6;color:#283593}
+.chN{background:#f3e5f5;color:#6a1b9a}.chL{background:#ffebee;color:#b71c1c}
+.chHC{background:#e0f2f1;color:#00695c}.chNP{background:#e1f5fe;color:#0277bd}
+.chVM{background:#ffcdd2;color:#b71c1c}.chUN{background:#f5f5f5;color:#999}
+.chC1{background:#b2dfdb;color:#00695c}.chC2{background:#ffe082;color:#e65100}
+.chC3{background:#ce93d8;color:#4a148c}
+
+.typing{align-self:flex-start;background:#fff;padding:12px 16px;border-radius:14px;
+  border-bottom-left-radius:4px;display:flex;gap:4px}
+.typing i{width:6px;height:6px;border-radius:50%;background:#bbb;animation:bl 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+.chips{display:flex;gap:6px;padding:8px 12px 4px;overflow-x:auto;flex-shrink:0}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex-shrink:0;background:#fff;border:1.5px solid #c5cae9;color:#1a237e;
+  font-family:inherit;font-size:.76rem;font-weight:600;padding:7px 13px;border-radius:20px;
+  cursor:pointer;white-space:nowrap}
+.chips button:hover{background:#e8eaf6}
+
+.bar{display:flex;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid #e0e0e0;
+  flex-shrink:0}
+.bar input{flex:1;padding:11px 14px;border:2px solid #e0e0e0;border-radius:22px;
+  font-size:.92rem;font-family:inherit;outline:none}
+.bar input:focus{border-color:#1a237e}
+.bar button{width:44px;height:44px;border-radius:50%;background:#1a237e;color:#fff;border:none;
+  font-size:1.1rem;cursor:pointer;flex-shrink:0}
+.bar button:disabled{background:#c5cae9;cursor:default}
+
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;
+  justify-content:center;z-index:300;padding:16px}
+.ovl.on{display:flex}
+.box{background:#fff;border-radius:16px;padding:18px;max-width:320px;width:100%}
+.box h3{font-size:1rem;color:#1a237e;margin-bottom:4px}
+.box p{font-size:.78rem;color:#777;margin-bottom:12px}
+.box input{width:100%;padding:12px;border:2px solid #c5cae9;border-radius:12px;font-size:1.05rem;
+  text-align:center;font-weight:700;letter-spacing:2px;outline:none;font-family:inherit}
+.box input:focus{border-color:#1a237e}
+.box .row{display:flex;gap:8px;margin-top:12px}
+.box .row button{flex:1;padding:11px;border:none;border-radius:12px;font-family:inherit;
+  font-size:.88rem;font-weight:700;cursor:pointer}
+.box .ok{background:#1a237e;color:#fff}
+.box .skip{background:#eceff1;color:#555}
+.box .err{color:#c62828;font-size:.78rem;margin-top:8px;text-align:center;display:none}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a href="index.html" class="back" title="Về trang lịch ca">‹</a>
+  <div class="hdr-body">
+    <h1>🤖 Trợ Lý Phân Xưởng 1</h1>
+    <p>Hỏi về lịch ca, tăng ca, nghỉ phép, đánh giá</p>
+  </div>
+  <button class="who" id="whoBtn" onclick="openWho()">Nhập MSNV</button>
+</div>
+
+<div class="wrap">
+  <div class="log" id="log"></div>
+  <div class="chips" id="chips"></div>
+  <div class="bar">
+    <input type="text" id="q" placeholder="Hỏi gì đó... vd: mai tôi làm ca gì"
+           autocomplete="off" onkeydown="if(event.key==='Enter')send()">
+    <button id="sendBtn" onclick="send()">➤</button>
+  </div>
+</div>
+
+<div class="ovl" id="whoOvl" onclick="if(event.target===this)closeWho()">
+  <div class="box">
+    <h3>Bạn là ai?</h3>
+    <p>Nhập MSNV để tôi tra được lịch ca, tăng ca và đánh giá của riêng bạn.</p>
+    <input type="text" id="whoInput" placeholder="MSNV" inputmode="numeric"
+           onkeydown="if(event.key==='Enter')saveWho()">
+    <div class="err" id="whoErr"></div>
+    <div class="row">
+      <button class="skip" onclick="closeWho()">Để sau</button>
+      <button class="ok" onclick="saveWho()">Xong</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="5s-tieu-chi.js"></script>
+<script>
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ── TÍNH CA (đồng bộ với index.html) ─────────
+const CYCLE = ['S','S','S','S','N','N','C','C','C','C','N','N'];
+const REF   = new Date(2026, 3, 12);
+const PHASE = {1:3, 2:11, 3:7};
+
+// ── ĐÈ LỊCH TẠM THỜI THÁNG 9 + 10/2026 ─────
+// Hai tháng này là giai đoạn chuyển tiếp sang chu kỳ 28 ngày nên KHÔNG theo
+// quy tắc chu kỳ 12 ngày ở trên. Nguồn:
+//   T9 : Lich_ca_3_team_tu_24-08_den_30-11_2026.xlsx
+//   T10: Lich_ca_thang_10_2026_2_phuong_an_ca_lien_mach.xlsx (sheet "PA1 - Giữ ngày nghỉ")
+// Mỗi ngày: [Kíp 1, Kíp 2, Kíp 3] — quy đổi từ file: D(Đêm)->C (Chiều 18h-6h),
+// N(Ngày)->S (Sáng 6h-18h), OFF->N (Nghỉ), C1 giữ nguyên (Ca 1, 6h-14h); 01+02/09 -> L (Nghỉ Lễ)
+const SCHED_OVR = {
+  // ── tháng 9/2026 ──
+  '2026-09-01':['L','L','L'], // T3 01/09
+  '2026-09-02':['L','L','L'], // T4 02/09
+  '2026-09-03':['C','N','S'], // T5 03/09
+  '2026-09-04':['N','C','S'], // T6 04/09
+  '2026-09-05':['N','C','S'], // T7 05/09
+  '2026-09-06':['N','N','N'], // CN 06/09
+  '2026-09-07':['C','N','S'], // T2 07/09
+  '2026-09-08':['C','S','N'], // T3 08/09
+  '2026-09-09':['C','S','N'], // T4 09/09
+  '2026-09-10':['C','S','N'], // T5 10/09
+  '2026-09-11':['N','S','C'], // T6 11/09
+  '2026-09-12':['N','S','C'], // T7 12/09
+  '2026-09-13':['N','N','C'], // CN 13/09
+  '2026-09-14':['S','N','C'], // T2 14/09
+  '2026-09-15':['S','N','C'], // T3 15/09
+  '2026-09-16':['S','C','N'], // T4 16/09
+  '2026-09-17':['S','C','N'], // T5 17/09
+  '2026-09-18':['N','C','S'], // T6 18/09
+  '2026-09-19':['N','N','S'], // T7 19/09
+  '2026-09-20':['N','N','S'], // CN 20/09
+  '2026-09-21':['C','N','S'], // T2 21/09
+  '2026-09-22':['C','S','N'], // T3 22/09
+  '2026-09-23':['C','S','N'], // T4 23/09
+  '2026-09-24':['C','S','N'], // T5 24/09
+  '2026-09-25':['N','S','C'], // T6 25/09
+  '2026-09-26':['N','S','C'], // T7 26/09
+  '2026-09-27':['N','N','N'], // CN 27/09
+  '2026-09-28':['S','N','C'], // T2 28/09
+  '2026-09-29':['S','C','N'], // T3 29/09
+  '2026-09-30':['S','C','N'], // T4 30/09
+  // ── tháng 10/2026 ──
+  '2026-10-01':['N','C','S'], // T5 01/10
+  '2026-10-02':['S','C','N'], // T6 02/10
+  '2026-10-03':['S','C','N'], // T7 03/10
+  '2026-10-04':['N','N','N'], // CN 04/10
+  '2026-10-05':['S','N','C'], // T2 05/10
+  '2026-10-06':['S','N','C'], // T3 06/10
+  '2026-10-07':['N','S','C'], // T4 07/10
+  '2026-10-08':['N','S','C'], // T5 08/10
+  '2026-10-09':['C','S','N'], // T6 09/10
+  '2026-10-10':['C','S','N'], // T7 10/10
+  '2026-10-11':['N','N','N'], // CN 11/10
+  '2026-10-12':['N','C','S'], // T2 12/10
+  '2026-10-13':['N','C','S'], // T3 13/10
+  '2026-10-14':['N','C','S'], // T4 14/10
+  '2026-10-15':['S','C','N'], // T5 15/10
+  '2026-10-16':['S','C','N'], // T6 16/10
+  '2026-10-17':['N','N','N'], // T7 17/10
+  '2026-10-18':['N','N','C'], // CN 18/10
+  '2026-10-19':['S','N','C'], // T2 19/10
+  '2026-10-20':['S','N','C'], // T3 20/10
+  '2026-10-21':['N','S','C'], // T4 21/10
+  '2026-10-22':['N','S','C'], // T5 22/10
+  '2026-10-23':['C','S','N'], // T6 23/10
+  '2026-10-24':['C','S','N'], // T7 24/10
+  '2026-10-25':['N','S','N'], // CN 25/10
+  '2026-10-26':['C','N','S'], // T2 26/10
+  '2026-10-27':['C','N','S'], // T3 27/10
+  '2026-10-28':['C','N','S'], // T4 28/10
+  '2026-10-29':['C','N','S'], // T5 29/10
+  '2026-10-30':['C','N','S'], // T6 30/10
+  '2026-10-31':['C','S','N'], // T7 31/10
+};
+function ovrKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+// Từ 01/10/2026 chưa chốt lịch (chờ thông tin chính thức) -> hiện "UN" (chưa có lịch)
+// thay vì đoán theo chu kỳ 12 ngày cũ. Khi có lịch: nối ngày vào SCHED_OVR ở trên
+// rồi đẩy mốc này lên, hoặc bỏ hẳn nếu đã đổi CYCLE/REF sang chu kỳ mới.
+const SCHED_UNKNOWN_FROM = '2026-11-01';
+
+function getShift(k, d){
+  const _ov = SCHED_OVR[ovrKey(d)];
+  if (_ov && _ov[k-1]) return _ov[k-1];
+  if (ovrKey(d) >= SCHED_UNKNOWN_FROM) return 'UN';
+  const len=CYCLE.length;
+  const d0=new Date(d); d0.setHours(0,0,0,0);
+  const n=Math.round((d0-REF)/864e5);
+  return CYCLE[((n+PHASE[k])%len+len)%len];
+}
+
+// ⚠ KHỐI TÍNH CA Ở TRÊN LÀ BẢN SAO THỨ 6 (index, rating, nhansu-ca, tra-cuu,
+// dashboard, chatbot). Đổi lịch ca là phải sửa cả 6 file. Nên tách ra một file
+// dùng chung kiểu 5s-tieu-chi.js - xem ghi chú cuối file này.
+
+const SLBL  = {S:'☀️ Ca Sáng',C:'🌙 Ca Chiều',N:'🏠 Nghỉ',L:'🎌 Nghỉ Lễ',HC:'🏢 Hành Chính',
+               NP:'🏖️ Nghỉ Phép',VM:'🔴 Vắng Mặt',UN:'– Chưa có lịch',C1:'① Ca 1 (6h-14h)',
+               C2:'② Ca 2',C3:'③ Ca 3'};
+const SHORT = {S:'Ca Sáng',C:'Ca Chiều',N:'Nghỉ',L:'Nghỉ Lễ',HC:'Hành Chính',NP:'Nghỉ Phép',
+               VM:'Vắng Mặt',UN:'chưa có lịch',C1:'Ca 1',C2:'Ca 2',C3:'Ca 3'};
+const GRP_LABEL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',4:'HC / Ca Xoay'};
+const DFUL = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+const WORK  = s => s!=='N' && s!=='L' && s!=='NP' && s!=='VM' && s!=='UN';
+
+function dKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function mKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function today(){const t=new Date();t.setHours(0,0,0,0);return t;}
+function addD(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function fmtD(d){return `${d.getDate()}/${d.getMonth()+1}`;}
+function fmtDay(d){
+  const t=today(), diff=Math.round((d-t)/864e5);
+  if(diff===0) return 'Hôm nay '+fmtD(d);
+  if(diff===1) return 'Ngày mai '+fmtD(d);
+  if(diff===-1)return 'Hôm qua '+fmtD(d);
+  return DFUL[d.getDay()]+' '+fmtD(d);
+}
+function round1(v){return Math.round(parseFloat(v)*10)/10;}
+function hhmm(h){return h%1===0?h+'h':h.toFixed(1)+'h';}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function chip(s){return `<span class="chip ch${s}">${SLBL[s]||s}</span>`;}
+
+// Bỏ dấu tiếng Việt + chuẩn hoá, để "ca cua toi hom nay" cũng khớp được.
+function norm(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/đ/g,'d').replace(/[^a-z0-9/\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+function empShiftFor(e, d, dk, HOLS, SCHED){
+  if(HOLS.some(h=>h.date===dk)) return 'L';
+  const isSun = d.getDay()===0;
+  const ov = SCHED.filter(s=>s.emp_id===e.id && s.start_date<=dk && dk<=s.end_date);
+  if(ov.length){ ov.sort((a,b)=>b.id-a.id); return ov[0].shift; }
+  if(e.fixed_shift==='HC') return isSun?'N':'HC';
+  if(e.fixed_shift==='S')  return isSun?'N':'S';
+  if(e.fixed_shift==='C')  return isSun?'N':'C';
+  if(e.kip===4) return isSun?'N':'UN';
+  if(e.kip>=1&&e.kip<=3) return getShift(e.kip,d);
+  return 'UN';
+}
+
+function otHours(o){
+  let h=null;
+  if(o.note){ const m=o.note.match(/^([\d.]+)h/); if(m) h=parseFloat(m[1]); }
+  if(!h && o.start_time && o.end_time){
+    const [h1,m1]=o.start_time.split(':').map(Number),[h2,m2]=o.end_time.split(':').map(Number);
+    const diff=((h2*60+m2)-(h1*60+m1))/60; if(diff>0) h=diff;
+  }
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TẦNG 1 - DỮ LIỆU
+// ═══════════════════════════════════════════════════════════════
+const DB = { emps:null, hols:null, sched:null, grade:null, docs:null, ot:{} };
+
+async function loadCore(){
+  if(DB.emps) return;
+  const [er,hr,sr,gr] = await Promise.all([
+    sb.from('employees').select('*').order('kip').order('sort_order'),
+    sb.from('holidays').select('*'),
+    sb.from('emp_schedule').select('*'),
+    sb.from('rating_config').select('*'),
+  ]);
+  if(er.error) throw new Error(er.error.message);
+  DB.emps  = er.data||[];
+  DB.hols  = hr.data||[];
+  DB.sched = sr.data||[];
+  DB.grade = gr.data||[];
+}
+async function loadOt(monthKey){
+  if(DB.ot[monthKey]) return DB.ot[monthKey];
+  const r = await sb.from('overtime').select('*').like('date', monthKey+'-%').order('date');
+  DB.ot[monthKey] = r.data||[];
+  return DB.ot[monthKey];
+}
+async function loadDocs(){
+  if(DB.docs) return DB.docs;
+  const r = await sb.from('huong_dan_videos').select('*').order('nhom').order('sort_order');
+  DB.docs = r.error ? [] : (r.data||[]);
+  return DB.docs;
+}
+function findEmp(id){ return DB.emps.find(e=>String(e.id)===String(id)) || null; }
+function getGrade(score){
+  const s=[...DB.grade].sort((a,b)=>(b.min_score||0)-(a.min_score||0));
+  for(const g of s){ if(score>=(g.min_score||0)) return g.grade; }
+  return 'D';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TẦNG 2 - TOOL
+// Đây chính là danh sách hàm sẽ khai báo cho Claude khi gắn API thật.
+// Mỗi hàm nhận tham số đơn giản, trả về dữ liệu thuần (không HTML).
+// ═══════════════════════════════════════════════════════════════
+const TOOLS = {
+
+  async tra_lich_ca({msnv, tu_ngay, den_ngay}){
+    await loadCore();
+    const e = findEmp(msnv); if(!e) return {loi:'khong_thay_nv'};
+    const out=[];
+    for(let d=new Date(tu_ngay); d<=den_ngay; d=addD(d,1)){
+      const dk=dKey(d);
+      out.push({ngay:dk, thu:DFUL[d.getDay()], ca:empShiftFor(e,d,dk,DB.hols,DB.sched)});
+    }
+    return {nhan_vien:{id:e.id,ten:e.name,kip:e.kip,role:e.role}, ngay:out};
+  },
+
+  async tim_ngay_nghi_toi({msnv, so_ngay=45}){
+    await loadCore();
+    const e = findEmp(msnv); if(!e) return {loi:'khong_thay_nv'};
+    const t=today(), ds=[];
+    for(let i=0;i<so_ngay;i++){
+      const d=addD(t,i), dk=dKey(d), s=empShiftFor(e,d,dk,DB.hols,DB.sched);
+      if(s==='N'||s==='L') ds.push({ngay:dk, thu:DFUL[d.getDay()], ca:s});
+      else if(ds.length) break;
+      if(s==='UN') break;
+    }
+    return {nhan_vien:{ten:e.name}, ngay_nghi:ds};
+  },
+
+  async tra_tang_ca({msnv, thang}){
+    await loadCore();
+    const e = findEmp(msnv); if(!e) return {loi:'khong_thay_nv'};
+    const ots=(await loadOt(thang)).filter(o=>String(o.emp_id)===String(msnv));
+    let tong=0; const ds=ots.map(o=>{const h=otHours(o); if(h)tong+=h;
+      return {ngay:o.date, ca:o.shift, gio:h, ghi_chu:o.note||''};});
+    return {nhan_vien:{ten:e.name}, thang, tong_gio:round1(tong), lan:ds};
+  },
+
+  async tra_nghi_phep({msnv, thang}){
+    await loadCore();
+    const e = findEmp(msnv); if(!e) return {loi:'khong_thay_nv'};
+    const ds=DB.sched.filter(s=>String(s.emp_id)===String(msnv)
+      && (s.shift==='NP'||s.shift==='VM') && s.start_date.startsWith(thang))
+      .map(s=>({tu:s.start_date, den:s.end_date, loai:s.shift}));
+    return {nhan_vien:{ten:e.name}, thang, ds};
+  },
+
+  async tra_danh_gia({msnv, thang}){
+    await loadCore();
+    const e = findEmp(msnv); if(!e) return {loi:'khong_thay_nv'};
+    const [rr,mr] = await Promise.all([
+      sb.from('ratings_new').select('*').eq('emp_id',msnv).like('date',thang+'-%'),
+      sb.from('monthly_reviews').select('*').eq('emp_id',msnv).eq('month_key',thang),
+    ]);
+    const rs=rr.data||[], cnt=rs.length;
+    const base = cnt ? round1(rs.reduce((a,r)=>a+parseFloat(r.score),0)/cnt) : null;
+    const rv=(mr.data||[]).find(r=>r.approved)||{};
+    const diem=(rv.final_score!=null)?parseFloat(rv.final_score):base;
+    return {nhan_vien:{ten:e.name}, thang, so_ngay_cham:cnt, diem,
+            phan_tram: diem!=null?Math.round(diem/10*100):null,
+            hang: rv.grade || (diem!=null?getGrade(diem):null),
+            da_duyet: !!(rv.grade||rv.final_score!=null), ghi_chu: rv.note||''};
+  },
+
+  async tra_thong_tin({msnv}){
+    await loadCore();
+    const e = findEmp(msnv); if(!e) return {loi:'khong_thay_nv'};
+    return {id:e.id, ten:e.name, kip:e.kip, nhom:GRP_LABEL[e.kip],
+            role:e.role||'', ca_co_dinh:e.fixed_shift||null};
+  },
+
+  // ── Tổng hợp cho quản đốc ──
+  async tra_kip_theo_ngay({ngay}){
+    await loadCore();
+    const d=new Date(ngay+'T00:00:00'), dk=ngay;
+    const kips=[1,2,3].map(k=>{
+      const ca=getShift(k,d);
+      const ds=DB.emps.filter(e=>e.kip===k);
+      const di=ds.filter(e=>WORK(empShiftFor(e,d,dk,DB.hols,DB.sched)));
+      return {kip:k, ca, tong:ds.length, di_lam:di.length};
+    });
+    const hc=DB.emps.filter(e=>e.kip===4);
+    const hcDi=hc.filter(e=>WORK(empShiftFor(e,d,dk,DB.hols,DB.sched)));
+    return {ngay:dk, thu:DFUL[d.getDay()], le:(DB.hols.find(h=>h.date===dk)||{}).name||null,
+            kips, hanh_chinh:{tong:hc.length, di_lam:hcDi.length},
+            tong_di_lam: kips.reduce((a,k)=>a+k.di_lam,0)+hcDi.length};
+  },
+
+  async tra_nguoi_vang({ngay}){
+    await loadCore();
+    const d=new Date(ngay+'T00:00:00'), dk=ngay, np=[], vm=[];
+    DB.emps.forEach(e=>{
+      const s=empShiftFor(e,d,dk,DB.hols,DB.sched);
+      if(s==='NP') np.push({ten:e.name, kip:e.kip});
+      if(s==='VM') vm.push({ten:e.name, kip:e.kip});
+    });
+    return {ngay:dk, nghi_phep:np, vang_mat:vm};
+  },
+
+  async xep_hang_tang_ca({thang, top=5}){
+    await loadCore();
+    const ots=await loadOt(thang), m={};
+    ots.forEach(o=>{const h=otHours(o); if(!h)return;
+      m[o.emp_id]=(m[o.emp_id]||0)+h;});
+    const ds=Object.entries(m).map(([id,h])=>{
+      const e=findEmp(id);
+      return {id, ten:e?e.name:('MSNV '+id), kip:e?e.kip:null, gio:round1(h)};
+    }).sort((a,b)=>b.gio-a.gio).slice(0,top);
+    return {thang, top:ds, tong_nguoi:Object.keys(m).length};
+  },
+
+  // ── Quy trình / tài liệu ──
+  async tra_tieu_chi_5s(){
+    return {so_muc:S_DEFS.length,
+            muc:S_DEFS.map((s,i)=>({stt:i+1, ten:s.name, mo_ta:s.desc}))};
+  },
+
+  async tim_tai_lieu({tu_khoa}){
+    const docs=await loadDocs(), q=norm(tu_khoa);
+    if(!q) return {tu_khoa, ds:docs.slice(0,8).map(d=>({ten:d.ten,nhom:d.nhom,mota:d.mota}))};
+    const tu=q.split(' ').filter(w=>w.length>1);
+    const hit=docs.map(d=>{
+      const hay=norm(d.ten+' '+d.nhom+' '+(d.mota||''));
+      return {d, diem:tu.filter(w=>hay.includes(w)).length};
+    }).filter(x=>x.diem>0).sort((a,b)=>b.diem-a.diem).slice(0,6);
+    return {tu_khoa, ds:hit.map(x=>({ten:x.d.ten, nhom:x.d.nhom, mota:x.d.mota,
+            thoiluong:x.d.thoiluong}))};
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// TẦNG 3 - BỘ NÃO
+// BRAIN_LOCAL: khớp từ khoá, chạy trong trình duyệt, miễn phí.
+//
+// ►► GẮN CLAUDE API SAU NÀY: viết BRAIN_CLAUDE cùng chữ ký
+//      async answer(cauHoi, ctx) -> {html, chips?}
+//    trong đó nó POST câu hỏi + định nghĩa TOOLS lên /api/chat
+//    (Cloudflare Worker giữ API key), Worker gọi Claude, Claude chọn tool,
+//    Worker chạy TOOLS tương ứng rồi trả câu trả lời về.
+//    Xong chỉ cần đổi dòng  const BRAIN = BRAIN_LOCAL;  ở cuối khối này.
+//    Giao diện, tầng TOOL và tầng dữ liệu giữ nguyên.
+// ═══════════════════════════════════════════════════════════════
+
+const DOW_MAP = {'chu nhat':0,'cn':0,'thu 2':1,'thu hai':1,'t2':1,'thu 3':2,'thu ba':2,'t3':2,
+  'thu 4':3,'thu tu':3,'t4':3,'thu 5':4,'thu nam':4,'t5':4,'thu 6':5,'thu sau':5,'t6':5,
+  'thu 7':6,'thu bay':6,'t7':6};
+
+// Trả về {kind:'day'|'range'|'month', ...} hoặc null
+function parseTime(q){
+  const t=today();
+
+  // tháng
+  if(/\bthang (nay|hien tai)\b/.test(q)) return {kind:'month', key:mKey(t), label:'tháng này'};
+  if(/\bthang (truoc|roi|vua roi)\b/.test(q)){
+    const d=new Date(t.getFullYear(),t.getMonth()-1,1);
+    return {kind:'month', key:mKey(d), label:'tháng '+(d.getMonth()+1)};
+  }
+  if(/\bthang (sau|toi)\b/.test(q)){
+    const d=new Date(t.getFullYear(),t.getMonth()+1,1);
+    return {kind:'month', key:mKey(d), label:'tháng '+(d.getMonth()+1)};
+  }
+  const mt=q.match(/\bthang (\d{1,2})\b/);
+  if(mt){
+    const m=+mt[1];
+    if(m>=1&&m<=12){
+      // Chọn lần xuất hiện GẦN hôm nay nhất của tháng đó. Hôm nay 10/2026 thì
+      // "tháng 9" là 09/2026 vừa rồi, còn "tháng 1" là 01/2027 sắp tới.
+      let y=t.getFullYear(); const diff=m-(t.getMonth()+1);
+      if(diff >  6) y--;
+      if(diff < -6) y++;
+      return {kind:'month', key:`${y}-${String(m).padStart(2,'0')}`, label:`tháng ${m}/${y}`};
+    }
+  }
+
+  // khoảng ngày
+  if(/\btuan (nay|hien tai)\b/.test(q)){
+    const off=(t.getDay()+6)%7, from=addD(t,-off);
+    return {kind:'range', from, to:addD(from,6), label:'tuần này'};
+  }
+  if(/\btuan (sau|toi|ke)\b/.test(q)){
+    const off=(t.getDay()+6)%7, from=addD(t,7-off);
+    return {kind:'range', from, to:addD(from,6), label:'tuần sau'};
+  }
+  if(/\b(7|bay) ngay (toi|tiep|sau)\b|\btuan toi day\b/.test(q))
+    return {kind:'range', from:t, to:addD(t,6), label:'7 ngày tới'};
+
+  // ngày cụ thể dd/mm
+  const md=q.match(/\b(\d{1,2})\s*\/\s*(\d{1,2})\b/);
+  if(md){
+    const dd=+md[1], mm=+md[2];
+    if(dd>=1&&dd<=31&&mm>=1&&mm<=12){
+      let y=t.getFullYear();
+      let d=new Date(y,mm-1,dd);
+      if(d < addD(t,-180)) d=new Date(y+1,mm-1,dd);
+      return {kind:'day', d, label:fmtD(d)};
+    }
+  }
+
+  // ngày tương đối
+  if(/\bhom kia\b/.test(q))           return {kind:'day', d:addD(t,-2), label:'hôm kia'};
+  if(/\bhom qua\b/.test(q))           return {kind:'day', d:addD(t,-1), label:'hôm qua'};
+  if(/\b(ngay )?kia\b/.test(q))       return {kind:'day', d:addD(t,2),  label:'ngày kia'};
+  if(/\b(ngay )?mot\b/.test(q))       return {kind:'day', d:addD(t,2),  label:'ngày mốt'};
+  if(/\b(ngay )?mai\b/.test(q))       return {kind:'day', d:addD(t,1),  label:'ngày mai'};
+  if(/\b(hom nay|bua nay|nay|hien tai|gio|bay gio)\b/.test(q))
+                                      return {kind:'day', d:t, label:'hôm nay'};
+
+  // thứ trong tuần -> lần xuất hiện gần nhất sắp tới
+  for(const [k,v] of Object.entries(DOW_MAP)){
+    if(new RegExp('\\b'+k+'\\b').test(q)){
+      let diff=(v-t.getDay()+7)%7; if(diff===0) diff=7;
+      const d=addD(t,diff);
+      return {kind:'day', d, label:DFUL[v]+' '+fmtD(d)};
+    }
+  }
+  return null;
+}
+
+const BRAIN_LOCAL = {
+async answer(raw, ctx){
+  const q = norm(raw);
+  if(!q) return {html:'Bạn hỏi gì ạ?'};
+
+  const has = (...ws) => ws.some(w=>q.includes(w));
+  const time = parseTime(q);
+  // Câu hỏi ngôi thứ nhất ("tôi thuộc kíp nào", "tôi làm ca nào hôm nay") phải
+  // ưu tiên nhánh cá nhân, nếu không sẽ bị mấy nhánh tổng hợp bên dưới nuốt mất
+  // vì cũng chứa cụm "kíp nào" / "ca nào".
+  const SELF = /\b(toi|em|minh|tui|tao)\b/.test(q);
+  const monthKey = time && time.kind==='month' ? time.key : mKey(today());
+  const monthLbl = time && time.kind==='month' ? time.label : 'tháng này';
+
+  // ── chào / giúp ──
+  if(/^(hi|hello|chao|xin chao|alo|hey)\b/.test(q) || q==='help' || has('giup gi','lam duoc gi','huong dan su dung'))
+    return {html: helpText(), chips: defaultChips()};
+
+  // ── quy trình 5S ──
+  if(has('5s','tieu chi')){
+    const r = await TOOLS.tra_tieu_chi_5s();
+    let h = `<b>${r.so_muc} mục kiểm tra 5S</b>`;
+    h += '<table>' + r.muc.map(m=>
+      `<tr><td>${m.stt}.</td><td><b>${esc(m.ten)}</b><br><span style="color:#777;font-size:.92em">${esc(m.mo_ta)}</span></td></tr>`
+    ).join('') + '</table>';
+    return {html:h, chips:['Mở trang 5S','Tài liệu hướng dẫn']};
+  }
+
+  // ── tài liệu / video ──
+  if(has('tai lieu','video','huong dan','cach lam','quy trinh','xem clip')){
+    const kw = q.replace(/\b(tai lieu|video|huong dan|cach lam|quy trinh|xem clip|co|nao|ve|tim|cho toi|khong)\b/g,' ').trim();
+    const r = await TOOLS.tim_tai_lieu({tu_khoa:kw});
+    if(!r.ds.length) return {html:`Không tìm thấy tài liệu nào về "<b>${esc(kw||'…')}</b>".\nThử mở trang 📚 Tài Liệu để xem toàn bộ.`,
+                             chips:['Mở trang Tài Liệu']};
+    let h = kw ? `Tài liệu về "<b>${esc(kw)}</b>":` : '<b>Một số tài liệu:</b>';
+    h += '<table>' + r.ds.map(d=>
+      `<tr><td>📄</td><td><b>${esc(d.ten)}</b>${d.thoiluong?' · '+esc(d.thoiluong):''}<br><span style="color:#777;font-size:.92em">${esc(d.nhom)}${d.mota?' — '+esc(d.mota):''}</span></td></tr>`
+    ).join('') + '</table>';
+    return {html:h, chips:['Mở trang Tài Liệu']};
+  }
+
+  // ── tổng hợp: kíp nào đi làm ──
+  if(!SELF && has('kip nao','ca nao','bao nhieu nguoi','may nguoi','tong hop','di lam hom nay','ai di lam','quan so')){
+    const d = time && time.kind==='day' ? time.d : today();
+    const r = await TOOLS.tra_kip_theo_ngay({ngay:dKey(d)});
+    let h = `<b>${fmtDay(d)}</b>${r.le?` · 🎌 ${esc(r.le)}`:''}`;
+    h += '<table>' + r.kips.map(k=>
+      `<tr><td>Kíp ${k.kip}</td><td>${chip(k.ca)} <span style="color:#777">${k.di_lam}/${k.tong} người</span></td></tr>`
+    ).join('');
+    if(r.hanh_chinh.tong) h += `<tr><td>HC/Xoay</td><td><span style="color:#777">${r.hanh_chinh.di_lam}/${r.hanh_chinh.tong} người</span></td></tr>`;
+    h += '</table>';
+    h += `\nTổng đi làm: <b>${r.tong_di_lam} người</b>`;
+    const v = await TOOLS.tra_nguoi_vang({ngay:dKey(d)});
+    if(v.nghi_phep.length) h += `\n🏖️ Nghỉ phép: ${v.nghi_phep.map(x=>esc(x.ten)).join(', ')}`;
+    if(v.vang_mat.length)  h += `\n🔴 Vắng mặt: ${v.vang_mat.map(x=>esc(x.ten)).join(', ')}`;
+    return {html:h, chips:['Ai tăng ca nhiều nhất','Hôm nay ai nghỉ phép']};
+  }
+
+  // ── tổng hợp: ai nghỉ phép ──
+  if(!SELF && has('ai nghi','ai vang','nghi phep hom nay','danh sach nghi')){
+    const d = time && time.kind==='day' ? time.d : today();
+    const r = await TOOLS.tra_nguoi_vang({ngay:dKey(d)});
+    if(!r.nghi_phep.length && !r.vang_mat.length)
+      return {html:`<b>${fmtDay(d)}</b> không có ai nghỉ phép hay vắng mặt. 👍`};
+    let h = `<b>${fmtDay(d)}</b>`;
+    if(r.nghi_phep.length) h += `\n🏖️ Nghỉ phép (${r.nghi_phep.length}): ${r.nghi_phep.map(x=>esc(x.ten)+' (K'+x.kip+')').join(', ')}`;
+    if(r.vang_mat.length)  h += `\n🔴 Vắng mặt (${r.vang_mat.length}): ${r.vang_mat.map(x=>esc(x.ten)+' (K'+x.kip+')').join(', ')}`;
+    return {html:h};
+  }
+
+  // ── tổng hợp: xếp hạng tăng ca ──
+  if(!SELF && has('nhieu nhat','xep hang','top','nhieu gio nhat') && has('tang ca','ot')){
+    const r = await TOOLS.xep_hang_tang_ca({thang:monthKey});
+    if(!r.top.length) return {html:`Chưa có ai tăng ca trong ${monthLbl}.`};
+    let h = `<b>Tăng ca nhiều nhất ${monthLbl}</b> (${r.tong_nguoi} người có tăng ca)`;
+    h += '<table>' + r.top.map((x,i)=>
+      `<tr><td>${i+1}.</td><td><b>${esc(x.ten)}</b>${x.kip?' · Kíp '+x.kip:''}</td><td style="text-align:right;color:#e65100;font-weight:700">${hhmm(x.gio)}</td></tr>`
+    ).join('') + '</table>';
+    return {html:h};
+  }
+
+  // ───── Từ đây cần MSNV ─────
+  const msnv = ctx.msnv;
+  if(!msnv) return {html:'Để trả lời được, tôi cần biết bạn là ai.\nBấm nút <b>Nhập MSNV</b> ở góc trên bên phải nhé.',
+                    chips:['Nhập MSNV']};
+
+  // ── khi nào được nghỉ ──
+  if(has('khi nao','bao gio','luc nao','con may ngay') && has('nghi')){
+    const r = await TOOLS.tim_ngay_nghi_toi({msnv});
+    if(r.loi) return {html:notFound(msnv)};
+    if(!r.ngay_nghi.length) return {html:'Trong 45 ngày tới tôi chưa thấy ngày nghỉ nào trong lịch (có thể lịch chưa được cập nhật).'};
+    const first=r.ngay_nghi[0], d=new Date(first.ngay+'T00:00:00');
+    const cach=Math.round((d-today())/864e5);
+    let h = cach===0 ? '<b>Hôm nay bạn nghỉ rồi</b> 🏠'
+          : `Ngày nghỉ gần nhất: <b>${fmtDay(d)}</b>` + (cach>0?` — còn ${cach} ngày nữa`:'');
+    if(r.ngay_nghi.length>1)
+      h += `\nĐợt nghỉ này gồm ${r.ngay_nghi.length} ngày: ` +
+           r.ngay_nghi.map(x=>fmtD(new Date(x.ngay+'T00:00:00'))).join(', ');
+    return {html:h, chips:['Lịch tuần sau','Ca của tôi hôm nay']};
+  }
+
+  // ── tăng ca cá nhân ──
+  if(has('tang ca','ot','lam them','tang gio')){
+    const r = await TOOLS.tra_tang_ca({msnv, thang:monthKey});
+    if(r.loi) return {html:notFound(msnv)};
+    if(!r.lan.length) return {html:`<b>${esc(r.nhan_vien.ten)}</b> chưa có tăng ca nào trong ${monthLbl}.`,
+                              chips:['Ca của tôi hôm nay','Điểm đánh giá của tôi']};
+    let h = `<b>${esc(r.nhan_vien.ten)}</b> · tăng ca ${monthLbl}: <b style="color:#e65100">${hhmm(r.tong_gio)}</b> (${r.lan.length} lần)`;
+    h += '<table>' + r.lan.map(o=>{
+      const [,mm,dd]=o.ngay.split('-');
+      return `<tr><td>${dd}/${mm}</td><td>${o.ca==='C'?'Chiều':o.ca==='S'?'Sáng':esc(o.ca||'')}</td><td style="text-align:right;color:#e65100;font-weight:700">${o.gio?hhmm(o.gio):''}</td></tr>`;
+    }).join('') + '</table>';
+    return {html:h, chips:['Ai tăng ca nhiều nhất']};
+  }
+
+  // ── nghỉ phép cá nhân ──
+  if(has('nghi phep','phep','vang mat','xin nghi')){
+    const r = await TOOLS.tra_nghi_phep({msnv, thang:monthKey});
+    if(r.loi) return {html:notFound(msnv)};
+    if(!r.ds.length) return {html:`<b>${esc(r.nhan_vien.ten)}</b> không có ngày nghỉ phép / vắng mặt nào trong ${monthLbl}.`,
+                             chips:['Khi nào tôi được nghỉ']};
+    let h = `<b>${esc(r.nhan_vien.ten)}</b> · ${monthLbl}`;
+    h += '<table>' + r.ds.map(x=>{
+      const a=x.tu.split('-'), b=x.den.split('-');
+      const rg = x.tu===x.den ? `${a[2]}/${a[1]}` : `${a[2]}/${a[1]} → ${b[2]}/${b[1]}`;
+      return `<tr><td>${rg}</td><td>${x.loai==='NP'?'🏖️ Nghỉ phép':'🔴 Vắng mặt'}</td></tr>`;
+    }).join('') + '</table>';
+    return {html:h};
+  }
+
+  // ── điểm đánh giá ──
+  if(has('diem','danh gia','xep hang','hang cua toi','ket qua')){
+    const r = await TOOLS.tra_danh_gia({msnv, thang:monthKey});
+    if(r.loi) return {html:notFound(msnv)};
+    if(r.diem==null) return {html:`<b>${esc(r.nhan_vien.ten)}</b> chưa có điểm đánh giá nào trong ${monthLbl}.`};
+    let h = `<b>${esc(r.nhan_vien.ten)}</b> · ${monthLbl}`;
+    h += `\n⭐ Điểm: <b>${r.diem}</b>/10 (${r.phan_tram}%)`;
+    h += `\n🏅 Xếp hạng: <b>${esc(r.hang||'–')}</b>${r.da_duyet?' (đã duyệt)':''}`;
+    h += `\n📋 Số ngày đã chấm: ${r.so_ngay_cham}`;
+    if(r.ghi_chu) h += `\n📝 ${esc(r.ghi_chu)}`;
+    return {html:h, chips:['Tăng ca tháng này']};
+  }
+
+  // ── thông tin bản thân ──
+  if(has('toi la ai','thong tin cua toi','thuoc kip','kip may','kip cua toi','toi o kip','vi tri cua toi')){
+    const r = await TOOLS.tra_thong_tin({msnv});
+    if(r.loi) return {html:notFound(msnv)};
+    let h = `<b>${esc(r.ten)}</b>\nMSNV: ${esc(r.id)}\nNhóm: ${esc(r.nhom||'')}`;
+    if(r.role) h += `\nVị trí: ${esc(r.role)}`;
+    if(r.ca_co_dinh) h += `\nCa cố định: ${esc(SHORT[r.ca_co_dinh]||r.ca_co_dinh)}`;
+    return {html:h, chips:['Ca của tôi hôm nay','Lịch tuần này']};
+  }
+
+  // ── lịch ca (mặc định khi có từ chỉ thời gian) ──
+  if(has('ca','lich','lam','di lam','truc') || time){
+    let from, to, lbl;
+    if(time && time.kind==='range'){ from=time.from; to=time.to; lbl=time.label; }
+    else if(time && time.kind==='day'){ from=to=time.d; lbl=time.label; }
+    else if(time && time.kind==='month'){
+      from=new Date(time.key+'-01T00:00:00');
+      to=new Date(from.getFullYear(), from.getMonth()+1, 0); lbl=time.label;
+    }
+    else { from=today(); to=addD(from,6); lbl='7 ngày tới'; }
+
+    const r = await TOOLS.tra_lich_ca({msnv, tu_ngay:from, den_ngay:to});
+    if(r.loi) return {html:notFound(msnv)};
+    const nv = r.nhan_vien;
+
+    if(r.ngay.length===1){
+      const x=r.ngay[0], d=new Date(x.ngay+'T00:00:00');
+      if(x.ca==='UN')
+        return {html:`<b>${fmtDay(d)}</b> chưa có lịch ca.\nLịch từ 01/11/2026 trở đi đang chờ chốt.`,
+                chips:['Lịch tuần này']};
+      const h = `<b>${esc(nv.ten)}</b> · ${GRP_LABEL[nv.kip]||''}\n${fmtDay(d)}: ${chip(x.ca)}`;
+      return {html:h, chips:['Lịch tuần này','Khi nào tôi được nghỉ','Tăng ca tháng này']};
+    }
+
+    let h = `<b>${esc(nv.ten)}</b> · ${GRP_LABEL[nv.kip]||''} · ${lbl}`;
+    h += '<table>' + r.ngay.map(x=>{
+      const d=new Date(x.ngay+'T00:00:00');
+      const hl = dKey(d)===dKey(today()) ? ' style="background:#fff8e1"' : '';
+      return `<tr${hl}><td>${esc(x.thu)} ${fmtD(d)}</td><td>${chip(x.ca)}</td></tr>`;
+    }).join('') + '</table>';
+    const lam = r.ngay.filter(x=>WORK(x.ca)).length;
+    h += `\nĐi làm ${lam}/${r.ngay.length} ngày`;
+    return {html:h, chips:['Khi nào tôi được nghỉ','Tăng ca tháng này']};
+  }
+
+  // ── không hiểu ──
+  return {html:'Tôi chưa hiểu câu này 😅\nThử hỏi theo mấy kiểu dưới đây, hoặc gõ <b>giúp</b> để xem tôi làm được gì.',
+          chips: defaultChips()};
+}};
+
+const BRAIN = BRAIN_LOCAL;   // ← đổi thành BRAIN_CLAUDE khi gắn API
+
+function notFound(id){ return `Không tìm thấy MSNV "<b>${esc(id)}</b>".\nBấm nút góc trên bên phải để nhập lại.`; }
+
+function helpText(){
+  return 'Chào bạn 👋 Tôi tra giúp mấy thứ sau:\n\n'
+    + '<b>Của riêng bạn</b> (cần MSNV)\n'
+    + '· Ca của tôi hôm nay / mai / thứ 5 / 15/10\n'
+    + '· Lịch tuần này, tuần sau\n'
+    + '· Khi nào tôi được nghỉ\n'
+    + '· Tăng ca tháng này / tháng 9\n'
+    + '· Nghỉ phép, điểm đánh giá của tôi\n\n'
+    + '<b>Tổng hợp</b>\n'
+    + '· Hôm nay kíp nào đi làm, bao nhiêu người\n'
+    + '· Hôm nay ai nghỉ phép\n'
+    + '· Ai tăng ca nhiều nhất tháng này\n\n'
+    + '<b>Quy trình</b>\n'
+    + '· Tiêu chí 5S gồm những gì\n'
+    + '· Tìm tài liệu / video về ...';
+}
+function defaultChips(){
+  return ['Ca của tôi hôm nay','Lịch tuần sau','Khi nào tôi được nghỉ',
+          'Hôm nay kíp nào đi làm','Tăng ca tháng này','Tiêu chí 5S'];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GIAO DIỆN
+// ═══════════════════════════════════════════════════════════════
+const logEl=document.getElementById('log'), chipsEl=document.getElementById('chips');
+let MSNV = localStorage.getItem('tracuu_msnv') || '';
+let busy = false;
+
+function push(html, who){
+  const d=document.createElement('div');
+  d.className='msg '+who; d.innerHTML=html;
+  logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight;
+  return d;
+}
+function showChips(list){
+  chipsEl.innerHTML='';
+  (list||[]).forEach(c=>{
+    const b=document.createElement('button');
+    b.textContent=c;
+    b.onclick=()=>{ document.getElementById('q').value=c; send(); };
+    chipsEl.appendChild(b);
+  });
+}
+function typing(on){
+  const old=document.getElementById('typing');
+  if(old) old.remove();
+  if(on){
+    const d=document.createElement('div');
+    d.className='typing'; d.id='typing'; d.innerHTML='<i></i><i></i><i></i>';
+    logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight;
+  }
+}
+
+async function send(){
+  if(busy) return;
+  const inp=document.getElementById('q'), raw=inp.value.trim();
+  if(!raw) return;
+
+  // vài lối tắt điều hướng
+  const n=norm(raw);
+  if(n==='nhap msnv'){ inp.value=''; openWho(); return; }
+  if(n.startsWith('mo trang')){
+    inp.value='';
+    if(n.includes('5s'))       { location.href='5s.html'; return; }
+    if(n.includes('tai lieu')) { location.href='huong-dan.html'; return; }
+  }
+
+  inp.value=''; push(esc(raw), 'me');
+  busy=true; document.getElementById('sendBtn').disabled=true; typing(true);
+  try{
+    const r = await BRAIN.answer(raw, {msnv:MSNV});
+    typing(false);
+    push(r.html, 'bot');
+    showChips(r.chips && r.chips.length ? r.chips : defaultChips());
+  }catch(e){
+    typing(false);
+    push('Lỗi khi tra dữ liệu: '+esc(e.message), 'bot');
+  }finally{
+    busy=false; document.getElementById('sendBtn').disabled=false; inp.focus();
+  }
+}
+
+function openWho(){
+  document.getElementById('whoOvl').classList.add('on');
+  document.getElementById('whoErr').style.display='none';
+  const i=document.getElementById('whoInput'); i.value=MSNV; i.focus(); i.select();
+}
+function closeWho(){ document.getElementById('whoOvl').classList.remove('on'); }
+
+async function saveWho(){
+  const id=document.getElementById('whoInput').value.trim();
+  const err=document.getElementById('whoErr');
+  if(!id){ err.textContent='Nhập MSNV đã nhé.'; err.style.display='block'; return; }
+  try{
+    await loadCore();
+    const e=findEmp(id);
+    if(!e){ err.textContent='Không tìm thấy MSNV này.'; err.style.display='block'; return; }
+    MSNV=id; localStorage.setItem('tracuu_msnv', id);
+    setWhoBtn(e);
+    closeWho();
+    push(`Chào <b>${esc(e.name)}</b> 👋 · ${esc(GRP_LABEL[e.kip]||'')}\nBạn muốn hỏi gì?`, 'bot');
+    showChips(defaultChips());
+  }catch(ex){
+    err.textContent='Lỗi tải dữ liệu: '+ex.message; err.style.display='block';
+  }
+}
+function setWhoBtn(e){
+  document.getElementById('whoBtn').textContent = e ? ('👤 '+e.name.split(' ').slice(-2).join(' ')) : 'Nhập MSNV';
+}
+
+// ── khởi động ──
+(async function init(){
+  push(helpText(), 'bot');
+  showChips(defaultChips());
+  try{
+    await loadCore();
+    if(MSNV){
+      const e=findEmp(MSNV);
+      if(e){ setWhoBtn(e); push(`Đang xem với tư cách <b>${esc(e.name)}</b> · ${esc(GRP_LABEL[e.kip]||'')}`, 'sys'); }
+      else { MSNV=''; }
+    }
+  }catch(e){
+    push('⚠️ Không tải được dữ liệu: '+esc(e.message), 'sys');
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════════
+// GHI CHÚ CHO LẦN SAU
+//
+// 1. Khối SCHED_OVR / getShift ở đầu file là bản sao thứ 6. Nên tách thành
+//    lich-ca.js dùng chung cho cả 6 trang, giống cách 5s-tieu-chi.js đang làm
+//    cho danh sách tiêu chí 5S.
+//
+// 2. Gắn Claude API: thêm route /api/chat trong Cloudflare Worker, giữ
+//    ANTHROPIC_API_KEY bằng `wrangler secret put`. Worker khai báo đúng các
+//    hàm trong TOOLS ở trên làm tool definition, Claude chọn hàm, Worker chạy
+//    rồi trả kết quả. Phía trang chỉ cần viết BRAIN_CLAUDE và đổi dòng
+//    `const BRAIN = BRAIN_LOCAL;`.
+//
+// 3. Bảo mật: trang này hiện chỉ hỏi MSNV, không có mật khẩu - ai biết MSNV
+//    người khác là xem được lịch, tăng ca, điểm của họ. Giống hệt tra-cuu.html.
+//    Muốn chặn thì thêm mã PIN cho từng nhân viên.
+// ═══════════════════════════════════════════════════════════════
+</script>
+</body>
+</html>
