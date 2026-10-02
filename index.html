@@ -14,10 +14,10 @@
   --n-bg:#ffcdd2;--n-fg:#b71c1c;
   --np-bg:#bbdefb;--np-fg:#0d47a1;
   --h-bg:#e1bee7;--h-fg:#6a1b9a;
-  --k1:#1565c0;--k1l:#e3f2fd;
-  --k2:#6a1b9a;--k2l:#f3e5f5;
-  --k3:#2e7d32;--k3l:#e8f5e9;
-  --k4:#00695c;--k4l:#e0f2f1;
+  --k1:#3f5f74;--k1l:#edf2f5;
+  --k2:#536875;--k2l:#eef2f3;
+  --k3:#46675a;--k3l:#edf3ef;
+  --k4:#42676b;--k4l:#edf3f3;
   --hc-bg:#fff9c4;--hc-fg:#e65100;
   --nav-h:58px;
   --hdr-h:52px;
@@ -551,6 +551,31 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   .page{padding-bottom:0!important}
   .tbl-wrap{padding:0!important}
 }
+
+/* Giao diện tối giản: ưu tiên đọc lịch và thao tác nhanh */
+html,body{background:#f5f6f7;color:#263238}
+.hdr{background:#334a5a;box-shadow:0 1px 3px rgba(0,0,0,.16)}
+.hdr-left h1{font-weight:650;letter-spacing:0}
+.hdr-left .sub{opacity:.9}
+.btn-rating{background:transparent!important;border:1px solid rgba(255,255,255,.38);border-radius:5px;padding:5px 8px;font-size:.76rem}
+.top-tabs{border-bottom:1px solid #dbe1e5;box-shadow:none}
+.top-tabs .tab{padding:11px 16px;color:#52616b;font-weight:600}
+.top-tabs .tab:hover,.top-tabs .tab.active{color:#334a5a;border-bottom-color:#334a5a}
+.tab-rating{color:#52616b!important}.tab-rating:hover{color:#334a5a!important;border-bottom-color:#334a5a!important}
+.ctrl{padding:10px 12px 4px}.search-row,.kip-row{padding-bottom:6px}
+.btn{border-radius:6px;box-shadow:none}.btn-pri{background:#334a5a}.btn-pri:active{background:#263b49}
+.btn-sec{border-color:#cbd4da;color:#3d4d57;background:#fff}
+.search{border-radius:6px;border-color:#cbd4da}.search:focus{border-color:#607d8b;box-shadow:0 0 0 2px rgba(96,125,139,.12)}
+.kb{border-radius:6px;border-width:1px;padding:6px 11px;background:#fff!important;color:#465761!important;border-color:#cbd4da!important}
+.kb:not(.off):hover,.kb.all{background:#e8eef1!important;color:#263b49!important;border-color:#78909c!important}
+.legend{color:#60717b;font-size:.7rem;gap:8px}.leg-box{border-radius:2px}
+.tbl-wrap,.sum-card,.ot-card,.ot-day-card{border:1px solid #dfe5e8;box-shadow:none;border-radius:7px}
+th{background:#405866}th.c1,th.c2,th.c3{background:#374c58}
+tr.kh td{background:#405866!important}
+.bot-nav{box-shadow:0 -1px 4px rgba(0,0,0,.08);border-color:#dbe1e5}
+.bot-nav .bnav{color:#687780}.bot-nav .bnav.active{color:#334a5a}.bot-nav .bnav.more .bicon{background:#334a5a;box-shadow:none;border-radius:6px}
+.more-sheet{border-radius:12px 12px 0 0}.more-sheet-item{background:#f7f8f9;border-radius:7px}.more-sheet-admin{background:#f7f8f9;border-color:#dbe1e5}
+@media(min-width:768px){.hdr-right{gap:6px!important}}
 </style>
 </head>
 <body>
@@ -580,27 +605,27 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-left">
-    <h1>🏭 Lịch Làm Việc Phân Xưởng 1</h1>
+    <h1>Lịch Làm Việc Phân Xưởng 1</h1>
     <div class="sub" id="todayLabel"></div>
   </div>
   <div class="hdr-right" style="display:flex!important;align-items:center;gap:8px">
-    <a href="xin-nghi.html" class="btn-rating" style="background:rgba(255,255,255,.25)" title="Tạo đơn xin nghỉ online">🏖️ Xin Nghỉ</a>
-    <a href="rating.html" class="btn-rating" title="Đánh giá nhân viên">🏆</a>
-    <a href="nhansu-ca.html" class="btn-rating" title="Nhân sự trong ca">👷</a>
+    <a href="xin-nghi.html" class="btn-rating" title="Tạo đơn xin nghỉ online">Xin nghỉ</a>
+    <a href="rating.html" class="btn-rating" title="Đánh giá nhân viên">Đánh giá</a>
+    <a href="nhansu-ca.html" class="btn-rating" title="Nhân sự trong ca">Nhân sự</a>
   </div>
 </div>
 
 <!-- TOP TABS (desktop) -->
 <div class="top-tabs">
-  <div class="tab active" data-tab="schedule" onclick="showTab('schedule')">📅 Lịch Ca</div>
-  <div class="tab"        data-tab="summary"  onclick="showTab('summary')">📊 Hôm Nay</div>
-  <div class="tab"        data-tab="tanca"    onclick="showTab('tanca')">⏰ Tăng Ca</div>
-  <a href="xin-nghi.html" class="tab tab-rating" title="Tạo đơn xin nghỉ online">🏖️ Xin Nghỉ</a>
-  <a href="rating.html" class="tab tab-rating" title="Đánh giá nhân viên">🏆 Đánh Giá</a>
-  <a href="nhansu-ca.html" class="tab tab-rating" style="color:#2e7d32!important" title="Nhân sự trong ca">👷 Nhân Sự Ca</a>
-  <a href="5s.html" class="tab tab-rating" style="color:#ef6c00!important" title="Kiểm tra 5S tại xưởng - cần mật khẩu">🧹 5S</a>
-  <a href="huong-dan.html" class="tab tab-rating" style="color:#1565c0!important" title="Tài liệu hướng dẫn: video, hình ảnh, PDF">📚 Tài Liệu</a>
-  <div class="tab" data-tab="settings" style="position:relative" onclick="showTab('settings')">⚙️ Quản Lý<span id="settingsBadgeTop" style="display:none;position:absolute;top:6px;right:6px;background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span></div>
+  <div class="tab active" data-tab="schedule" onclick="showTab('schedule')">Lịch ca</div>
+  <div class="tab"        data-tab="summary"  onclick="showTab('summary')">Hôm nay</div>
+  <div class="tab"        data-tab="tanca"    onclick="showTab('tanca')">Tăng ca</div>
+  <a href="xin-nghi.html" class="tab tab-rating" title="Tạo đơn xin nghỉ online">Xin nghỉ</a>
+  <a href="rating.html" class="tab tab-rating" title="Đánh giá nhân viên">Đánh giá</a>
+  <a href="nhansu-ca.html" class="tab tab-rating" title="Nhân sự trong ca">Nhân sự ca</a>
+  <a href="5s.html" class="tab tab-rating" title="Kiểm tra 5S tại xưởng - cần mật khẩu">5S</a>
+  <a href="huong-dan.html" class="tab tab-rating" title="Tài liệu hướng dẫn: video, hình ảnh, PDF">Tài liệu</a>
+  <div class="tab" data-tab="settings" style="position:relative" onclick="showTab('settings')">Quản lý<span id="settingsBadgeTop" style="display:none;position:absolute;top:6px;right:6px;background:#e53935;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;line-height:1.4">0</span></div>
 </div>
 
 <!-- TAB 1: LỊCH CA -->
@@ -608,13 +633,13 @@ tbody tr td.today-c{outline:2px solid #f9a825!important}
   <div class="ctrl">
     <div class="nav-row">
       <button class="btn btn-sec" onclick="nav(-1)">◀</button>
-      <button class="btn btn-pri" onclick="goToday()" style="flex:1;justify-content:center">📅 Hôm nay</button>
+      <button class="btn btn-pri" onclick="goToday()" style="flex:1;justify-content:center">Hôm nay</button>
       <button class="btn btn-sec" onclick="nav(1)">▶</button>
       <button class="btn btn-sec" onclick="window.print()" title="In">🖨️</button>
     </div>
   </div>
   <div class="search-row">
-    <input class="search" type="text" placeholder="🔍 Tìm nhân viên, MSNV..." autocomplete="off" data-clear-on-load oninput="setSearch(this.value)">
+    <input class="search" type="text" placeholder="Tìm nhân viên hoặc MSNV..." autocomplete="off" data-clear-on-load oninput="setSearch(this.value)">
   </div>
   <div class="kip-row" id="kipBtns">
     <button class="kb all" onclick="setKip(0)">Tất cả</button>
