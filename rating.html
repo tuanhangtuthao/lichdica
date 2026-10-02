@@ -387,6 +387,8 @@ td:hover .del-btn{display:inline-block!important}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Nội dung kiểm 5S dùng chung với trang 5S - sửa ở file này -->
+<script src="5s-tieu-chi.js"></script>
 <script>
 // ══════════════════════════════════════════
 // ⚙️  SUPABASE (giống index.html)
@@ -402,15 +404,7 @@ let RATINGS = [];
 let MONTHLY_REVIEWS = []; // [{id, emp_id, month_key, note, approved, final_score, violation_note}]
 let S5 = [];              // lượt kiểm 5S CHƯA ĐẠT, để nhân viên xem kết quả của mình
 
-// 5 nội dung kiểm 5S - giữ khớp với S_DEFS bên trang 5s.html.
-// Đổi nội dung bên đó thì cập nhật luôn danh sách này.
-const S5_MUC = [
-  {k:'s1', ten:'Đường đi, sàn nhà, đường line'},
-  {k:'s2', ten:'Bàn thao tác'},
-  {k:'s3', ten:'Thân máy'},
-  {k:'s4', ten:'Rổ đựng hàng'},
-  {k:'s5', ten:'Bộ cấp phôi'},
-];
+// Nội dung kiểm 5S lấy từ 5s-tieu-chi.js (dùng chung với trang 5S)
 let VIOLATIONS = []; // [{emp_id, month_key, violation_note, final_score}]
 let GRADE_CFG = [
   {grade:'A+',min_score:9.0,description:'Xuất sắc',sort_order:1},
@@ -560,7 +554,7 @@ async function loadData(){
     ]);
     // chỉ giữ lượt CHƯA ĐẠT - đó là thứ nhân viên cần biết để sửa
     S5 = (s5r && s5r.data ? s5r.data : []).filter(r =>
-      !S5_MUC.every(s => r[s.k] === true));
+      !S_DEFS.every(s => r[s.k] === true));
 
     EMPS={1:[],2:[],3:[],4:[]};
     (er.data||[]).forEach(e=>{
@@ -705,7 +699,7 @@ function s5CuaNguoi(empId, empName, mVal){
   }).sort((a,b) => a.date.localeCompare(b.date));
 }
 
-function s5MucHong(r){ return S5_MUC.filter(s => r[s.k] !== true); }
+function s5MucHong(r){ return S_DEFS.filter(s => r[s.k] !== true); }
 
 // Bảng chi tiết 5S - chỉ để xem, không có nút sửa hay xoá nào
 function moChiTiet5S(empId){
@@ -733,7 +727,7 @@ function moChiTiet5S(empId){
       </div>
       <div style="margin-top:6px">${hong.map(s =>
         `<span style="display:inline-block;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:11px;
-          background:#ffebee;color:#c62828;border:1px solid #ef9a9a;margin:2px 3px 0 0">${s.ten}</span>`).join('')}</div>
+          background:#ffebee;color:#c62828;border:1px solid #ef9a9a;margin:2px 3px 0 0">${s.name}</span>`).join('')}</div>
       ${r.note?`<div style="font-size:.8rem;color:#444;margin-top:7px;line-height:1.4">📝 ${r.note}</div>`:''}
       ${anh?`<div style="margin-top:6px">${anh}</div>`:''}
     </div>`;

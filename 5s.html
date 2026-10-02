@@ -468,6 +468,8 @@ table.th-bang tr:hover{background:#f5f9ff}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Nội dung kiểm 5S dùng chung với trang Đánh Giá - sửa ở file này -->
+<script src="5s-tieu-chi.js"></script>
 <script>
 const SB_URL='https://xtutpuwesganunktrxcv.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
@@ -480,19 +482,7 @@ const TABLE='s5_checks', BUCKET='s5-photos';
 // mọi chỗ khác (số điểm, thẻ vi phạm, bộ lọc lịch sử) đều tự suy ra theo nó.
 // k = tên cột trong bảng s5_checks, giữ dạng s1..s4 cho trung tính vì nội
 // dung kiểm tra có thể còn đổi; ý nghĩa từng cột xem comment cột trong sql/5s-update.sql
-const S_DEFS = [
-  {k:'s1', name:'Đường đi, sàn nhà, đường line', short:'Đường đi / Sàn',
-   desc:'Đường đi có rác không, có vết bẩn, dầu mỡ không'},
-  {k:'s2', name:'Bàn thao tác', short:'Bàn thao tác',
-   desc:'Bàn thao tác đã để đúng quy định chưa'},
-  {k:'s3', name:'Thân máy', short:'Thân máy',
-   desc:'Xung quanh máy có vật dụng thừa, vết bẩn, dầu nhớt bám trên máy không'},
-  {k:'s4', name:'Rổ đựng hàng', short:'Rổ đựng hàng',
-   desc:'Khi nhận máy đầu ca, các rổ đựng sản phẩm không được còn sản phẩm của ca trước'},
-  {k:'s5', name:'Bộ cấp phôi', short:'Bộ cấp phôi',
-   desc:'Kiểm tra tình trạng bộ cấp phôi, trên bộ cấp chỉ để 1 mã hàng'},
-];
-const N_TC = S_DEFS.length;
+// S_DEFS và N_TC lấy từ 5s-tieu-chi.js (dùng chung với rating.html)
 
 // ══════════════════════════════════════════════
 // LỊCH CA – trích nguyên từ nhansu-ca.html để suy ra kíp nào trực ca nào
