@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1F4E79">
+<title>Ca Của Tôi - Phân Xưởng 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   CA CỦA TÔI — trang cá nhân cho thợ, chạy song song với trang Lịch ca
+   ═══════════════════════════════════════════════════════════════
+   Nhập MSNV → thấy ca hôm nay, 7 ngày tới, số ngày làm, tăng ca, đánh
+   giá, 5S. Muốn xem cả xưởng thì bấm "Xem toàn bộ nhân viên" sang index.
+   Màu và cỡ chữ theo bản đề xuất giao diện (Bộ thành phần dùng chung). */
+:root{
+  --xanh:#1F4E79; --xanh-dam:#163A5C; --xanh-nhat:#E6EEF6;
+  --chu:#16202B; --chu-phu:#5A6876; --nen:#F4F5F3; --the:#FFFFFF; --vien:#E1E5E0;
+  --dat:#1E6B3A; --loi:#B3261E; --loi-nen:#FBE9E7;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--nen);color:var(--chu);
+  font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
+  -webkit-text-size-adjust:100%}
+button,input{font-family:inherit}
+
+.dau{position:sticky;top:0;z-index:5;background:var(--xanh);color:#fff}
+.dau-trong{max-width:960px;margin:0 auto;height:60px;padding:0 8px 0 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.dau-xuong{font-size:12px;font-weight:500;color:#C9D8E8}
+.dau-ten{font-size:17px;font-weight:700}
+.nut-dau{height:44px;padding:0 14px;display:flex;align-items:center;gap:6px;border:1px solid #4D7BA6;
+  border-radius:22px;background:#2A5D8C;color:#fff;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}
+.nut-dau:hover{background:#336BA0}
+
+.khung{max-width:960px;margin:0 auto;padding:16px 16px 40px}
+.the{background:var(--the);border:1px solid var(--vien);border-radius:16px;padding:18px}
+.tieu{margin:0 0 10px;font-size:15px;font-weight:700}
+.nho{font-size:12px;color:var(--chu-phu)}
+
+/* ── Màn nhập MSNV ── */
+#manNhap{max-width:440px;margin:24px auto 0}
+.nhap-tieu{margin:0 0 4px;font-size:22px;font-weight:800}
+.nhap-phu{margin:0 0 18px;font-size:14px;color:var(--chu-phu);line-height:1.5}
+.o-nhap{width:100%;height:56px;padding:0 16px;font-size:22px;font-weight:700;letter-spacing:2px;text-align:center;
+  border:2px solid #C3C9C2;border-radius:14px;outline:none;color:var(--chu);background:#fff}
+.o-nhap:focus{border-color:var(--xanh)}
+.nut-chinh{width:100%;height:52px;margin-top:12px;border:0;border-radius:14px;background:var(--xanh);color:#fff;
+  font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.nut-chinh:hover{background:var(--xanh-dam)}
+.nut-chinh:disabled{background:#90A4AE;cursor:default}
+.nut-phu{width:100%;height:48px;border:1px solid #C3C9C2;border-radius:14px;background:#fff;color:var(--xanh);
+  font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.nut-phu:hover{background:var(--xanh-nhat)}
+.bao-loi{min-height:20px;margin-top:10px;font-size:14px;font-weight:600;color:var(--loi);text-align:center}
+.gan-day{margin-top:22px}
+.ds-gan{display:flex;flex-direction:column;gap:8px}
+.chon-gan{width:100%;min-height:52px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:1px solid var(--vien);border-radius:14px;background:#fff;cursor:pointer;text-align:left;color:var(--chu)}
+.chon-gan:hover{border-color:var(--xanh);background:var(--xanh-nhat)}
+.chon-gan b{font-size:15px}
+.chon-gan span{font-size:13px;color:var(--chu-phu)}
+
+/* ── Màn xem ── */
+#manXem{display:none}
+.luoi{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.nguoi{display:flex;align-items:center;gap:12px;padding:2px 2px 0}
+.nguoi-chu{width:46px;height:46px;flex-shrink:0;border-radius:23px;background:var(--xanh);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800}
+.nguoi-ten{font-size:19px;font-weight:800;line-height:1.2}
+.nguoi-phu{font-size:13px;color:var(--chu-phu);margin-top:2px}
+
+.hn-dau{display:flex;justify-content:space-between;align-items:baseline}
+.hn-nhan{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--chu-phu)}
+.hn-ngay{font-size:13px;font-weight:500;color:var(--chu-phu)}
+.hn-than{display:flex;align-items:center;gap:14px;margin-top:10px}
+.hn-o{width:58px;height:58px;flex-shrink:0;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800}
+.hn-ten{font-size:30px;font-weight:800;line-height:1.1}
+.hn-gio{font-size:16px;font-weight:500;color:#3E4C5A;margin-top:2px}
+.hn-gach{height:1px;background:#ECEFEB;margin:14px 0 12px}
+.hn-ba{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hn-ba div b{display:block;font-size:15px;margin-top:2px}
+
+.tuan{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.ngay{height:72px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.ngay .t{font-size:11px;font-weight:600}
+.ngay .d{font-size:15px;font-weight:800}
+.ngay .m{font-size:12px;font-weight:800}
+.ngay.hom-nay{outline:2px solid var(--xanh);outline-offset:-2px}
+
+.sap{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.sap-o{width:42px;height:42px;flex-shrink:0;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}
+.sap b{display:block;font-size:15px;margin-top:1px}
+
+.so{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.so .the{padding:14px}
+.so-lon{font-size:24px;font-weight:800;margin-top:4px;line-height:1.15}
+.so-phu{font-size:12px;font-weight:600;margin-top:3px;color:var(--chu-phu)}
+
+.dong{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #EEF0ED;font-size:14px}
+.dong:last-child{border-bottom:0;padding-bottom:0}
+.dong b{white-space:nowrap}
+.trong{font-size:14px;color:var(--chu-phu)}
+
+.cuoi{display:flex;flex-direction:column;gap:10px}
+.cap-nhat{text-align:center;font-size:12px;color:var(--chu-phu);margin-top:6px}
+
+/* Màu mã ca: chữ mã luôn hiện, màu chỉ để liếc nhanh.
+   Sáng xanh / chiều cam khác cả độ sáng, không chỉ khác sắc. */
+.ma-S ,.ma-C1,.ma-C2,.ma-C3{background:#DCEAF7;color:#14466F}
+.ma-C1,.ma-C2,.ma-C3{background:#EAF2FA;box-shadow:inset 0 0 0 1.5px #8DB3D9}
+.ma-C {background:#FBE3C4;color:#6A3F05}
+.ma-N {background:#EEEEEA;color:#5E5E58}
+.ma-NP{background:#EEEEEA;color:#3F3F3A;box-shadow:inset 0 0 0 1.5px #8A8A82}
+.ma-L {background:#EEEEEA;color:#6A4E00;box-shadow:inset 0 0 0 1.5px #C9A227}
+.ma-VM{background:var(--loi-nen);color:#8C1D18;box-shadow:inset 0 0 0 1.5px #E8A39C}
+.ma-HC{background:#fff;color:var(--chu);box-shadow:inset 0 0 0 1.5px #C3C9C2}
+.ma-UN{background:#fff;color:#6A6A63;box-shadow:inset 0 0 0 1.5px #C3C9C2}
+
+.dang-tai{padding:40px 0;text-align:center;color:var(--chu-phu);font-size:15px}
+
+/* Máy tính: dàn 2 cột cho đỡ trống, khối hôm nay vẫn rộng nhất */
+@media (min-width:900px){
+  .luoi{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}
+  .cot-trai,.cot-phai{display:flex;flex-direction:column;gap:14px}
+  .nguoi{grid-column:span 2}
+}
+@media (max-width:899px){ .cot-trai,.cot-phai{display:contents} }
+</style>
+</head>
+<body>
+
+<header class="dau">
+  <div class="dau-trong">
+    <div>
+      <div class="dau-xuong">Phân Xưởng 1</div>
+      <div class="dau-ten">Ca của tôi</div>
+    </div>
+    <button type="button" class="nut-dau" id="nutDoi" onclick="doiNguoi()" style="display:none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"></path></svg>
+      Đổi người
+    </button>
+  </div>
+</header>
+
+<div class="khung">
+
+  <!-- ═══ MÀN 1: NHẬP MSNV ═══ -->
+  <section id="manNhap">
+    <div class="the">
+      <h1 class="nhap-tieu">Nhập mã số nhân viên</h1>
+      <p class="nhap-phu">Xem ca làm, kíp, số ngày làm và tăng ca của bạn.</p>
+      <label for="oMsnv" class="nho" style="display:block;margin-bottom:6px">Mã số nhân viên (MSNV)</label>
+      <!-- readonly tới khi chạm: chặn trình duyệt tự điền MSNV người khác vào -->
+      <input id="oMsnv" class="o-nhap" type="text" inputmode="numeric" autocomplete="off"
+             placeholder="VD: 2200" maxlength="12" readonly
+             onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter')xem()">
+      <button type="button" class="nut-chinh" id="nutXem" onclick="xem()">Xem ca của tôi</button>
+      <div class="bao-loi" id="baoLoi" role="alert"></div>
+    </div>
+
+    <div class="gan-day" id="ganDay" style="display:none">
+      <div class="nho" style="margin:0 2px 8px;font-weight:600">Đã xem gần đây — bấm để chọn</div>
+      <div class="ds-gan" id="dsGan"></div>
+    </div>
+
+    <div style="margin-top:22px">
+      <a href="index.html" class="nut-phu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M8 2v4M16 2v4"></path></svg>
+        Xem toàn bộ nhân viên
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══ MÀN 2: CA CỦA TÔI ═══ -->
+  <section id="manXem"></section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Lịch ca (CYCLE / SCHED_OVR / getShift / getBlockStatus) - nguồn duy nhất -->
+<script src="lich-ca.js"></script>
+<!-- Nội dung kiểm 5S (S_DEFS) dùng chung với trang 5S và Đánh Giá -->
+<script src="5s-tieu-chi.js"></script>
+<script>
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const THU   = ['CN','T2','T3','T4','T5','T6','T7'];
+const THU_D = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+
+// Tên và giờ từng mã ca. Chỉ ghi giờ cho ca đã biết chắc giờ; ca nào trang
+// Lịch ca không ghi giờ thì ở đây cũng để trống, không đoán.
+const CA = {
+  S :{ten:'Ca Sáng',     gio:'6:00 – 18:00'},
+  C :{ten:'Ca Chiều',    gio:'18:00 – 6:00 sáng hôm sau'},
+  C1:{ten:'Ca 1',        gio:'6:00 – 14:00'},
+  C2:{ten:'Ca 2',        gio:''},
+  C3:{ten:'Ca 3',        gio:''},
+  HC:{ten:'Hành Chính',  gio:''},
+  N :{ten:'Nghỉ',        gio:''},
+  L :{ten:'Nghỉ Lễ',     gio:''},
+  NP:{ten:'Nghỉ Phép',   gio:''},
+  VM:{ten:'Vắng Mặt',    gio:''},
+  UN:{ten:'Chưa có lịch',gio:''},
+};
+const DI_LAM = new Set(['S','C','C1','C2','C3','HC']);   // mã tính là ngày đi làm
+
+function dKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function caCua(ma){ return CA[ma] || {ten: ma, gio: ''}; }
+function lop(ma){ return CA[ma] ? 'ma-' + ma : 'ma-UN'; }
+// Nhóm hiển thị ở ô "Kíp". Kíp 4 gồm cả hành chính, ca cố định sáng/chiều,
+// và ca xoay được phân tay (Ca 1/2/3) - gộp chung một chữ là sai với người xem.
+function nhomCua(e){
+  if(e.kip >= 1 && e.kip <= 3) return 'Kíp ' + e.kip;
+  if(e.fixed_shift === 'HC') return 'Hành chính';
+  if(e.fixed_shift === 'S' || e.fixed_shift === 'C') return 'Ca cố định';
+  return 'Ca xoay';
+}
+function soGon(v){ return v % 1 === 0 ? String(v) : v.toFixed(1).replace('.', ','); }
+
+// ── Tính ca một người một ngày ─────────────────────────────────
+// GIỮ ĐÚNG thứ tự ưu tiên của empShift() bên index.html, nếu không hai trang
+// sẽ báo ca khác nhau: ngày lễ → lịch tay (dòng id lớn nhất) → ca cố định →
+// HC/ca xoay chưa gán → kíp theo chu kỳ.
+function tinhCa(e, d, HOLS, LICH){
+  const dk = dKey(d);
+  if(HOLS.some(h => h.date === dk)) return 'L';
+  const cn = d.getDay() === 0;
+  const tay = LICH.filter(s => s.start_date <= dk && dk <= s.end_date);
+  if(tay.length){ tay.sort((a,b) => b.id - a.id); return tay[0].shift; }
+  if(e.fixed_shift === 'HC') return cn ? 'N' : 'HC';
+  if(e.fixed_shift === 'S')  return cn ? 'N' : 'S';
+  if(e.fixed_shift === 'C')  return cn ? 'N' : 'C';
+  if(e.kip === 4) return cn ? 'N' : 'UN';
+  if(e.kip >= 1 && e.kip <= 3) return getShift(e.kip, d);
+  return 'UN';
+}
+
+function gioTangCa(o){
+  let h = null;
+  if(o.note){ const m = o.note.match(/^([\d.]+)h/); if(m) h = parseFloat(m[1]); }
+  if(!h && o.start_time && o.end_time){
+    const [h1,m1] = o.start_time.split(':').map(Number), [h2,m2] = o.end_time.split(':').map(Number);
+    const k = ((h2*60+m2) - (h1*60+m1)) / 60; if(k > 0) h = k;
+  }
+  return h;
+}
+
+function hangCua(diem, CFG){
+  const ds = [...CFG].sort((a,b) => (b.min_score||0) - (a.min_score||0));
+  for(const g of ds) if(diem >= (g.min_score||0)) return g.grade;
+  return 'D';
+}
+
+// ── Nhớ những người đã xem gần đây trên máy này ────────────────
+// Máy ở xưởng có thể dùng chung, nên chỉ giữ 4 người và chỉ để chọn nhanh.
+const KHOA_GAN = 'ccm_gan_day';
+function docGan(){
+  try{ const v = JSON.parse(localStorage.getItem(KHOA_GAN) || '[]'); return Array.isArray(v) ? v : []; }
+  catch(e){ return []; }
+}
+function nhoGan(id, ten){
+  try{
+    const ds = docGan().filter(x => x.id !== id);
+    ds.unshift({id, ten});
+    localStorage.setItem(KHOA_GAN, JSON.stringify(ds.slice(0, 4)));
+    localStorage.setItem('tracuu_msnv', id);   // dùng chung với trang Tra Cứu cũ
+  }catch(e){}
+}
+function veGan(){
+  const ds = docGan();
+  document.getElementById('ganDay').style.display = ds.length ? '' : 'none';
+  document.getElementById('dsGan').innerHTML = ds.map(x =>
+    `<button type="button" class="chon-gan" data-id="${esc(x.id)}" onclick="xem(this.dataset.id)">
+       <b>${esc(x.ten)}</b><span>${esc(x.id)}</span></button>`).join('');
+}
+
+// ── Chuyển màn ─────────────────────────────────────────────────
+function hienNhap(){
+  document.getElementById('manXem').style.display = 'none';
+  document.getElementById('manNhap').style.display = 'block';
+  document.getElementById('nutDoi').style.display = 'none';
+  veGan();
+}
+function doiNguoi(){
+  history.replaceState(null, '', location.pathname);
+  const o = document.getElementById('oMsnv');
+  o.value = ''; document.getElementById('baoLoi').textContent = '';
+  hienNhap();
+  window.scrollTo(0, 0);
+}
+
+// ── Tải và hiện ca của một người ───────────────────────────────
+async function xem(maChon){
+  const o = document.getElementById('oMsnv');
+  const id = String(maChon ?? o.value).trim();
+  const loi = document.getElementById('baoLoi');
+  const nut = document.getElementById('nutXem');
+  if(!id){ loi.textContent = 'Chưa nhập mã số nhân viên'; o.focus(); return; }
+  loi.textContent = ''; nut.disabled = true; nut.textContent = 'Đang tải...';
+
+  const hn = new Date(); hn.setHours(0,0,0,0);
+  const thang = `${hn.getFullYear()}-${String(hn.getMonth()+1).padStart(2,'0')}`;
+  const cuoiThang = new Date(hn.getFullYear(), hn.getMonth()+1, 0).getDate();
+
+  try{
+    const [er, rr, mr, otr, lr, hr, gr, s5r] = await Promise.all([
+      sb.from('employees').select('*').eq('id', id),
+      sb.from('ratings_new').select('*').eq('emp_id', id).like('date', thang + '-%'),
+      sb.from('monthly_reviews').select('*').eq('emp_id', id).eq('month_key', thang),
+      sb.from('overtime').select('*').eq('emp_id', id).like('date', thang + '-%').order('date'),
+      sb.from('emp_schedule').select('*').eq('emp_id', id),
+      sb.from('holidays').select('*'),
+      sb.from('rating_config').select('*'),
+      sb.from('s5_checks').select('*').gte('date', thang + '-01').lte('date', `${thang}-${cuoiThang}`),
+    ]);
+    const hong = [er, rr, mr, otr, lr, hr, gr].find(r => r.error);
+    if(hong) throw hong.error;
+
+    const e = (er.data || [])[0];
+    if(!e){
+      loi.textContent = `Không tìm thấy MSNV "${id}". Kiểm tra lại mã số.`;
+      hienNhap(); o.value = id; o.focus();
+      return;
+    }
+    nhoGan(e.id, e.name);
+    if(new URLSearchParams(location.search).get('msnv') !== String(e.id))
+      history.replaceState(null, '', `${location.pathname}?msnv=${encodeURIComponent(e.id)}`);
+
+    veTrang(e, {
+      hn, thang, cuoiThang,
+      HOLS: hr.data || [], LICH: lr.data || [],
+      DIEM: rr.data || [], DUYET: (mr.data || []).find(r => r.approved) || {},
+      CFG: gr.data || [], TC: otr.data || [],
+      S5: s5r.error ? null : (s5r.data || []),
+    });
+  }catch(err){
+    loi.textContent = 'Lỗi tải dữ liệu: ' + (err.message || err);
+    hienNhap();
+  }finally{
+    nut.disabled = false; nut.textContent = 'Xem ca của tôi';
+  }
+}
+
+function veTrang(e, D){
+  const {hn, thang, cuoiThang, HOLS, LICH} = D;
+  const caNgay = d => tinhCa(e, d, HOLS, LICH);
+  const cong = n => { const d = new Date(hn); d.setDate(d.getDate() + n); return d; };
+
+  // ── Hôm nay ──
+  const maHn = caNgay(hn), caHn = caCua(maHn);
+  const le = maHn === 'L' ? HOLS.find(h => h.date === dKey(hn)) : null;
+  // "Ngày làm 1/2" chỉ đúng khi hôm nay đang đi theo chu kỳ kíp. Có lịch tay
+  // (nghỉ phép, đổi ca) hay ca cố định thì chu kỳ kíp không còn nói đúng về người này.
+  let dot = '—';
+  if(e.kip >= 1 && e.kip <= 3 && !e.fixed_shift && maHn === getShift(e.kip, hn)){
+    const bs = getBlockStatus(e.kip, hn);
+    if(bs.type === 'work') dot = `Ngày làm ${bs.day}/${bs.total}`;
+    else if(bs.type === 'rest') dot = `Ngày nghỉ ${bs.day}/${bs.total}`;
+  }
+
+  // ── 7 ngày tới ──
+  let tuan = '';
+  for(let i = 0; i < 7; i++){
+    const d = cong(i), m = caNgay(d);
+    tuan += `<div class="ngay ${lop(m)}${i === 0 ? ' hom-nay' : ''}" title="${esc(caCua(m).ten)}">
+      <span class="t">${i === 0 ? 'Nay' : THU[d.getDay()]}</span>
+      <span class="d">${d.getDate()}</span><span class="m">${esc(m)}</span></div>`;
+  }
+
+  // ── Sắp tới: lần đổi ca kế tiếp, kéo dài mấy ngày ──
+  let sap = '';
+  for(let i = 1; i <= 60; i++){
+    const m = caNgay(cong(i));
+    if(m !== maHn){
+      let n = 1;
+      while(n < 31 && caNgay(cong(i + n)) === m) n++;
+      const d = cong(i);
+      sap = `<div class="the sap">
+        <div class="sap-o ${lop(m)}">${esc(m)}</div>
+        <div><div class="nho">Sắp tới</div>
+          <b>${esc(caCua(m).ten)} từ ${THU[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}${m === 'UN' ? '' : ` · ${n} ngày`}</b></div>
+      </div>`;
+      break;
+    }
+  }
+
+  // ── Ngày làm trong tháng: đã qua / cả tháng, theo lịch ──
+  let daQua = 0, caThang = 0, chuaLich = 0;
+  for(let n = 1; n <= cuoiThang; n++){
+    const d = new Date(hn.getFullYear(), hn.getMonth(), n);
+    const m = caNgay(d);
+    if(m === 'UN'){ chuaLich++; continue; }
+    if(DI_LAM.has(m)){ caThang++; if(d <= hn) daQua++; }
+  }
+
+  // ── Tăng ca ──
+  let tongTc = 0, dongTc = '';
+  D.TC.forEach(o => {
+    const h = gioTangCa(o); if(h) tongTc += h;
+    const [, mm, dd] = o.date.split('-');
+    dongTc += `<div class="dong"><span>${dd}/${mm} · ${o.shift === 'C' ? 'Chiều' : 'Sáng'}</span>
+      <b>${h ? soGon(h) + ' giờ' : esc((o.start_time || '') + (o.end_time ? '–' + o.end_time : ''))}</b></div>`;
+  });
+
+  // ── Đánh giá: ưu tiên điểm đã duyệt ──
+  const ds = D.DIEM, nDiem = ds.length;
+  const tb = nDiem ? Math.round(ds.reduce((a,r) => a + parseFloat(r.score), 0) / nDiem * 10) / 10 : null;
+  const duyet = D.DUYET;
+  const diem = (duyet.final_score !== null && duyet.final_score !== undefined) ? parseFloat(duyet.final_score) : tb;
+  const hang = duyet.grade || (diem !== null && D.CFG.length ? hangCua(diem, D.CFG) : null);
+
+  // ── 5S: khớp MSNV trước, bản ghi cũ chưa có MSNV thì theo tên ──
+  let o5 = {lon: '—', phu: 'không tải được', mau: ''};
+  if(D.S5){
+    const ten = String(e.name || '').trim().toLowerCase();
+    const cua = D.S5.filter(r => r.worker_id ? String(r.worker_id) === String(e.id)
+                                             : String(r.worker_name || '').trim().toLowerCase() === ten);
+    const hongLan = cua.filter(r => !S_DEFS.every(s => r[s.k] === true)).length;
+    o5 = !cua.length ? {lon: 'Chưa kiểm', phu: 'tháng này', mau: ''}
+       : hongLan    ? {lon: `${hongLan} lần`, phu: 'chưa đạt', mau: 'color:var(--loi)'}
+       :              {lon: 'Đạt', phu: `${cua.length} lượt kiểm`, mau: 'color:var(--dat)'};
+  }
+
+  // ── Nghỉ phép / vắng mặt tháng này ──
+  const dongNghi = LICH.filter(s => (s.shift === 'NP' || s.shift === 'VM') &&
+                                    s.start_date <= `${thang}-${cuoiThang}` && s.end_date >= `${thang}-01`)
+    .sort((a,b) => a.start_date.localeCompare(b.start_date))
+    .map(s => {
+      const a = s.start_date.split('-'), b = s.end_date.split('-');
+      const khoang = s.start_date === s.end_date ? `${a[2]}/${a[1]}` : `${a[2]}/${a[1]} – ${b[2]}/${b[1]}`;
+      return `<div class="dong"><span>${khoang}</span><b>${s.shift === 'NP' ? 'Nghỉ phép' : 'Vắng mặt'}</b></div>`;
+    }).join('');
+
+  const chuDau = String(e.name || '?').trim().split(/\s+/).slice(-2).map(x => x[0]).join('').toUpperCase();
+  const thangSo = hn.getMonth() + 1;
+
+  document.getElementById('manXem').innerHTML = `
+  <div class="luoi">
+    <div class="nguoi">
+      <div class="nguoi-chu" aria-hidden="true">${esc(chuDau)}</div>
+      <div>
+        <div class="nguoi-ten">${esc(e.name)}</div>
+        <div class="nguoi-phu">MSNV ${esc(e.id)} · ${esc(nhomCua(e))}${e.role ? ' · ' + esc(e.role) : ''}</div>
+      </div>
+    </div>
+
+    <div class="cot-trai">
+      <section class="the" aria-label="Ca hôm nay">
+        <div class="hn-dau"><span class="hn-nhan">HÔM NAY</span>
+          <span class="hn-ngay">${THU_D[hn.getDay()]}, ${hn.getDate()}/${thangSo}</span></div>
+        <div class="hn-than">
+          <div class="hn-o ${lop(maHn)}">${esc(maHn)}</div>
+          <div>
+            <div class="hn-ten">${esc(caHn.ten)}</div>
+            ${le ? `<div class="hn-gio">${esc(le.name)}</div>` : caHn.gio ? `<div class="hn-gio">${esc(caHn.gio)}</div>` : ''}
+          </div>
+        </div>
+        <div class="hn-gach"></div>
+        <div class="hn-ba">
+          <div><span class="nho">Kíp</span><b>${esc(nhomCua(e))}</b></div>
+          <div><span class="nho">Đợt</span><b>${esc(dot)}</b></div>
+          <div><span class="nho">Máy</span><b>${esc(e.role || '—')}</b></div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="tieu">7 ngày tới</h2>
+        <div class="tuan">${tuan}</div>
+      </section>
+
+      ${sap}
+    </div>
+
+    <div class="cot-phai">
+      <section class="so" aria-label="Tóm tắt tháng ${thangSo}">
+        <div class="the">
+          <div class="nho">Ngày làm T${thangSo}</div>
+          <div class="so-lon">${daQua}<span style="font-size:16px;color:var(--chu-phu);font-weight:700"> / ${caThang}</span></div>
+          <div class="so-phu">đã qua / cả tháng${chuaLich ? ` · ${chuaLich} ngày chưa có lịch` : ''}</div>
+        </div>
+        <div class="the">
+          <div class="nho">Tăng ca T${thangSo}</div>
+          <div class="so-lon">${soGon(tongTc)} giờ</div>
+          <div class="so-phu">${D.TC.length} lần</div>
+        </div>
+        <div class="the">
+          <div class="nho">Đánh giá T${thangSo}</div>
+          <div class="so-lon">${diem !== null ? soGon(diem) : '—'}</div>
+          <div class="so-phu">${hang ? 'Hạng ' + esc(hang) + (duyet.approved ? ' · đã duyệt' : '') : nDiem + ' ngày đã chấm'}</div>
+        </div>
+        <div class="the">
+          <div class="nho">5S T${thangSo}</div>
+          <div class="so-lon" style="${o5.mau}">${esc(o5.lon)}</div>
+          <div class="so-phu">${esc(o5.phu)}</div>
+        </div>
+      </section>
+
+      <section class="the">
+        <h2 class="tieu">Tăng ca tháng ${thangSo}</h2>
+        ${dongTc || '<div class="trong">Không có tăng ca</div>'}
+      </section>
+
+      <section class="the">
+        <h2 class="tieu">Nghỉ phép / vắng mặt tháng ${thangSo}</h2>
+        ${dongNghi || '<div class="trong">Không có</div>'}
+      </section>
+
+      <div class="cuoi">
+        <a href="index.html" class="nut-chinh">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M8 2v4M16 2v4"></path></svg>
+          Xem toàn bộ nhân viên
+        </a>
+        <a href="xin-nghi.html" class="nut-phu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          Tạo đơn xin nghỉ
+        </a>
+        <div class="cap-nhat">Cập nhật lúc ${new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('manNhap').style.display = 'none';
+  // 'block' chứ không phải '': gỡ kiểu riêng là CSS #manXem{display:none} lại thắng
+  document.getElementById('manXem').style.display = 'block';
+  document.getElementById('nutDoi').style.display = '';
+  window.scrollTo(0, 0);
+}
+
+// ── Khởi động ──────────────────────────────────────────────────
+// Link có ?msnv=... (lưu vào màn hình chính điện thoại) thì vào thẳng; còn
+// không thì luôn bắt đầu ở màn nhập, có danh sách người đã xem để chọn nhanh.
+(function(){
+  const ma = new URLSearchParams(location.search).get('msnv');
+  hienNhap();
+  if(ma) xem(ma);
+})();
+</script>
+</body>
+</html>
