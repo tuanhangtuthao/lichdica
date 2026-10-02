@@ -201,6 +201,16 @@ input.sc-note:focus{border-color:#4a148c}
   .res-wrap{padding:0 24px 24px}
 }
 td:hover .del-btn{display:inline-block!important}
+/* Tooltip lý do trừ điểm ở tab Duyệt Đánh Giá */
+.note-tip{position:fixed;z-index:900;max-width:min(300px,86vw);background:#37474f;color:#fff;
+  padding:8px 11px;border-radius:8px;font-size:.78rem;line-height:1.45;
+  box-shadow:0 4px 16px rgba(0,0,0,.32);display:none;pointer-events:none;
+  white-space:pre-wrap;word-break:break-word}
+.note-tip.show{display:block}
+.note-tip b{display:block;font-size:.66rem;opacity:.72;font-weight:700;
+  margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.appr-day.co-note{cursor:help}
+.appr-day.co-note:hover{background:#fff8e1!important}
 </style>
 </head>
 <body>
@@ -1155,6 +1165,61 @@ function setApprKip(k){
   renderApproval();
 }
 
+// ── LÝ DO TRỪ ĐIỂM ───────────────────────────────────────
+// Tooltip tự dựng, gắn thẳng vào body nên không bị thẻ cha cắt mất, và
+// hiện ngay chứ không phải chờ cả giây như tooltip mặc định của trình duyệt.
+// Bấm vào ô cũng hiện, để trên điện thoại (không có hover) vẫn xem được.
+function escAttr(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+let _tipEl = null, _tipGim = null;
+function tipEl(){
+  if(!_tipEl){
+    _tipEl = document.createElement('div');
+    _tipEl.className = 'note-tip';
+    document.body.appendChild(_tipEl);
+  }
+  return _tipEl;
+}
+
+function hienLyDo(o, gim){
+  const t = tipEl();
+  if(gim){
+    // bấm lần nữa vào đúng ô đang ghim thì tắt
+    if(_tipGim === o){ _tipGim = null; anLyDo(true); return; }
+    _tipGim = o;
+  }else if(_tipGim){
+    return;   // đang ghim bằng cú bấm thì rê chuột không đổi nội dung
+  }
+  t.innerHTML = '<b>Ngày ' + escAttr(o.dataset.ngay) + ' · lý do trừ điểm</b>' + escAttr(o.dataset.note);
+  t.classList.add('show');
+
+  // đặt phía trên ô; không đủ chỗ thì lật xuống dưới. Kẹp lại trong màn hình
+  // cho khỏi tràn ra ngoài ở các ô sát mép.
+  const r = o.getBoundingClientRect(), tr = t.getBoundingClientRect();
+  let left = r.left + r.width/2 - tr.width/2;
+  left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8));
+  let top = r.top - tr.height - 8;
+  if(top < 8) top = r.bottom + 8;
+  t.style.left = left + 'px';
+  t.style.top  = top + 'px';
+}
+
+function anLyDo(buoc){
+  if(_tipGim && !buoc) return;
+  if(buoc) _tipGim = null;
+  if(_tipEl) _tipEl.classList.remove('show');
+}
+
+// bấm ra ngoài thì bỏ ghim
+addEventListener('click', e => {
+  if(_tipGim && !e.target.closest('.appr-day')) anLyDo(true);
+});
+addEventListener('scroll', () => anLyDo(true), true);
+
 function renderApproval(){
   const mVal = document.getElementById('apprMonth').value; // YYYY-MM
   if(!mVal){
@@ -1173,10 +1238,11 @@ function renderApproval(){
   // Calculate avg for the month
   const statMap = {};
   RATINGS.filter(r => r.date.startsWith(monthPrefix)).forEach(r => {
-    if(!statMap[r.emp_id]) statMap[r.emp_id] = {sum:0, cnt:0, scores:{}};
+    if(!statMap[r.emp_id]) statMap[r.emp_id] = {sum:0, cnt:0, scores:{}, notes:{}};
     statMap[r.emp_id].sum += parseFloat(r.score);
     statMap[r.emp_id].cnt++;
     statMap[r.emp_id].scores[r.date] = parseFloat(r.score);
+    if(r.note) statMap[r.emp_id].notes[r.date] = r.note;   // lý do trừ điểm
   });
 
   // Calculate grade distribution
@@ -1246,8 +1312,15 @@ function renderApproval(){
     for(let i=1; i<=daysInMonth; i++) {
        const dk = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
        const sVal = st.scores[dk] !== undefined ? st.scores[dk] : '';
-       html += `<div style="display:inline-flex;flex-direction:column;align-items:center;background:#fff;border-radius:6px;padding:3px;border:1px solid #ddd;min-width:38px;">
-         <span style="font-size:.65rem;font-weight:600;color:#888">${i}</span>
+       const nVal = (st.notes && st.notes[dk]) || '';   // lý do trừ điểm của ngày này
+       // Ngày có lý do thì viền cam + chấm nhỏ, để biết chỗ nào đáng chỉ vào
+       // mà xem, khỏi phải rà từng ô
+       const vien = nVal ? '1.5px solid #ff9800' : '1px solid #ddd';
+       html += `<div class="appr-day${nVal ? ' co-note' : ''}"
+         ${nVal ? `data-ngay="${i}" data-note="${escAttr(nVal)}"
+           onmouseenter="hienLyDo(this)" onmouseleave="anLyDo()" onclick="hienLyDo(this,true)"` : ''}
+         style="display:inline-flex;flex-direction:column;align-items:center;background:#fff;border-radius:6px;padding:3px;border:${vien};min-width:38px;position:relative">
+         <span style="font-size:.65rem;font-weight:600;color:#888">${i}${nVal ? '<span style="color:#ff9800">•</span>' : ''}</span>
          <input type="number" min="0" max="12" step="0.1" title="${dk}" id="appr-sc-${e.id}-${i}" value="${sVal}" style="width:100%;text-align:center;border:none;background:none;font-size:.85rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none" onchange="this.style.color=scoreColor(this.value)">
        </div>`;
     }
