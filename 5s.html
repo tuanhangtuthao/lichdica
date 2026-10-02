@@ -121,7 +121,7 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   max-height:90vh;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.3);
   opacity:0;pointer-events:none;transition:.2s}
 .sheet.show{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
-.sheet.wide{width:min(720px,96vw)}
+.sheet.wide{width:min(1100px,96vw)}
 .sh-head{padding:13px 16px;background:linear-gradient(135deg,var(--accent-d),var(--accent));
   color:#fff;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .sh-head.warn{background:linear-gradient(135deg,#bf360c,#e64a19)}
@@ -202,6 +202,55 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 .hs-note{font-size:.78rem;color:#444;margin-top:6px;line-height:1.35}
 .hs-ph{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
 .hs-ph img{width:62px;height:62px;object-fit:cover;border-radius:7px;border:1px solid #ddd;cursor:zoom-in}
+
+/* ── TAB TRONG BẢNG LỊCH SỬ ── */
+.hs-tabs{display:flex;gap:6px;border-bottom:2px solid #eceff1;margin-bottom:12px;flex-wrap:wrap}
+.hs-tab{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;
+  padding:8px 12px;font-size:.82rem;font-weight:700;color:#90a4ae;cursor:pointer;font-family:inherit}
+.hs-tab:hover{color:#546e7a}
+.hs-tab.on{color:var(--accent-d);border-bottom-color:var(--accent)}
+
+/* ── DUYỆT THEO THÁNG ── */
+.th-bar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.th-bar input,.th-bar select{border:1.5px solid #ccc;border-radius:8px;padding:6px 9px;
+  font-size:.8rem;font-family:inherit;outline:none}
+.th-bar .lon{flex:1;min-width:110px}
+.th-xuat{background:#1b5e20;color:#fff;border:none;border-radius:8px;padding:7px 13px;
+  font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;margin-left:auto}
+.th-xuat:disabled{opacity:.5;cursor:not-allowed}
+.th-tong{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.th-o{flex:1;min-width:84px;border-radius:9px;padding:7px 10px;text-align:center;border:1.5px solid}
+.th-o .n{font-size:1.05rem;font-weight:900;line-height:1.1}
+.th-o .l{font-size:.6rem;font-weight:700;text-transform:uppercase;margin-top:2px;letter-spacing:.03em}
+.th-o.a{background:var(--accent-l);border-color:var(--accent);color:var(--accent-d)}
+.th-o.b{background:var(--ok-l);border-color:var(--ok);color:var(--ok)}
+.th-o.c{background:var(--ng-l);border-color:var(--ng);color:var(--ng)}
+.th-o.d{background:#f5f5f5;border-color:#ccc;color:#757575}
+
+.th-cuon{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e3e7ec;border-radius:9px}
+table.th-bang{border-collapse:collapse;width:100%;font-size:.76rem;min-width:760px;background:#fff}
+table.th-bang th{background:#eceff1;color:#455a64;font-weight:800;font-size:.68rem;
+  text-transform:uppercase;letter-spacing:.03em;padding:7px 8px;text-align:left;
+  position:sticky;top:0;z-index:2;white-space:nowrap}
+table.th-bang td{padding:6px 8px;border-top:1px solid #eceff1;vertical-align:middle}
+table.th-bang tr.ng{background:#fff5f5}
+table.th-bang tr:hover{background:#f5f9ff}
+.th-tt{font-weight:800;white-space:nowrap}
+.th-tt.ok{color:var(--ok)}.th-tt.ng{color:var(--ng)}
+.th-tag{display:inline-block;font-size:.63rem;font-weight:800;padding:1px 6px;border-radius:9px;
+  background:var(--ng-l);color:var(--ng);border:1px solid #ef9a9a;margin:1px 2px 1px 0}
+.th-nv{border:1px solid #cfd8dc;border-radius:6px;padding:3px 5px;font-size:.75rem;
+  font-family:inherit;max-width:150px;background:#fff}
+.th-nut{border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:.74rem;
+  background:#eceff1;color:#546e7a}
+.th-nut.xoa{background:var(--ng-l);color:var(--ng)}
+.th-anh img{width:30px;height:30px;object-fit:cover;border-radius:4px;border:1px solid #ddd;
+  cursor:zoom-in;margin-right:2px}
+
+@media(max-width:680px){
+  .th-xuat{margin-left:0;width:100%}
+  .hs-tab{padding:7px 9px;font-size:.76rem}
+}
 
 /* ── XEM ẢNH TO ── */
 .lb{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:600;display:none;
@@ -379,10 +428,32 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 <!-- LỊCH SỬ VI PHẠM TOÀN XƯỞNG -->
 <div class="sheet wide" id="histSheet">
   <div class="sh-head warn">
-    <div><h3>📋 Lịch sử vi phạm 5S</h3><div class="sh-sub">Các lần kiểm còn mục chưa đạt</div></div>
+    <div><h3>📋 Lịch sử &amp; Duyệt 5S</h3><div class="sh-sub" id="hsSub">Các lần kiểm còn mục chưa đạt</div></div>
     <button class="sh-close" onclick="closeHistory()">✕</button>
   </div>
   <div class="sh-body">
+    <div class="hs-tabs">
+      <button class="hs-tab on" id="tabBtnVP" onclick="doiTabLS('vipham')">📋 Vi phạm</button>
+      <button class="hs-tab" id="tabBtnTH" onclick="doiTabLS('thang')">📅 Duyệt tuân thủ theo tháng</button>
+    </div>
+
+    <div id="tabThang" style="display:none">
+      <div class="th-bar">
+        <input type="month" id="thThang" onchange="taiThang()">
+        <select id="thNV" class="lon" onchange="veThang()"></select>
+        <input type="text" id="thMay" class="lon" placeholder="Mã máy..." autocomplete="off" oninput="veThang()">
+        <select id="thLoc" onchange="veThang()">
+          <option value="all">Tất cả lượt kiểm</option>
+          <option value="ng">Chỉ chưa đạt</option>
+          <option value="ok">Chỉ đạt</option>
+        </select>
+        <button class="th-xuat" id="thXuat" onclick="xuatExcelThang()">📊 Xuất Excel gửi nhân sự</button>
+      </div>
+      <div class="th-tong" id="thTong"></div>
+      <div id="thNoiDung"><div class="hs-empty">Chọn tháng để xem.</div></div>
+    </div>
+
+    <div id="tabVipham">
     <div class="hs-filter">
       <select id="hsWorker" onchange="renderHistory()"></select>
       <input type="text" id="hsMachine" placeholder="Mã máy..." autocomplete="off" oninput="renderHistory()">
@@ -393,6 +464,7 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
       </select>
     </div>
     <div id="hsList"><div class="hs-empty">Đang tải...</div></div>
+    </div>
   </div>
 </div>
 
@@ -400,6 +472,7 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 const SB_URL='https://xtutpuwesganunktrxcv.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
@@ -1183,6 +1256,213 @@ async function loadCellHistory(code){
   }catch(e){
     box.innerHTML = `<div class="hs-empty" style="padding:12px">Lỗi tra lịch sử: ${esc(e.message)}</div>`;
   }
+}
+
+
+// ══════════════════════════════════════════════
+// DUYỆT TUÂN THỦ THEO THÁNG
+// ══════════════════════════════════════════════
+// Xem toàn bộ lượt kiểm của một tháng: sửa lại người đứng máy khi gán sai,
+// xoá lượt kiểm hỏng, và xuất Excel gửi nhân sự.
+let THANG = [];          // dữ liệu tháng đang xem
+
+function doiTabLS(t){
+  const vp = t === 'vipham';
+  document.getElementById('tabVipham').style.display = vp ? '' : 'none';
+  document.getElementById('tabThang').style.display  = vp ? 'none' : '';
+  document.getElementById('tabBtnVP').classList.toggle('on', vp);
+  document.getElementById('tabBtnTH').classList.toggle('on', !vp);
+  document.getElementById('hsSub').textContent = vp
+    ? 'Các lần kiểm còn mục chưa đạt'
+    : 'Toàn bộ lượt kiểm trong tháng · sửa người, xoá lượt, xuất Excel';
+  if(!vp){
+    const o = document.getElementById('thThang');
+    if(!o.value) o.value = (curDate || dKeyOf(new Date())).slice(0,7);
+    if(!THANG.length) taiThang();
+  }
+}
+
+async function taiThang(){
+  const thang = document.getElementById('thThang').value;
+  const box = document.getElementById('thNoiDung');
+  if(!thang){ box.innerHTML = '<div class="hs-empty">Chọn tháng để xem.</div>'; return; }
+  box.innerHTML = '<div class="hs-empty">Đang tải...</div>';
+  const [y,m] = thang.split('-');
+  const cuoi = new Date(Number(y), Number(m), 0).getDate();
+  try{
+    const {data,error} = await sb.from(TABLE).select('*')
+      .gte('date', `${thang}-01`).lte('date', `${thang}-${String(cuoi).padStart(2,'0')}`)
+      .order('date').order('checked_at');
+    if(error) throw error;
+    THANG = data || [];
+    // đổ danh sách người vào ô lọc, chỉ những người có mặt trong tháng
+    const sel = document.getElementById('thNV'), giu = sel.value;
+    const ten = [...new Set(THANG.map(r => r.worker_name).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">Tất cả nhân viên</option>' +
+      ten.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    sel.value = giu;
+    veThang();
+  }catch(e){
+    console.warn(e);
+    box.innerHTML = `<div class="hs-empty">Lỗi tải dữ liệu: ${esc(e.message)}</div>`;
+  }
+}
+
+function locThang(){
+  const nv  = document.getElementById('thNV').value;
+  const may = document.getElementById('thMay').value.toLowerCase().trim();
+  const loc = document.getElementById('thLoc').value;
+  return THANG.filter(r => {
+    if(nv && r.worker_name !== nv) return false;
+    if(may && !(r.machine_code||'').toLowerCase().includes(may)) return false;
+    const dat = statusOf(r) === 'ok';
+    if(loc === 'ng' && dat) return false;
+    if(loc === 'ok' && !dat) return false;
+    return true;
+  });
+}
+
+function veThang(){
+  const ds = locThang();
+  // thống kê tính trên dữ liệu đã lọc
+  const dat = ds.filter(r => statusOf(r) === 'ok').length;
+  const may = new Set(ds.map(r => r.machine_code)).size;
+  const ngNV = new Set(ds.map(r => r.worker_name).filter(Boolean)).size;
+  document.getElementById('thTong').innerHTML = `
+    <div class="th-o a"><div class="n">${ds.length}</div><div class="l">Lượt kiểm</div></div>
+    <div class="th-o b"><div class="n">${dat}</div><div class="l">Đạt</div></div>
+    <div class="th-o c"><div class="n">${ds.length - dat}</div><div class="l">Chưa đạt</div></div>
+    <div class="th-o d"><div class="n">${may}</div><div class="l">Máy</div></div>
+    <div class="th-o d"><div class="n">${ngNV}</div><div class="l">Nhân viên</div></div>`;
+
+  document.getElementById('thXuat').disabled = ds.length === 0;
+
+  const box = document.getElementById('thNoiDung');
+  if(!ds.length){
+    box.innerHTML = `<div class="hs-empty">${THANG.length ? 'Không có lượt kiểm nào khớp bộ lọc.' : 'Tháng này chưa có lượt kiểm nào.'}</div>`;
+    return;
+  }
+
+  let h = `<div class="th-cuon"><table class="th-bang"><thead><tr>
+    <th>Ngày</th><th>Ca</th><th>Máy</th><th>Nhân viên</th><th>Người kiểm</th>
+    <th>Kết quả</th><th>Mục chưa đạt</th><th>Ghi chú</th><th>Ảnh</th><th></th></tr></thead><tbody>`;
+  ds.forEach(r => {
+    const st = statusOf(r), hong = failsOf(r);
+    const anh = (r.photos || []).slice(0,3)
+      .map(u => `<img src="${esc(u)}" alt="" onclick="openLightbox('${esc(u)}')">`).join('');
+    h += `<tr class="${st === 'ok' ? '' : 'ng'}">
+      <td style="white-space:nowrap">${fmtDs(r.date)}${gioCua(r) ? '<br><span style="color:#90a4ae;font-size:.68rem">'+gioCua(r)+'</span>' : ''}</td>
+      <td style="white-space:nowrap">${r.shift === 'S' ? 'Sáng' : 'Tối'}${r.kip ? '<br><span style="color:#90a4ae;font-size:.68rem">Kíp '+r.kip+'</span>' : ''}</td>
+      <td style="font-weight:800">${esc(r.machine_code)}</td>
+      <td>${oChonNV(r)}</td>
+      <td style="color:#607d8b">${esc(r.inspector || '')}</td>
+      <td class="th-tt ${st}">${st === 'ok' ? '✅ Đạt' : '⚠️ ' + (N_TC - hong.length) + '/' + N_TC}</td>
+      <td>${hong.map(s => `<span class="th-tag">${esc(s.short)}</span>`).join('') || '<span style="color:#cfd8dc">—</span>'}</td>
+      <td style="max-width:180px">${esc(r.note || '') || '<span style="color:#cfd8dc">—</span>'}</td>
+      <td class="th-anh" style="white-space:nowrap">${anh || '<span style="color:#cfd8dc">—</span>'}</td>
+      <td><button class="th-nut xoa" title="Xoá lượt kiểm này" onclick="xoaLuotThang(${r.id})">🗑</button></td>
+    </tr>`;
+  });
+  box.innerHTML = h + '</tbody></table></div>';
+}
+
+// Ô chọn người đứng máy: sửa được ngay trong bảng khi gán sai người
+function oChonNV(r){
+  const hien = r.worker_name || '';
+  let op = '<option value="">— Chưa rõ —</option>';
+  const byKip = {};
+  EMPS.forEach(e => { (byKip[e.kip] = byKip[e.kip] || []).push(e); });
+  Object.keys(byKip).sort().forEach(k => {
+    op += `<optgroup label="${k === '4' ? 'Hành chính / Ca xoay' : 'Kíp ' + k}">` +
+      byKip[k].map(e => `<option value="${esc(e.name)}"${e.name === hien ? ' selected' : ''}>${esc(e.name)}</option>`).join('') +
+      '</optgroup>';
+  });
+  // tên không còn trong danh sách NV vẫn giữ, không làm mất dữ liệu cũ
+  if(hien && !EMPS.some(e => e.name === hien))
+    op += `<option value="${esc(hien)}" selected>${esc(hien)} (ngoài danh sách)</option>`;
+  return `<select class="th-nv" onchange="doiNVThang(${r.id}, this.value)">${op}</select>`;
+}
+
+async function doiNVThang(id, ten){
+  try{
+    const {error} = await sb.from(TABLE).update({worker_name: ten, updated_at: new Date().toISOString()}).eq('id', id);
+    if(error) throw error;
+    const r = THANG.find(x => x.id === id);
+    if(r) r.worker_name = ten;
+    await loadChecks(); renderFloor();   // sơ đồ ngoài cũng đổi theo
+    veThang();
+    toast('✅ Đã đổi người đứng máy');
+  }catch(e){ toast('Lỗi đổi người: ' + e.message, true); }
+}
+
+async function xoaLuotThang(id){
+  const r = THANG.find(x => x.id === id);
+  if(!r) return;
+  if(!confirm(`Xoá lượt kiểm máy ${r.machine_code} ngày ${fmtDs(r.date)}?\n\nẢnh kèm theo cũng bị xoá. Không khôi phục được.`)) return;
+  try{
+    const paths = (r.photos || []).map(pathCuaAnh).filter(Boolean);
+    if(paths.length) await sb.storage.from(BUCKET).remove(paths);
+    const {error} = await sb.from(TABLE).delete().eq('id', id);
+    if(error) throw error;
+    THANG = THANG.filter(x => x.id !== id);
+    await loadChecks(); renderFloor();
+    veThang();
+    toast('Đã xoá lượt kiểm');
+  }catch(e){ toast('Lỗi xoá: ' + e.message, true); }
+}
+
+// Xuất Excel: 2 sheet - tổng hợp theo người để nhân sự xử lý, và chi tiết
+// từng lượt để đối chiếu khi cần.
+function xuatExcelThang(){
+  const ds = locThang();
+  if(!ds.length){ toast('Không có dữ liệu để xuất', true); return; }
+  if(typeof XLSX === 'undefined'){ toast('Chưa tải được thư viện Excel, thử lại sau', true); return; }
+  const thang = document.getElementById('thThang').value;
+
+  // ── Sheet 1: tổng hợp theo nhân viên ──
+  const gom = {};
+  ds.forEach(r => {
+    const k = r.worker_name || '(chưa rõ)';
+    if(!gom[k]) gom[k] = {luot:0, dat:0, ng:0, loi:{}, may:new Set()};
+    const g = gom[k];
+    g.luot++; g.may.add(r.machine_code);
+    if(statusOf(r) === 'ok') g.dat++;
+    else { g.ng++; failsOf(r).forEach(s => g.loi[s.short] = (g.loi[s.short] || 0) + 1); }
+  });
+  const s1 = [['Nhân viên','Số lượt kiểm','Đạt','Chưa đạt','Tỷ lệ đạt','Số máy','Các mục chưa đạt']];
+  Object.entries(gom)
+    .sort((a,b) => b[1].ng - a[1].ng || a[0].localeCompare(b[0]))
+    .forEach(([ten,g]) => s1.push([
+      ten, g.luot, g.dat, g.ng,
+      g.luot ? Math.round(g.dat / g.luot * 100) + '%' : '',
+      g.may.size,
+      Object.entries(g.loi).map(([k,v]) => `${k} (${v})`).join(', ')
+    ]));
+
+  // ── Sheet 2: chi tiết từng lượt ──
+  const s2 = [['Ngày','Giờ','Ca','Kíp','Máy','Nhân viên','Người kiểm','Kết quả',
+               ...S_DEFS.map(s => s.name), 'Mục chưa đạt','Ghi chú','Số ảnh']];
+  ds.forEach(r => s2.push([
+    fmtDs(r.date), gioCua(r), r.shift === 'S' ? 'Sáng' : 'Tối', r.kip || '',
+    r.machine_code, r.worker_name || '', r.inspector || '',
+    statusOf(r) === 'ok' ? 'Đạt' : 'Chưa đạt',
+    ...S_DEFS.map(s => r[s.k] ? 'Đạt' : 'Chưa đạt'),
+    failsOf(r).map(s => s.short).join(', '),
+    r.note || '', (r.photos || []).length
+  ]));
+
+  const wb = XLSX.utils.book_new();
+  const w1 = XLSX.utils.aoa_to_sheet(s1);
+  w1['!cols'] = [{wch:24},{wch:13},{wch:7},{wch:10},{wch:10},{wch:8},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, w1, 'Tổng hợp theo NV');
+  const w2 = XLSX.utils.aoa_to_sheet(s2);
+  w2['!cols'] = [{wch:11},{wch:7},{wch:7},{wch:6},{wch:10},{wch:22},{wch:18},{wch:10},
+                 ...S_DEFS.map(() => ({wch:14})), {wch:26},{wch:34},{wch:7}];
+  XLSX.utils.book_append_sheet(wb, w2, 'Chi tiết');
+
+  const [y,m] = thang.split('-');
+  XLSX.writeFile(wb, `5S thang ${m}-${y}.xlsx`);
+  toast('✅ Đã xuất file Excel');
 }
 
 // ══════════════════════════════════════════════
