@@ -44,6 +44,10 @@ body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;lin
 .chVM{background:#ffcdd2;color:#b71c1c}.chUN{background:#f5f5f5;color:#999}
 .chC1{background:#b2dfdb;color:#00695c}.chC2{background:#ffe082;color:#e65100}
 .chC3{background:#ce93d8;color:#4a148c}
+.msg .gb{display:inline-block;padding:1px 9px;border-radius:7px;font-weight:800;font-size:.82rem}
+.gb-Ap{background:#e8f5e9;color:#1b5e20}.gb-A{background:#c8e6c9;color:#2e7d32}
+.gb-B{background:#bbdefb;color:#1565c0}.gb-C{background:#fff9c4;color:#e65100}
+.gb-D{background:#ffcdd2;color:#b71c1c}
 
 .typing{align-self:flex-start;background:#fff;padding:12px 16px;border-radius:14px;
   border-bottom-left-radius:4px;display:flex;gap:4px}
@@ -249,6 +253,8 @@ function round1(v){return Math.round(parseFloat(v)*10)/10;}
 function hhmm(h){return h%1===0?h+'h':h.toFixed(1)+'h';}
 function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 function chip(s){return `<span class="chip ch${s}">${SLBL[s]||s}</span>`;}
+function gbClass(g){return 'gb-'+(g==='A+'?'Ap':g);}
+function gbadge(g){return `<span class="gb ${gbClass(g)}">${esc(g)}</span>`;}
 
 // Bỏ dấu tiếng Việt + chuẩn hoá, để "ca cua toi hom nay" cũng khớp được.
 function norm(s){
@@ -282,7 +288,7 @@ function otHours(o){
 // ═══════════════════════════════════════════════════════════════
 // TẦNG 1 - DỮ LIỆU
 // ═══════════════════════════════════════════════════════════════
-const DB = { emps:null, hols:null, sched:null, grade:null, docs:null, ot:{} };
+const DB = { emps:null, hols:null, sched:null, grade:null, docs:null, ot:{}, s5:{} };
 
 async function loadCore(){
   if(DB.emps) return;
@@ -310,6 +316,32 @@ async function loadDocs(){
   DB.docs = r.error ? [] : (r.data||[]);
   return DB.docs;
 }
+// Chỉ giữ lượt CHƯA ĐẠT - giống cách rating.html lọc, để con số "số lần vi
+// phạm" trên chatbot và trên trang Đánh Giá luôn bằng nhau.
+async function loadS5(monthKey){
+  if(DB.s5[monthKey]) return DB.s5[monthKey];
+  // s5_checks.date là cột kiểu date THẬT, không lọc bằng like được
+  // (Postgres báo "operator does not exist: date ~~ unknown"), phải dùng
+  // khoảng ngày. Khác overtime.date / ratings_new.date đang là cột text -
+  // chỗ đó like chạy bình thường nên đừng copy ngược lại.
+  const [y,m] = monthKey.split('-').map(Number);
+  const sau = m===12 ? `${y+1}-01-01` : `${y}-${String(m+1).padStart(2,'0')}-01`;
+  const r = await sb.from('s5_checks').select('*')
+              .gte('date', monthKey+'-01').lt('date', sau).order('date');
+  if(r.error) throw new Error('Đọc dữ liệu 5S lỗi: '+r.error.message);
+  DB.s5[monthKey] = (r.data||[]).filter(x => !S_DEFS.every(d => x[d.k] === true));
+  return DB.s5[monthKey];
+}
+function s5MucHong(r){ return S_DEFS.filter(d => r[d.k] !== true); }
+// Khớp theo MSNV trước; bản ghi cũ chưa có MSNV thì đối chiếu theo tên.
+function s5CuaNguoi(rows, empId, empName){
+  const ten = String(empName||'').trim().toLowerCase();
+  return rows.filter(r => r.worker_id
+      ? String(r.worker_id) === String(empId)
+      : (ten && String(r.worker_name||'').trim().toLowerCase() === ten)
+    ).sort((a,b)=>a.date.localeCompare(b.date));
+}
+
 function findEmp(id){ return DB.emps.find(e=>String(e.id)===String(id)) || null; }
 function getGrade(score){
   const s=[...DB.grade].sort((a,b)=>(b.min_score||0)-(a.min_score||0));
@@ -430,6 +462,63 @@ const TOOLS = {
     return {thang, top:ds, tong_nguoi:Object.keys(m).length};
   },
 
+  async tra_vi_pham_5s({msnv, thang}){
+    await loadCore();
+    const e = findEmp(msnv); if(!e) return {loi:'khong_thay_nv'};
+    const ds = s5CuaNguoi(await loadS5(thang), e.id, e.name);
+    return {nhan_vien:{ten:e.name, kip:e.kip}, thang, so_lan:ds.length,
+            chi_tiet: ds.map(r=>({ngay:r.date, may:r.machine_code||'', ca:r.shift||'',
+              muc_hong: s5MucHong(r).map(d=>d.short||d.name),
+              ghi_chu: r.note||'', nguoi_kiem: r.inspector||'',
+              so_anh: (r.photos||[]).length}))};
+  },
+
+  async xep_hang_vi_pham_5s({thang, top=5}){
+    await loadCore();
+    const rows = await loadS5(thang), m = {};
+    rows.forEach(r=>{
+      const key = r.worker_id || ('ten:'+String(r.worker_name||'').trim().toLowerCase());
+      if(!key || key==='ten:') return;
+      if(!m[key]) m[key] = {ten:r.worker_name||'', lan:0, muc:0};
+      m[key].lan++; m[key].muc += s5MucHong(r).length;
+    });
+    const ds = Object.entries(m).map(([k,v])=>{
+      const e = k.startsWith('ten:') ? null : findEmp(k);
+      return {ten: e?e.name:(v.ten||k), kip: e?e.kip:null, lan:v.lan, so_muc:v.muc};
+    }).sort((a,b)=>b.lan-a.lan||b.so_muc-a.so_muc).slice(0,top);
+    return {thang, top:ds, tong_luot:rows.length, tong_nguoi:Object.keys(m).length};
+  },
+
+  async xep_hang_danh_gia({thang, top=10, hang=null}){
+    await loadCore();
+    const [rr,mr] = await Promise.all([
+      sb.from('ratings_new').select('*').like('date', thang+'-%'),
+      sb.from('monthly_reviews').select('*').eq('month_key', thang),
+    ]);
+    const diemTho = {};
+    (rr.data||[]).forEach(r=>{ (diemTho[r.emp_id]=diemTho[r.emp_id]||[]).push(parseFloat(r.score)); });
+    const duyet = {};
+    (mr.data||[]).forEach(r=>{ if(r.approved) duyet[r.emp_id]=r; });
+    const ds = [];
+    DB.emps.forEach(e=>{
+      const arr = diemTho[e.id]||[];
+      const base = arr.length ? round1(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
+      const rv = duyet[e.id]||{};
+      const diem = (rv.final_score!=null) ? parseFloat(rv.final_score) : base;
+      if(diem==null) return;
+      ds.push({id:e.id, ten:e.name, kip:e.kip, diem,
+               hang: rv.grade || getGrade(diem), da_duyet: !!(rv.grade||rv.final_score!=null)});
+    });
+    ds.sort((a,b)=>b.diem-a.diem);
+    const theoHang = {};
+    ds.forEach(x=>{ theoHang[x.hang]=(theoHang[x.hang]||0)+1; });
+    // Hỏi đích danh "ai hạng A" thì chỉ trả người hạng đó. Khớp theo chữ cái
+    // đầu nên "hạng A" gồm cả A+ (dấu + bị bỏ lúc chuẩn hoá câu hỏi).
+    const loc = hang ? ds.filter(x=>String(x.hang||'').toUpperCase().startsWith(hang)) : ds;
+    return {thang, tong:ds.length, theo_hang:theoHang, loc_hang:hang,
+            so_khop:loc.length, top:loc.slice(0,top)};
+  },
+
   // ── Quy trình / tài liệu ──
   async tra_tieu_chi_5s(){
     return {so_muc:S_DEFS.length,
@@ -548,6 +637,11 @@ async answer(raw, ctx){
   // ưu tiên nhánh cá nhân, nếu không sẽ bị mấy nhánh tổng hợp bên dưới nuốt mất
   // vì cũng chứa cụm "kíp nào" / "ca nào".
   const SELF = /\b(toi|em|minh|tui|tao)\b/.test(q);
+  const AI   = /\bai\b/.test(q);          // "ai tăng ca nhiều nhất" - hỏi về người khác
+  const OT   = /\bot\b/.test(q);          // dùng ranh giới từ, nếu không "ngày mốt" cũng dính
+  // Hỏi về vi phạm 5S (khác với hỏi tiêu chí 5S gồm những gì)
+  const VP5S = has('vi pham','chua dat','khong dat')
+            || (has('5s') && has('may lan','bao nhieu lan','so lan','bi loi'));
   const monthKey = time && time.kind==='month' ? time.key : mKey(today());
   const monthLbl = time && time.kind==='month' ? time.label : 'tháng này';
 
@@ -555,8 +649,43 @@ async answer(raw, ctx){
   if(/^(hi|hello|chao|xin chao|alo|hey)\b/.test(q) || q==='help' || has('giup gi','lam duoc gi','huong dan su dung'))
     return {html: helpText(), chips: defaultChips()};
 
-  // ── quy trình 5S ──
-  if(has('5s','tieu chi')){
+  // ── tổng hợp: ai vi phạm 5S nhiều nhất ──
+  if(VP5S && !SELF && (AI || has('nhieu nhat','xep hang','top','thong ke'))){
+    const r = await TOOLS.xep_hang_vi_pham_5s({thang:monthKey});
+    if(!r.top.length) return {html:`Không có lượt 5S chưa đạt nào trong ${monthLbl}. 👍`};
+    let h = `<b>Vi phạm 5S nhiều nhất ${monthLbl}</b>\n`
+          + `${r.tong_luot} lượt chưa đạt · ${r.tong_nguoi} người`;
+    h += '<table>' + r.top.map((x,i)=>
+      `<tr><td>${i+1}.</td><td><b>${esc(x.ten)}</b>${x.kip?' · Kíp '+x.kip:''}</td>`
+      + `<td style="text-align:right;color:#c62828;font-weight:700">${x.lan} lần</td></tr>`
+    ).join('') + '</table>';
+    return {html:h, chips:['Tiêu chí 5S','Ai hạng A tháng này']};
+  }
+
+  // ── tổng hợp: xếp loại đánh giá ──
+  if(!SELF && has('xep loai','xep hang','danh gia','hang a','hang b','hang c')
+          && (AI || has('nhieu nhat','top','bang xep hang','thong ke','bao nhieu nguoi'))){
+    const mH = q.match(/\bhang ([a-d])\b/);
+    const r = await TOOLS.xep_hang_danh_gia({thang:monthKey,
+                hang: mH ? mH[1].toUpperCase() : null});
+    if(!r.tong) return {html:`Chưa có ai được chấm điểm trong ${monthLbl}.`};
+    if(r.loc_hang && !r.so_khop)
+      return {html:`Không có ai hạng <b>${r.loc_hang}</b> trong ${monthLbl}.\n`
+                 + `Phân bố: ` + Object.entries(r.theo_hang).map(([g,n])=>`${g}: ${n}`).join(' · '),
+              chips:['Xếp loại của tôi','Ai vi phạm 5S nhiều nhất']};
+    let h = r.loc_hang
+      ? `<b>Hạng ${r.loc_hang} ${monthLbl}</b> · ${r.so_khop} người\n`
+      : `<b>Xếp loại ${monthLbl}</b> · ${r.tong} người có điểm\n`;
+    h += Object.entries(r.theo_hang).map(([g,n])=>`${g}: ${n}`).join(' · ');
+    h += '<table>' + r.top.map((x,i)=>
+      `<tr><td>${i+1}.</td><td><b>${esc(x.ten)}</b>${x.kip?' · Kíp '+x.kip:''}</td>`
+      + `<td style="text-align:right">${gbadge(x.hang)} ${x.diem}</td></tr>`
+    ).join('') + '</table>';
+    return {html:h, chips:['Ai vi phạm 5S nhiều nhất','Xếp loại của tôi']};
+  }
+
+  // ── quy trình 5S (tiêu chí gồm những gì) ──
+  if(has('5s','tieu chi') && !VP5S){
     const r = await TOOLS.tra_tieu_chi_5s();
     let h = `<b>${r.so_muc} mục kiểm tra 5S</b>`;
     h += '<table>' + r.muc.map(m=>
@@ -608,7 +737,7 @@ async answer(raw, ctx){
   }
 
   // ── tổng hợp: xếp hạng tăng ca ──
-  if(!SELF && has('nhieu nhat','xep hang','top','nhieu gio nhat') && has('tang ca','ot')){
+  if(!SELF && has('nhieu nhat','xep hang','top','nhieu gio nhat') && (OT || has('tang ca'))){
     const r = await TOOLS.xep_hang_tang_ca({thang:monthKey});
     if(!r.top.length) return {html:`Chưa có ai tăng ca trong ${monthLbl}.`};
     let h = `<b>Tăng ca nhiều nhất ${monthLbl}</b> (${r.tong_nguoi} người có tăng ca)`;
@@ -638,8 +767,26 @@ async answer(raw, ctx){
     return {html:h, chips:['Lịch tuần sau','Ca của tôi hôm nay']};
   }
 
+  // ── vi phạm 5S của cá nhân ──
+  if(VP5S){
+    const r = await TOOLS.tra_vi_pham_5s({msnv, thang:monthKey});
+    if(r.loi) return {html:notFound(msnv)};
+    if(!r.so_lan) return {html:`<b>${esc(r.nhan_vien.ten)}</b> không có lượt 5S chưa đạt nào trong ${monthLbl}. 👍`,
+                          chips:['Xếp loại của tôi','Tiêu chí 5S']};
+    let h = `<b>${esc(r.nhan_vien.ten)}</b> · ${monthLbl}\n`
+          + `⚠️ <b style="color:#c62828">${r.so_lan} lần</b> 5S chưa đạt`;
+    h += '<table>' + r.chi_tiet.map(x=>{
+      const [,mm,dd] = x.ngay.split('-');
+      return `<tr><td>${dd}/${mm}${x.may?'<br><span style="color:#999">'+esc(x.may)+'</span>':''}</td>`
+        + `<td>${x.muc_hong.map(m=>esc(m)).join(', ')}`
+        + `${x.ghi_chu?'<br><span style="color:#777;font-size:.92em">'+esc(x.ghi_chu)+'</span>':''}</td></tr>`;
+    }).join('') + '</table>';
+    h += '\nChi tiết kèm ảnh xem ở trang 5S.';
+    return {html:h, chips:['Tiêu chí 5S','Xếp loại của tôi','Mở trang 5S']};
+  }
+
   // ── tăng ca cá nhân ──
-  if(has('tang ca','ot','lam them','tang gio')){
+  if(OT || has('tang ca','lam them','tang gio')){
     const r = await TOOLS.tra_tang_ca({msnv, thang:monthKey});
     if(r.loi) return {html:notFound(msnv)};
     if(!r.lan.length) return {html:`<b>${esc(r.nhan_vien.ten)}</b> chưa có tăng ca nào trong ${monthLbl}.`,
@@ -668,13 +815,13 @@ async answer(raw, ctx){
   }
 
   // ── điểm đánh giá ──
-  if(has('diem','danh gia','xep hang','hang cua toi','ket qua')){
+  if(has('diem','danh gia','xep loai','xep hang','hang cua toi','ket qua')){
     const r = await TOOLS.tra_danh_gia({msnv, thang:monthKey});
     if(r.loi) return {html:notFound(msnv)};
     if(r.diem==null) return {html:`<b>${esc(r.nhan_vien.ten)}</b> chưa có điểm đánh giá nào trong ${monthLbl}.`};
     let h = `<b>${esc(r.nhan_vien.ten)}</b> · ${monthLbl}`;
     h += `\n⭐ Điểm: <b>${r.diem}</b>/10 (${r.phan_tram}%)`;
-    h += `\n🏅 Xếp hạng: <b>${esc(r.hang||'–')}</b>${r.da_duyet?' (đã duyệt)':''}`;
+    h += `\n🏅 Xếp loại: ${r.hang?gbadge(r.hang):'<b>–</b>'}${r.da_duyet?' (đã duyệt)':''}`;
     h += `\n📋 Số ngày đã chấm: ${r.so_ngay_cham}`;
     if(r.ghi_chu) h += `\n📝 ${esc(r.ghi_chu)}`;
     return {html:h, chips:['Tăng ca tháng này']};
@@ -741,18 +888,22 @@ function helpText(){
     + '· Lịch tuần này, tuần sau\n'
     + '· Khi nào tôi được nghỉ\n'
     + '· Tăng ca tháng này / tháng 9\n'
-    + '· Nghỉ phép, điểm đánh giá của tôi\n\n'
+    + '· Nghỉ phép của tôi\n'
+    + '· Xếp loại của tôi · Tôi vi phạm 5S mấy lần\n\n'
     + '<b>Tổng hợp</b>\n'
     + '· Hôm nay kíp nào đi làm, bao nhiêu người\n'
     + '· Hôm nay ai nghỉ phép\n'
-    + '· Ai tăng ca nhiều nhất tháng này\n\n'
+    + '· Ai tăng ca nhiều nhất tháng này\n'
+    + '· Ai hạng A tháng này · Ai vi phạm 5S nhiều nhất\n\n'
     + '<b>Quy trình</b>\n'
     + '· Tiêu chí 5S gồm những gì\n'
     + '· Tìm tài liệu / video về ...';
 }
 function defaultChips(){
   return ['Ca của tôi hôm nay','Lịch tuần sau','Khi nào tôi được nghỉ',
-          'Hôm nay kíp nào đi làm','Tăng ca tháng này','Tiêu chí 5S'];
+          'Xếp loại của tôi','Tôi vi phạm 5S mấy lần','Tăng ca tháng này',
+          'Hôm nay kíp nào đi làm','Ai hạng A tháng này','Ai vi phạm 5S nhiều nhất',
+          'Tiêu chí 5S'];
 }
 
 // ═══════════════════════════════════════════════════════════════
