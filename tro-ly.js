@@ -1,143 +1,41 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="preconnect" href="https://xtutpuwesganunktrxcv.supabase.co" crossorigin>
-<title>Trợ Lý Phân Xưởng 1</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;line-height:1.5;
-  display:flex;flex-direction:column}
+// ═══════════════════════════════════════════════════════════════
+// TRỢ LÝ - BONG BÓNG CHAT DÙNG CHUNG
+// ═══════════════════════════════════════════════════════════════
+// Nhúng vào trang nào thì trang đó có bong bóng chat ở góc dưới bên phải.
+//
+//   <script src="lich-ca.js"></script>       (cần: getShift)
+//   <script src="5s-tieu-chi.js"></script>   (cần: S_DEFS)
+//   <script src="tro-ly.js"></script>
+//
+// Tự tạo client Supabase riêng và bọc trong IIFE nên không đụng biến nào của
+// trang chủ nhà. Mọi CSS đều nằm dưới #tl-root để không đè style trang chủ.
+//
+// z-index 9000/9500: thấp hơn màn khoá của trang 5S và Tài Liệu (99999) nên
+// chưa mở khoá thì bong bóng bị màn khoá che, đúng ý - không hỏi được dữ liệu
+// khi chưa qua cửa.
+//
+// ĐỔI CÂU TRẢ LỜI / CÂU HỎI NHANH: sửa trong phần BỘ MÁY bên dưới (TOOLS,
+// BRAIN_LOCAL, defaultChips). Trước đây phần này nằm trong chatbot.html.
+//
+// GẮN CLAUDE API: viết BRAIN_CLAUDE cùng chữ ký answer(câuHỏi, ctx) rồi đổi
+// dòng `const BRAIN = BRAIN_LOCAL;`. Giao diện và tầng TOOLS giữ nguyên.
+// ═══════════════════════════════════════════════════════════════
+(function () {
+'use strict';
+if (window.__troLyDaNap) return;          // phòng khi một trang nhúng hai lần
+window.__troLyDaNap = true;
 
-.hdr{background:linear-gradient(135deg,#1a237e,#4a148c);color:#fff;padding:12px 16px;
-  display:flex;align-items:center;gap:10px;flex-shrink:0}
-.hdr .back{color:#fff;text-decoration:none;font-size:1.3rem;line-height:1;opacity:.85}
-.hdr-body{flex:1;min-width:0}
-.hdr h1{font-size:1.05rem;line-height:1.2}
-.hdr p{font-size:.72rem;opacity:.85}
-.hdr .who{background:rgba(255,255,255,.18);border:none;color:#fff;font-family:inherit;
-  font-size:.72rem;font-weight:700;padding:6px 11px;border-radius:20px;cursor:pointer;
-  white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+if (typeof supabase === 'undefined') { console.warn('[Trợ Lý] thiếu supabase-js'); return; }
+if (typeof getShift === 'undefined')  { console.warn('[Trợ Lý] thiếu lich-ca.js'); return; }
+if (typeof S_DEFS === 'undefined')    { console.warn('[Trợ Lý] thiếu 5s-tieu-chi.js'); return; }
 
-.wrap{flex:1;display:flex;flex-direction:column;max-width:620px;width:100%;margin:0 auto;
-  min-height:0}
-
-.log{flex:1;overflow-y:auto;padding:14px 12px 4px;display:flex;flex-direction:column;gap:10px}
-.msg{max-width:88%;padding:10px 13px;border-radius:14px;font-size:.88rem;white-space:pre-wrap;
-  word-wrap:break-word;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.msg.bot{background:#fff;align-self:flex-start;border-bottom-left-radius:4px}
-.msg.me{background:#1a237e;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
-.msg.sys{align-self:center;background:#fff8e1;color:#8d6e00;font-size:.76rem;max-width:95%;
-  text-align:center;border-radius:10px}
-.msg b{color:#1a237e}
-.msg.me b{color:#fff}
-.msg table{border-collapse:collapse;margin-top:6px;font-size:.82rem;width:100%}
-.msg td{padding:3px 6px;border-bottom:1px dashed #eee}
-.msg td:first-child{color:#666;white-space:nowrap}
-.msg .chip{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.76rem;font-weight:700}
-.chS{background:#fff3e0;color:#e65100}.chC{background:#e8eaf6;color:#283593}
-.chN{background:#f3e5f5;color:#6a1b9a}.chL{background:#ffebee;color:#b71c1c}
-.chHC{background:#e0f2f1;color:#00695c}.chNP{background:#e1f5fe;color:#0277bd}
-.chVM{background:#ffcdd2;color:#b71c1c}.chUN{background:#f5f5f5;color:#999}
-.chC1{background:#b2dfdb;color:#00695c}.chC2{background:#ffe082;color:#e65100}
-.chC3{background:#ce93d8;color:#4a148c}
-.msg .gb{display:inline-block;padding:1px 9px;border-radius:7px;font-weight:800;font-size:.82rem}
-.gb-Ap{background:#e8f5e9;color:#1b5e20}.gb-A{background:#c8e6c9;color:#2e7d32}
-.gb-B{background:#bbdefb;color:#1565c0}.gb-C{background:#fff9c4;color:#e65100}
-.gb-D{background:#ffcdd2;color:#b71c1c}
-
-.typing{align-self:flex-start;background:#fff;padding:12px 16px;border-radius:14px;
-  border-bottom-left-radius:4px;display:flex;gap:4px}
-.typing i{width:6px;height:6px;border-radius:50%;background:#bbb;animation:bl 1.2s infinite}
-.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
-@keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
-
-/* Xuống dòng thay vì cuộn ngang: trên điện thoại 375px một hàng chỉ chứa
-   được 2-3 nút, mấy nút sau nằm ngoài màn hình mà không có thanh cuộn nào
-   báo hiệu nên không ai biết để vuốt. */
-.chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px 4px;flex-shrink:0}
-.chips button{flex-shrink:0;background:#fff;border:1.5px solid #c5cae9;color:#1a237e;
-  font-family:inherit;font-size:.76rem;font-weight:600;padding:7px 13px;border-radius:20px;
-  cursor:pointer;white-space:nowrap}
-.chips button:hover{background:#e8eaf6}
-
-.bar{display:flex;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid #e0e0e0;
-  flex-shrink:0}
-.bar input{flex:1;padding:11px 14px;border:2px solid #e0e0e0;border-radius:22px;
-  font-size:.92rem;font-family:inherit;outline:none}
-.bar input:focus{border-color:#1a237e}
-.bar button{width:44px;height:44px;border-radius:50%;background:#1a237e;color:#fff;border:none;
-  font-size:1.1rem;cursor:pointer;flex-shrink:0}
-.bar button:disabled{background:#c5cae9;cursor:default}
-
-.ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;
-  justify-content:center;z-index:300;padding:16px}
-.ovl.on{display:flex}
-.box{background:#fff;border-radius:16px;padding:18px;max-width:320px;width:100%}
-.box h3{font-size:1rem;color:#1a237e;margin-bottom:4px}
-.box p{font-size:.78rem;color:#777;margin-bottom:12px}
-.box input{width:100%;padding:12px;border:2px solid #c5cae9;border-radius:12px;font-size:1.05rem;
-  text-align:center;font-weight:700;letter-spacing:2px;outline:none;font-family:inherit}
-.box input:focus{border-color:#1a237e}
-.box .row{display:flex;gap:8px;margin-top:12px}
-.box .row button{flex:1;padding:11px;border:none;border-radius:12px;font-family:inherit;
-  font-size:.88rem;font-weight:700;cursor:pointer}
-.box .ok{background:#1a237e;color:#fff}
-.box .skip{background:#eceff1;color:#555}
-.box .err{color:#c62828;font-size:.78rem;margin-top:8px;text-align:center;display:none}
-</style>
-</head>
-<body>
-
-<div class="hdr">
-  <a href="index.html" class="back" title="Về trang lịch ca">‹</a>
-  <div class="hdr-body">
-    <h1>🤖 Trợ Lý Phân Xưởng 1</h1>
-    <p>Hỏi về lịch ca, tăng ca, nghỉ phép, đánh giá</p>
-  </div>
-  <button class="who" id="whoBtn" onclick="openWho()">Nhập MSNV</button>
-</div>
-
-<div class="wrap">
-  <div class="log" id="log"></div>
-  <div class="chips" id="chips"></div>
-  <div class="bar">
-    <input type="text" id="q" placeholder="Hỏi gì đó... vd: mai tôi làm ca gì"
-           autocomplete="off" onkeydown="if(event.key==='Enter')send()">
-    <button id="sendBtn" onclick="send()">➤</button>
-  </div>
-</div>
-
-<div class="ovl" id="whoOvl" onclick="if(event.target===this)closeWho()">
-  <div class="box">
-    <h3>Bạn là ai?</h3>
-    <p>Nhập MSNV để tôi tra được lịch ca, tăng ca và đánh giá của riêng bạn.</p>
-    <input type="text" id="whoInput" placeholder="MSNV" inputmode="numeric"
-           onkeydown="if(event.key==='Enter')saveWho()">
-    <div class="err" id="whoErr"></div>
-    <div class="row">
-      <button class="skip" onclick="closeWho()">Để sau</button>
-      <button class="ok" onclick="saveWho()">Xong</button>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="5s-tieu-chi.js"></script>
-<script src="lich-ca.js"></script>
-<script>
 const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// Lịch ca (CYCLE / SCHED_OVR / getShift / getBlockStatus) nằm ở
-// lich-ca.js - nguồn duy nhất, nạp bằng thẻ <script> phía trên.
-
-
-
+// ═══════════════════════════════════════════════════════════════
+// BỘ MÁY  (nguyên văn từ chatbot.html cũ)
+// ═══════════════════════════════════════════════════════════════
 const SLBL  = {S:'☀️ Ca Sáng',C:'🌙 Ca Chiều',N:'🏠 Nghỉ',L:'🎌 Nghỉ Lễ',HC:'🏢 Hành Chính',
                NP:'🏖️ Nghỉ Phép',VM:'🔴 Vắng Mặt',UN:'– Chưa có lịch',C1:'① Ca 1 (6h-14h)',
                C2:'② Ca 2',C3:'③ Ca 3'};
@@ -789,7 +687,7 @@ async answer(raw, ctx){
 
 const BRAIN = BRAIN_LOCAL;   // ← đổi thành BRAIN_CLAUDE khi gắn API
 
-function notFound(id){ return `Không tìm thấy MSNV "<b>${esc(id)}</b>".\nBấm nút góc trên bên phải để nhập lại.`; }
+function notFound(id){ return `Không tìm thấy MSNV "<b>${esc(id)}</b>".\nBấm tên ở đầu khung chat để nhập lại.`; }
 
 function helpText(){
   return 'Chào bạn 👋 Tôi tra giúp mấy thứ sau:\n\n'
@@ -818,126 +716,283 @@ function defaultChips(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// GIAO DIỆN
+// GIAO DIỆN BONG BÓNG
 // ═══════════════════════════════════════════════════════════════
-const logEl=document.getElementById('log'), chipsEl=document.getElementById('chips');
-let MSNV = localStorage.getItem('tracuu_msnv') || '';
-let busy = false;
+const CSS = `
+#tl-root{--tl-xanh:#1a237e}
+#tl-bong{position:fixed;right:16px;z-index:9000;width:56px;height:56px;border-radius:50%;
+  border:none;cursor:pointer;background:linear-gradient(135deg,#1a237e,#4a148c);color:#fff;
+  font-size:1.6rem;line-height:1;box-shadow:0 4px 16px rgba(0,0,0,.3);
+  display:flex;align-items:center;justify-content:center;transition:transform .15s}
+#tl-bong:hover{transform:scale(1.07)}
+#tl-bong.an{display:none}
+#tl-cham{position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:50%;
+  background:#e53935;border:2px solid #fff}
 
-function push(html, who){
-  const d=document.createElement('div');
-  d.className='msg '+who; d.innerHTML=html;
-  logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight;
-  return d;
+#tl-khung{position:fixed;right:16px;z-index:9500;width:380px;max-width:calc(100vw - 32px);
+  height:560px;max-height:calc(100vh - 100px);background:#eef1f6;border-radius:16px;
+  box-shadow:0 10px 40px rgba(0,0,0,.35);display:none;flex-direction:column;overflow:hidden;
+  font-family:'Segoe UI','Arial',sans-serif}
+#tl-khung.mo{display:flex}
+@media(max-width:480px){
+  #tl-khung{right:0;left:0;bottom:0!important;width:100%;max-width:100%;height:85vh;
+    max-height:85vh;border-radius:16px 16px 0 0}
 }
-function showChips(list){
-  chipsEl.innerHTML='';
-  (list||[]).forEach(c=>{
-    const b=document.createElement('button');
-    b.textContent=c;
-    b.onclick=()=>{ document.getElementById('q').value=c; send(); };
-    chipsEl.appendChild(b);
+
+#tl-dau{background:linear-gradient(135deg,#1a237e,#4a148c);color:#fff;padding:10px 12px;
+  display:flex;align-items:center;gap:8px;flex-shrink:0}
+#tl-dau .t{flex:1;min-width:0}
+#tl-dau .t b{font-size:.95rem;display:block;line-height:1.2}
+#tl-dau .t span{font-size:.68rem;opacity:.85}
+#tl-ai{background:rgba(255,255,255,.18);border:none;color:#fff;font-family:inherit;
+  font-size:.7rem;font-weight:700;padding:5px 10px;border-radius:20px;cursor:pointer;
+  white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+#tl-dong{background:none;border:none;color:#fff;font-size:1.3rem;line-height:1;cursor:pointer;
+  padding:0 2px}
+
+#tl-log{flex:1;overflow-y:auto;padding:12px 10px 4px;display:flex;flex-direction:column;gap:9px}
+#tl-root .msg{max-width:88%;padding:9px 12px;border-radius:14px;font-size:.85rem;
+  white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#333;
+  line-height:1.5}
+#tl-root .msg.bot{background:#fff;align-self:flex-start;border-bottom-left-radius:4px}
+#tl-root .msg.me{background:#1a237e;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+#tl-root .msg.sys{align-self:center;background:#fff8e1;color:#8d6e00;font-size:.73rem;
+  max-width:95%;text-align:center;border-radius:10px}
+#tl-root .msg b{color:#1a237e}
+#tl-root .msg.me b{color:#fff}
+#tl-root .msg table{border-collapse:collapse;margin-top:5px;font-size:.8rem;width:100%}
+#tl-root .msg td{padding:3px 5px;border-bottom:1px dashed #eee}
+#tl-root .msg td:first-child{color:#666;white-space:nowrap}
+#tl-root .msg .chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.74rem;
+  font-weight:700}
+#tl-root .chS{background:#fff3e0;color:#e65100}#tl-root .chC{background:#e8eaf6;color:#283593}
+#tl-root .chN{background:#f3e5f5;color:#6a1b9a}#tl-root .chL{background:#ffebee;color:#b71c1c}
+#tl-root .chHC{background:#e0f2f1;color:#00695c}#tl-root .chNP{background:#e1f5fe;color:#0277bd}
+#tl-root .chVM{background:#ffcdd2;color:#b71c1c}#tl-root .chUN{background:#f5f5f5;color:#999}
+#tl-root .chC1{background:#b2dfdb;color:#00695c}#tl-root .chC2{background:#ffe082;color:#e65100}
+#tl-root .chC3{background:#ce93d8;color:#4a148c}
+#tl-root .msg .gb{display:inline-block;padding:1px 8px;border-radius:7px;font-weight:800;
+  font-size:.8rem}
+#tl-root .gb-Ap{background:#e8f5e9;color:#1b5e20}#tl-root .gb-A{background:#c8e6c9;color:#2e7d32}
+#tl-root .gb-B{background:#bbdefb;color:#1565c0}#tl-root .gb-C{background:#fff9c4;color:#e65100}
+#tl-root .gb-D{background:#ffcdd2;color:#b71c1c}
+
+#tl-go{align-self:flex-start;background:#fff;padding:11px 15px;border-radius:14px;
+  border-bottom-left-radius:4px;display:flex;gap:4px}
+#tl-go i{width:6px;height:6px;border-radius:50%;background:#bbb;animation:tlbl 1.2s infinite}
+#tl-go i:nth-child(2){animation-delay:.2s}#tl-go i:nth-child(3){animation-delay:.4s}
+@keyframes tlbl{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+#tl-nut{display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px 3px;flex-shrink:0}
+#tl-nut button{background:#fff;border:1.5px solid #c5cae9;color:#1a237e;font-family:inherit;
+  font-size:.73rem;font-weight:600;padding:6px 11px;border-radius:20px;cursor:pointer}
+#tl-nut button:hover{background:#e8eaf6}
+
+#tl-thanh{display:flex;gap:7px;padding:9px 10px;background:#fff;border-top:1px solid #e0e0e0;
+  flex-shrink:0}
+#tl-thanh input{flex:1;padding:10px 13px;border:2px solid #e0e0e0;border-radius:22px;
+  font-size:.88rem;font-family:inherit;outline:none;min-width:0;color:#333;background:#fff}
+#tl-thanh input:focus{border-color:#1a237e}
+#tl-thanh button{width:40px;height:40px;border-radius:50%;background:#1a237e;color:#fff;
+  border:none;font-size:1rem;cursor:pointer;flex-shrink:0}
+#tl-thanh button:disabled{background:#c5cae9;cursor:default}
+
+#tl-hoi{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9600;display:none;
+  align-items:center;justify-content:center;padding:16px}
+#tl-hoi.mo{display:flex}
+#tl-hoi .hop{background:#fff;border-radius:16px;padding:18px;max-width:300px;width:100%;
+  font-family:'Segoe UI','Arial',sans-serif}
+#tl-hoi h3{font-size:1rem;color:#1a237e;margin:0 0 4px}
+#tl-hoi p{font-size:.76rem;color:#777;margin:0 0 12px}
+#tl-hoi input{width:100%;padding:11px;border:2px solid #c5cae9;border-radius:12px;
+  font-size:1.05rem;text-align:center;font-weight:700;letter-spacing:2px;outline:none;
+  font-family:inherit;box-sizing:border-box}
+#tl-hoi .hang{display:flex;gap:8px;margin-top:12px}
+#tl-hoi .hang button{flex:1;padding:10px;border:none;border-radius:12px;font-family:inherit;
+  font-size:.85rem;font-weight:700;cursor:pointer}
+#tl-hoi .ok{background:#1a237e;color:#fff}#tl-hoi .bo{background:#eceff1;color:#555}
+#tl-hoi .loi{color:#c62828;font-size:.76rem;margin-top:8px;text-align:center;display:none}
+`;
+
+const HTML = `
+<button id="tl-bong" title="Hỏi Trợ Lý" aria-label="Mở Trợ Lý">🤖<span id="tl-cham"></span></button>
+<div id="tl-khung" role="dialog" aria-label="Trợ Lý Phân Xưởng 1">
+  <div id="tl-dau">
+    <div class="t"><b>🤖 Trợ Lý Phân Xưởng 1</b><span>Lịch ca · tăng ca · đánh giá · 5S</span></div>
+    <button id="tl-ai">Nhập MSNV</button>
+    <button id="tl-dong" aria-label="Đóng">✕</button>
+  </div>
+  <div id="tl-log"></div>
+  <div id="tl-nut"></div>
+  <div id="tl-thanh">
+    <input type="text" id="tl-input" placeholder="Hỏi gì đó... vd: mai tôi làm ca gì" autocomplete="off">
+    <button id="tl-gui" aria-label="Gửi">➤</button>
+  </div>
+</div>
+<div id="tl-hoi">
+  <div class="hop">
+    <h3>Bạn là ai?</h3>
+    <p>Nhập MSNV để tôi tra được lịch ca, tăng ca và đánh giá của riêng bạn.</p>
+    <input type="text" id="tl-msnv" placeholder="MSNV" inputmode="numeric">
+    <div class="loi" id="tl-loi"></div>
+    <div class="hang">
+      <button class="bo" id="tl-bo">Để sau</button>
+      <button class="ok" id="tl-luu">Xong</button>
+    </div>
+  </div>
+</div>`;
+
+let MSNV = '';
+try { MSNV = localStorage.getItem('tracuu_msnv') || ''; } catch (e) {}
+let ban = false, daChao = false;
+let root, elLog, elNut, elInput, elGui, elKhung, elBong, elAi, elHoi;
+
+function dung() {
+  root = document.createElement('div');
+  root.id = 'tl-root';
+  const st = document.createElement('style');
+  st.textContent = CSS;
+  root.appendChild(st);
+  const box = document.createElement('div');
+  box.innerHTML = HTML;
+  while (box.firstChild) root.appendChild(box.firstChild);
+  document.body.appendChild(root);
+
+  elKhung = root.querySelector('#tl-khung');
+  elBong  = root.querySelector('#tl-bong');
+  elLog   = root.querySelector('#tl-log');
+  elNut   = root.querySelector('#tl-nut');
+  elInput = root.querySelector('#tl-input');
+  elGui   = root.querySelector('#tl-gui');
+  elAi    = root.querySelector('#tl-ai');
+  elHoi   = root.querySelector('#tl-hoi');
+
+  // tránh đè lên thanh điều hướng dưới cùng của trang Lịch Ca trên điện thoại
+  const nav = document.querySelector('.bot-nav');
+  const day = nav && getComputedStyle(nav).display !== 'none' ? nav.offsetHeight : 0;
+  elBong.style.bottom  = (day + 16) + 'px';
+  elKhung.style.bottom = (day + 16) + 'px';
+
+  elBong.onclick  = mo;
+  root.querySelector('#tl-dong').onclick = dong;
+  elGui.onclick   = gui;
+  elInput.onkeydown = e => { if (e.key === 'Enter') gui(); };
+  elAi.onclick    = moHoi;
+  root.querySelector('#tl-bo').onclick  = () => elHoi.classList.remove('mo');
+  root.querySelector('#tl-msnv').onkeydown = e => { if (e.key === 'Enter') luuAi(); };
+  root.querySelector('#tl-luu').onclick = luuAi;
+  elHoi.onclick = e => { if (e.target === elHoi) elHoi.classList.remove('mo'); };
+}
+
+function dat(html, ai) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + ai;
+  d.innerHTML = html;
+  elLog.appendChild(d);
+  elLog.scrollTop = elLog.scrollHeight;
+}
+function datNut(ds) {
+  elNut.innerHTML = '';
+  (ds || []).forEach(c => {
+    const b = document.createElement('button');
+    b.textContent = c;
+    b.onclick = () => { elInput.value = c; gui(); };
+    elNut.appendChild(b);
   });
 }
-function typing(on){
-  const old=document.getElementById('typing');
-  if(old) old.remove();
-  if(on){
-    const d=document.createElement('div');
-    d.className='typing'; d.id='typing'; d.innerHTML='<i></i><i></i><i></i>';
-    logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight;
+function dangGo(bat) {
+  const cu = root.querySelector('#tl-go');
+  if (cu) cu.remove();
+  if (bat) {
+    const d = document.createElement('div');
+    d.id = 'tl-go';
+    d.innerHTML = '<i></i><i></i><i></i>';
+    elLog.appendChild(d);
+    elLog.scrollTop = elLog.scrollHeight;
   }
 }
 
-async function send(){
-  if(busy) return;
-  const inp=document.getElementById('q'), raw=inp.value.trim();
-  if(!raw) return;
-
-  // vài lối tắt điều hướng
-  const n=norm(raw);
-  if(n==='nhap msnv'){ inp.value=''; openWho(); return; }
-  if(n.startsWith('mo trang')){
-    inp.value='';
-    if(n.includes('5s'))       { location.href='5s.html'; return; }
-    if(n.includes('tai lieu')) { location.href='huong-dan.html'; return; }
-  }
-
-  inp.value=''; push(esc(raw), 'me');
-  busy=true; document.getElementById('sendBtn').disabled=true; typing(true);
-  try{
-    const r = await BRAIN.answer(raw, {msnv:MSNV});
-    typing(false);
-    push(r.html, 'bot');
-    showChips(r.chips && r.chips.length ? r.chips : defaultChips());
-  }catch(e){
-    typing(false);
-    push('Lỗi khi tra dữ liệu: '+esc(e.message), 'bot');
-  }finally{
-    busy=false; document.getElementById('sendBtn').disabled=false; inp.focus();
-  }
-}
-
-function openWho(){
-  document.getElementById('whoOvl').classList.add('on');
-  document.getElementById('whoErr').style.display='none';
-  const i=document.getElementById('whoInput'); i.value=MSNV; i.focus(); i.select();
-}
-function closeWho(){ document.getElementById('whoOvl').classList.remove('on'); }
-
-async function saveWho(){
-  const id=document.getElementById('whoInput').value.trim();
-  const err=document.getElementById('whoErr');
-  if(!id){ err.textContent='Nhập MSNV đã nhé.'; err.style.display='block'; return; }
-  try{
-    await loadCore();
-    const e=findEmp(id);
-    if(!e){ err.textContent='Không tìm thấy MSNV này.'; err.style.display='block'; return; }
-    MSNV=id; localStorage.setItem('tracuu_msnv', id);
-    setWhoBtn(e);
-    closeWho();
-    push(`Chào <b>${esc(e.name)}</b> 👋 · ${esc(GRP_LABEL[e.kip]||'')}\nBạn muốn hỏi gì?`, 'bot');
-    showChips(defaultChips());
-  }catch(ex){
-    err.textContent='Lỗi tải dữ liệu: '+ex.message; err.style.display='block';
-  }
-}
-function setWhoBtn(e){
-  document.getElementById('whoBtn').textContent = e ? ('👤 '+e.name.split(' ').slice(-2).join(' ')) : 'Nhập MSNV';
-}
-
-// ── khởi động ──
-(async function init(){
-  push(helpText(), 'bot');
-  showChips(defaultChips());
-  try{
-    await loadCore();
-    if(MSNV){
-      const e=findEmp(MSNV);
-      if(e){ setWhoBtn(e); push(`Đang xem với tư cách <b>${esc(e.name)}</b> · ${esc(GRP_LABEL[e.kip]||'')}`, 'sys'); }
-      else { MSNV=''; }
+async function mo() {
+  elKhung.classList.add('mo');
+  elBong.classList.add('an');
+  const cham = root.querySelector('#tl-cham');
+  if (cham) cham.remove();
+  if (!daChao) {
+    daChao = true;
+    dat(helpText(), 'bot');
+    datNut(defaultChips());
+    try {
+      await loadCore();
+      if (MSNV) {
+        const e = findEmp(MSNV);
+        if (e) { datTen(e); dat(`Đang xem với tư cách <b>${esc(e.name)}</b> · ${esc(GRP_LABEL[e.kip] || '')}`, 'sys'); }
+        else MSNV = '';
+      }
+    } catch (e) {
+      dat('⚠️ Không tải được dữ liệu: ' + esc(e.message), 'sys');
     }
-  }catch(e){
-    push('⚠️ Không tải được dữ liệu: '+esc(e.message), 'sys');
   }
-})();
+  setTimeout(() => elInput.focus(), 50);
+}
+function dong() { elKhung.classList.remove('mo'); elBong.classList.remove('an'); }
+function datTen(e) {
+  elAi.textContent = e ? ('👤 ' + e.name.split(' ').slice(-2).join(' ')) : 'Nhập MSNV';
+}
+function moHoi() {
+  elHoi.classList.add('mo');
+  root.querySelector('#tl-loi').style.display = 'none';
+  const i = root.querySelector('#tl-msnv');
+  i.value = MSNV; i.focus(); i.select();
+}
+async function luuAi() {
+  const id = root.querySelector('#tl-msnv').value.trim();
+  const loi = root.querySelector('#tl-loi');
+  if (!id) { loi.textContent = 'Nhập MSNV đã nhé.'; loi.style.display = 'block'; return; }
+  try {
+    await loadCore();
+    const e = findEmp(id);
+    if (!e) { loi.textContent = 'Không tìm thấy MSNV này.'; loi.style.display = 'block'; return; }
+    MSNV = id;
+    try { localStorage.setItem('tracuu_msnv', id); } catch (ex) {}
+    datTen(e);
+    elHoi.classList.remove('mo');
+    dat(`Chào <b>${esc(e.name)}</b> 👋 · ${esc(GRP_LABEL[e.kip] || '')}\nBạn muốn hỏi gì?`, 'bot');
+    datNut(defaultChips());
+  } catch (ex) {
+    loi.textContent = 'Lỗi tải dữ liệu: ' + ex.message; loi.style.display = 'block';
+  }
+}
 
-// ═══════════════════════════════════════════════════════════════
-// GHI CHÚ CHO LẦN SAU
-//
-// 1. Lịch ca nằm ở lich-ca.js, dùng chung cho cả 6 trang - đổi lịch chỉ sửa
-//    một chỗ đó, không sửa ở đây.
-//
-// 2. Gắn Claude API: thêm route /api/chat trong Cloudflare Worker, giữ
-//    ANTHROPIC_API_KEY bằng `wrangler secret put`. Worker khai báo đúng các
-//    hàm trong TOOLS ở trên làm tool definition, Claude chọn hàm, Worker chạy
-//    rồi trả kết quả. Phía trang chỉ cần viết BRAIN_CLAUDE và đổi dòng
-//    `const BRAIN = BRAIN_LOCAL;`.
-//
-// 3. Bảo mật: trang này hiện chỉ hỏi MSNV, không có mật khẩu - ai biết MSNV
-//    người khác là xem được lịch, tăng ca, điểm của họ. Giống hệt tra-cuu.html.
-//    Muốn chặn thì thêm mã PIN cho từng nhân viên.
-// ═══════════════════════════════════════════════════════════════
-</script>
-</body>
-</html>
+async function gui() {
+  if (ban) return;
+  const raw = elInput.value.trim();
+  if (!raw) return;
+
+  const n = norm(raw);
+  if (n === 'nhap msnv') { elInput.value = ''; moHoi(); return; }
+  if (n.startsWith('mo trang')) {
+    elInput.value = '';
+    if (n.includes('5s'))       { location.href = '5s.html'; return; }
+    if (n.includes('tai lieu')) { location.href = 'huong-dan.html'; return; }
+  }
+
+  elInput.value = '';
+  dat(esc(raw), 'me');
+  ban = true; elGui.disabled = true; dangGo(true);
+  try {
+    const r = await BRAIN.answer(raw, { msnv: MSNV });
+    dangGo(false);
+    dat(r.html, 'bot');
+    datNut(r.chips && r.chips.length ? r.chips : defaultChips());
+  } catch (e) {
+    dangGo(false);
+    dat('Lỗi khi tra dữ liệu: ' + esc(e.message), 'bot');
+  } finally {
+    ban = false; elGui.disabled = false; elInput.focus();
+  }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', dung);
+else dung();
+
+})();
