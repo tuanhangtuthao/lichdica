@@ -211,6 +211,15 @@ td:hover .del-btn{display:inline-block!important}
   margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
 .appr-day.co-note{cursor:help}
 .appr-day.co-note:hover{background:#fff8e1!important}
+/* Các thẻ dưới có style đặt thẳng trên thẻ, nên muốn đè phải dùng !important */
+#s5Ov.show{opacity:1!important;pointer-events:all!important}
+#s5Modal.show{opacity:1!important;pointer-events:all!important;transform:translate(-50%,-50%) scale(1)!important}
+#s5Lb.show{display:flex!important}
+@media(max-width:680px){
+  #s5Modal{top:auto!important;bottom:0!important;left:0!important;transform:translateY(100%)!important;
+    width:100%!important;max-height:94vh!important;border-radius:18px 18px 0 0!important}
+  #s5Modal.show{transform:translateY(0)!important}
+}
 </style>
 </head>
 <body>
@@ -357,6 +366,24 @@ td:hover .del-btn{display:inline-block!important}
   </div>
 </div>
 
+<!-- CHI TIẾT 5S (chỉ xem) -->
+<div id="s5Ov" onclick="dong5S()" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;opacity:0;pointer-events:none;transition:.2s"></div>
+<div id="s5Modal" style="position:fixed;z-index:510;top:50%;left:50%;transform:translate(-50%,-50%) scale(.97);
+  width:min(560px,94vw);max-height:90vh;background:#fff;border-radius:16px;overflow:hidden;
+  display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:.2s;box-shadow:0 12px 40px rgba(0,0,0,.3)">
+  <div style="padding:13px 16px;background:linear-gradient(135deg,#b71c1c,#e53935);color:#fff;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+    <div><h3 style="font-size:1rem;font-weight:800">🧹 Kết quả 5S chưa đạt</h3>
+      <div style="font-size:.72rem;opacity:.88;margin-top:2px" id="s5Ten">—</div></div>
+    <button onclick="dong5S()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;line-height:1;padding:0 4px">✕</button>
+  </div>
+  <div style="padding:14px 16px;overflow-y:auto;flex:1" id="s5Body"></div>
+</div>
+<div id="s5Lb" onclick="dongAnh5S()" style="position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:600;
+  display:none;align-items:center;justify-content:center;padding:16px;cursor:zoom-out">
+  <img id="s5AnhTo" alt="ảnh 5S" style="max-width:100%;max-height:100%;border-radius:8px">
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -373,6 +400,17 @@ const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
 let EMPS = {1:[],2:[],3:[],4:[]};
 let RATINGS = [];
 let MONTHLY_REVIEWS = []; // [{id, emp_id, month_key, note, approved, final_score, violation_note}]
+let S5 = [];              // lượt kiểm 5S CHƯA ĐẠT, để nhân viên xem kết quả của mình
+
+// 5 nội dung kiểm 5S - giữ khớp với S_DEFS bên trang 5s.html.
+// Đổi nội dung bên đó thì cập nhật luôn danh sách này.
+const S5_MUC = [
+  {k:'s1', ten:'Đường đi, sàn nhà, đường line'},
+  {k:'s2', ten:'Bàn thao tác'},
+  {k:'s3', ten:'Thân máy'},
+  {k:'s4', ten:'Rổ đựng hàng'},
+  {k:'s5', ten:'Bộ cấp phôi'},
+];
 let VIOLATIONS = []; // [{emp_id, month_key, violation_note, final_score}]
 let GRADE_CFG = [
   {grade:'A+',min_score:9.0,description:'Xuất sắc',sort_order:1},
@@ -511,14 +549,19 @@ async function loadData(){
   try{
     // Các bảng bắt buộc
     // Gọi tất cả song song 1 lần - tránh chờ nối tiếp làm chậm trang
-    const [er,rr,gr,hr,esr,mr]=await Promise.all([
+    const [er,rr,gr,hr,esr,mr,s5r]=await Promise.all([
       sb.from('employees').select('*').order('kip').order('sort_order'),
       loadAllRatings(),
       sb.from('rating_config').select('*').order('sort_order'),
       sb.from('holidays').select('*').order('date'),
       sb.from('emp_schedule').select('*').order('start_date'),
       sb.from('monthly_reviews').select('*'),
+      sb.from('s5_checks').select('*').order('date'),
     ]);
+    // chỉ giữ lượt CHƯA ĐẠT - đó là thứ nhân viên cần biết để sửa
+    S5 = (s5r && s5r.data ? s5r.data : []).filter(r =>
+      !S5_MUC.every(s => r[s.k] === true));
+
     EMPS={1:[],2:[],3:[],4:[]};
     (er.data||[]).forEach(e=>{
       if(EMPS[e.kip]) EMPS[e.kip].push({id:e.id,name:e.name,role:e.role||'',fixed_shift:e.fixed_shift||null,kip:e.kip});
@@ -651,6 +694,68 @@ const LOCK_SHIFTS = {N:'Ngày nghỉ', L:'Nghỉ lễ', NP:'Nghỉ phép', VM:'V
 // Global store for day note data
 window.DAY_NOTES_MAP = {};
 
+// 5S của một người trong tháng. Khớp theo MSNV trước; bản ghi cũ chưa có
+// MSNV thì đối chiếu theo tên.
+function s5CuaNguoi(empId, empName, mVal){
+  const ten = String(empName || '').trim().toLowerCase();
+  return S5.filter(r => {
+    if(!r.date.startsWith(mVal)) return false;
+    if(r.worker_id) return String(r.worker_id) === String(empId);
+    return ten && String(r.worker_name || '').trim().toLowerCase() === ten;
+  }).sort((a,b) => a.date.localeCompare(b.date));
+}
+
+function s5MucHong(r){ return S5_MUC.filter(s => r[s.k] !== true); }
+
+// Bảng chi tiết 5S - chỉ để xem, không có nút sửa hay xoá nào
+function moChiTiet5S(empId){
+  const mVal = document.getElementById('rfMonth').value;
+  const ds = (window.S5_MAP && window.S5_MAP[empId]) || [];
+  if(!ds.length) return;
+  const ten = ds[0].worker_name || empId;
+  const [y,m] = mVal.split('-');
+  let h = `<div style="font-size:.78rem;color:#78909c;margin-bottom:10px">
+    ${ds.length} lần chưa đạt trong tháng ${m}/${y}</div>`;
+  ds.forEach(r => {
+    const hong = s5MucHong(r);
+    const anh = (r.photos||[]).map(u =>
+      `<img src="${u}" alt="ảnh 5S" onclick="xemAnh5S('${u}')"
+        style="width:74px;height:74px;object-fit:cover;border-radius:7px;border:1px solid #ddd;cursor:zoom-in;margin:3px 3px 0 0">`
+    ).join('');
+    h += `<div style="border:1.5px solid #ffcdd2;border-left-width:5px;border-left-color:#c62828;
+      border-radius:10px;padding:10px 12px;margin-bottom:9px;background:#fff">
+      <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
+        <b style="font-size:.9rem;color:#37474f">${r.machine_code||''}</b>
+        <span style="font-size:.74rem;font-weight:700;color:#78909c">
+          ${r.date.split('-').reverse().join('/')}
+          · ${r.shift==='S'?'Ca Sáng':'Ca Tối'}${r.kip?' · Kíp '+r.kip:''}
+          ${r.inspector?' · người kiểm: '+r.inspector:''}</span>
+      </div>
+      <div style="margin-top:6px">${hong.map(s =>
+        `<span style="display:inline-block;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:11px;
+          background:#ffebee;color:#c62828;border:1px solid #ef9a9a;margin:2px 3px 0 0">${s.ten}</span>`).join('')}</div>
+      ${r.note?`<div style="font-size:.8rem;color:#444;margin-top:7px;line-height:1.4">📝 ${r.note}</div>`:''}
+      ${anh?`<div style="margin-top:6px">${anh}</div>`:''}
+    </div>`;
+  });
+  document.getElementById('s5Ten').textContent = ten;
+  document.getElementById('s5Body').innerHTML = h;
+  document.getElementById('s5Modal').classList.add('show');
+  document.getElementById('s5Ov').classList.add('show');
+}
+function dong5S(){
+  document.getElementById('s5Modal').classList.remove('show');
+  document.getElementById('s5Ov').classList.remove('show');
+}
+function xemAnh5S(u){
+  document.getElementById('s5AnhTo').src = u;
+  document.getElementById('s5Lb').classList.add('show');
+}
+function dongAnh5S(){
+  document.getElementById('s5Lb').classList.remove('show');
+  document.getElementById('s5AnhTo').src = '';
+}
+
 function renderResults(){
   const search = document.getElementById('rfSearch').value.trim().toLowerCase();
   const mVal = document.getElementById('rfMonth').value; // YYYY-MM
@@ -665,6 +770,7 @@ function renderResults(){
 
   // Clear previous data
   window.DAY_NOTES_MAP = {};
+  window.S5_MAP = {};
 
   const filtered = RATINGS.filter(r=>r.date.startsWith(mVal));
 
@@ -740,7 +846,8 @@ function renderResults(){
       <th style="position:sticky;left:0;z-index:2;background:#4a148c;min-width:140px">Họ tên</th>
       <th style="text-align:center">Kíp</th>
       <th style="text-align:center">Điểm TB</th>
-      <th style="text-align:center">Hạng</th>`;
+      <th style="text-align:center">Hạng</th>
+      <th style="text-align:center;min-width:46px" title="Số lần chưa đạt 5S trong tháng">5S</th>`;
   for(let i=1; i<=daysInMonth; i++) h+= `<th style="text-align:center;min-width:32px;padding:6px 3px">${i}</th>`;
   h+= `<th style="min-width:150px">Ghi chú Tháng (Q.Lý)</th></tr></thead><tbody>`;
 
@@ -765,6 +872,14 @@ function renderResults(){
       <td style="font-size:.75rem;color:#666;text-align:center">${GRP_LABEL[e.kip]||''}</td>
       <td style="text-align:center;background:#fff8e1">${avgTxt}</td>
       <td style="text-align:center;background:#fff8e1">${grHtml}</td>`;
+
+    // Cột 5S: bấm vào xem chi tiết. Chỉ xem, không sửa được gì.
+    const ds5 = s5CuaNguoi(e.id, e.name, mVal);
+    window.S5_MAP[e.id] = ds5;
+    h += ds5.length
+      ? `<td style="text-align:center;background:#ffebee;cursor:pointer" title="Bấm xem chi tiết"
+           onclick="moChiTiet5S('${e.id}')"><b style="color:#c62828">${ds5.length}</b></td>`
+      : `<td style="text-align:center;color:#a5d6a7" title="Không có lần nào chưa đạt">✓</td>`;
 
     for(let i=1; i<=daysInMonth; i++){
       const dk = y + '-' + String(m).padStart(2,'0') + '-' + String(i).padStart(2,'0');
