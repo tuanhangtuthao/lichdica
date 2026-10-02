@@ -9,7 +9,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;line-height:1.5;padding-bottom:40px}
-.hdr{background:linear-gradient(135deg,#1a237e,#4a148c);color:#fff;padding:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hdr{background:linear-gradient(135deg,#1F4E79,#4a148c);color:#fff;padding:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .hdr h1{font-size:1.2rem}
 .hdr .date-lbl{font-size:.8rem;opacity:.85}
 .hdr input[type=date]{padding:7px 10px;border:none;border-radius:8px;font-size:.85rem;font-weight:700}
@@ -25,7 +25,7 @@ body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;lin
 .cnt-row{display:flex;justify-content:space-between;font-size:.83rem;padding:5px 0;border-bottom:1px dashed #f0f0f0}
 .cnt-row:last-child{border-bottom:none}
 .cnt-row b{font-size:.95rem}
-.big-num{font-size:2rem;font-weight:800;text-align:center;color:#1a237e}
+.big-num{font-size:2rem;font-weight:800;text-align:center;color:#1F4E79}
 .sub-lbl{text-align:center;font-size:.72rem;color:#888}
 .name-list{font-size:.78rem;color:#555;margin-top:8px;line-height:1.7}
 .name-tag{display:inline-block;background:#fafafa;border:1px solid #eee;border-radius:8px;padding:1px 8px;margin:1px}
@@ -34,17 +34,20 @@ body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;lin
 .name-tag.ot{background:#fff3e0;border-color:#ffe0b2;color:#e65100}
 .name-tag.mc{background:#eceff1;border-color:#cfd8dc;color:#455a64}
 .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.links a{flex:1;min-width:130px;text-align:center;background:#fff;border:2px solid #c5cae9;color:#1a237e;text-decoration:none;font-weight:700;font-size:.8rem;padding:10px;border-radius:12px}
-.links a:hover{background:#1a237e;color:#fff}
+.links a{flex:1;min-width:130px;text-align:center;background:#fff;border:2px solid #c5cae9;color:#1F4E79;text-decoration:none;font-weight:700;font-size:.8rem;padding:10px;border-radius:12px}
+.links a:hover{background:#1F4E79;color:#fff}
 .muted{color:#aaa;font-size:.78rem;text-align:center;padding:6px}
 .loading{text-align:center;color:#888;padding:40px}
 </style>
+<!-- Giao diện dùng chung: màu, phông, nút, thanh điều hướng, thông báo. Sửa ở giao-dien.css / giao-dien.js -->
+<link rel="stylesheet" href="giao-dien.css">
+<script src="giao-dien.js"></script>
 </head>
 <body>
 
 <div class="hdr">
   <div>
-    <h1>📊 Dashboard Quản Đốc</h1>
+    <h1>Dashboard Quản Đốc</h1>
     <div class="date-lbl" id="dateLbl"></div>
   </div>
   <input type="date" id="dPick" onchange="loadDash()">
@@ -189,7 +192,7 @@ async function loadDash(){
     // ── Card đơn xin nghỉ chờ duyệt ──
     html+=`<div class="card"><div class="card-hd kdon">📮 ĐƠN XIN NGHỈ CHỜ DUYỆT</div>
       <div class="card-bd">
-        <div class="big-num" style="color:${REQS.length?'#ad1457':'#1a237e'}">${REQS.length}</div>
+        <div class="big-num" style="color:${REQS.length?'#ad1457':'#1F4E79'}">${REQS.length}</div>
         <div class="sub-lbl">đơn đang chờ</div>
         ${REQS.length?`<div class="name-list" style="margin-top:10px">${REQS.slice(0,10).map(r=>`<span class="name-tag">${r.emp_name||r.emp_id}</span>`).join('')}</div>`:''}
       </div></div>`;
@@ -219,7 +222,7 @@ async function loadDash(){
           <div class="card-bd">
             <div class="cnt-row"><span>☀️ Ca Sáng (Kíp ${kipS})</span><b>${staffedS} / ${machineCells.length} máy</b></div>
             <div class="cnt-row"><span>🌙 Ca Chiều (Kíp ${kipC})</span><b>${staffedC} / ${machineCells.length} máy</b></div>
-            <div class="muted" style="margin-top:6px">Chi tiết xem <a href="nhansu-ca.html" style="color:#1a237e;font-weight:700">Sơ Đồ Máy</a></div>
+            <div class="muted" style="margin-top:6px">Chi tiết xem <a href="nhansu-ca.html" style="color:#1F4E79;font-weight:700">Sơ Đồ Máy</a></div>
           </div></div>`;
       }
     }catch(e){console.warn('Máy trống:',e);}

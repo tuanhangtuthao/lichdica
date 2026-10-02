@@ -9,31 +9,31 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;line-height:1.5;padding-bottom:40px}
-.hdr{background:linear-gradient(135deg,#1a237e,#4a148c);color:#fff;padding:18px 16px;text-align:center}
+.hdr{background:linear-gradient(135deg,#1F4E79,#4a148c);color:#fff;padding:18px 16px;text-align:center}
 .hdr h1{font-size:1.25rem}
 .hdr p{font-size:.78rem;opacity:.85}
 .wrap{max-width:520px;margin:0 auto;padding:14px}
 .search-box{display:flex;gap:8px;margin-bottom:14px}
 .search-box input{flex:1;padding:12px;border:2px solid #c5cae9;border-radius:12px;font-size:1.05rem;text-align:center;font-weight:700;letter-spacing:2px;outline:none}
-.search-box input:focus{border-color:#1a237e}
-.search-box button{padding:12px 20px;background:#1a237e;color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer}
+.search-box input:focus{border-color:#1F4E79}
+.search-box button{padding:12px 20px;background:#1F4E79;color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer}
 .card{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);padding:14px;margin-bottom:12px}
-.card h3{font-size:.85rem;color:#1a237e;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:6px}
-.emp-name{font-size:1.2rem;font-weight:800;color:#1a237e}
+.card h3{font-size:.85rem;color:#1F4E79;margin-bottom:10px;border-bottom:1px solid #eee;padding-bottom:6px}
+.emp-name{font-size:1.2rem;font-weight:800;color:#1F4E79}
 .emp-sub{font-size:.8rem;color:#777}
 .day-row{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px dashed #f0f0f0;font-size:.85rem}
 .day-row:last-child{border-bottom:none}
 .day-row.today{background:#fff8e1;border-radius:8px;font-weight:700}
 .day-d{width:105px;color:#555}
 .chip{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.78rem;font-weight:700}
-.chS{background:#fff3e0;color:#e65100}.chC{background:#e8eaf6;color:#283593}
+.chS{background:#fff3e0;color:#e65100}.chC{background:#e8eaf6;color:#24598A}
 .chN{background:#f3e5f5;color:#6a1b9a}.chL{background:#ffebee;color:#b71c1c}
 .chHC{background:#e0f2f1;color:#00695c}.chNP{background:#e1f5fe;color:#0277bd}
 .chVM{background:#ffcdd2;color:#b71c1c}.chUN{background:#f5f5f5;color:#999}
 .chC1{background:#b2dfdb;color:#00695c}.chC2{background:#ffe082;color:#e65100}.chC3{background:#ce93d8;color:#4a148c}
 .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stat{text-align:center;padding:10px 4px;background:#fafafa;border-radius:10px}
-.stat b{display:block;font-size:1.3rem;color:#1a237e}
+.stat b{display:block;font-size:1.3rem;color:#1F4E79}
 .stat span{font-size:.68rem;color:#888}
 .gb{display:inline-block;padding:2px 12px;border-radius:8px;font-weight:800;font-size:1rem}
 .gb-Ap{background:#e8f5e9;color:#1b5e20}.gb-A{background:#c8e6c9;color:#2e7d32}
@@ -43,12 +43,17 @@ body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;lin
 .muted{text-align:center;color:#aaa;font-size:.8rem;padding:10px}
 .loading{text-align:center;color:#888;padding:30px}
 </style>
+<!-- Giao diện dùng chung: màu, phông, nút, thanh điều hướng, thông báo. Sửa ở giao-dien.css / giao-dien.js -->
+<link rel="stylesheet" href="giao-dien.css">
+<script src="giao-dien.js"></script>
 </head>
 <body>
 
-<div class="hdr">
-  <h1>🔍 Tra Cứu Cá Nhân</h1>
+<div class="hdr gd-hdr-khoi">
+  <div class="hdr-left">
+  <h1>Tra Cứu Cá Nhân</h1>
   <p>Phân Xưởng 1 · Lịch ca, điểm, tăng ca của bạn</p>
+  </div>
 </div>
 
 <div class="wrap">

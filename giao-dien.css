@@ -1,0 +1,231 @@
+/* ═══════════════════════════════════════════════════════════════
+   GIAO DIỆN DÙNG CHUNG - mọi trang nạp file này SAU <style> riêng của trang
+   ═══════════════════════════════════════════════════════════════
+   Một bộ màu, một phông chữ, một kiểu nút và một thanh điều hướng cho cả
+   web. Trước đây mỗi trang một màu, mà màu ca còn ngược nhau giữa các trang
+   (trang Lịch ca: Sáng xanh lá / Chiều cam; trang Tra Cứu: Sáng cam /
+   Chiều xanh) - thợ xem hai trang dễ đọc nhầm.
+
+   Nạp SAU style của trang nên quy tắc ở đây thắng khi cùng độ ưu tiên.
+   Đổi màu: sửa ở :root bên dưới, mọi trang đổi theo.
+   Thanh điều hướng do giao-dien.js dựng, CSS của nó cũng nằm ở đây. */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --gd-xanh:#1F4E79; --gd-xanh-dam:#163A5C; --gd-xanh-nhat:#E6EEF6; --gd-xanh-vien:#4D7BA6;
+  --gd-chu:#16202B; --gd-chu-phu:#5A6876; --gd-nen:#F4F5F3; --gd-the:#FFFFFF; --gd-vien:#E1E5E0;
+  --gd-dat:#1E6B3A; --gd-loi:#B3261E; --gd-loi-nen:#FBE9E7;
+  --gd-nav-duoi:68px;
+  --gd-phong:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
+
+  /* ── Màu mã ca, dùng chung mọi trang ──
+     Sáng = xanh, Chiều = cam: khác cả độ sáng chứ không chỉ khác sắc, người
+     khó phân biệt màu vẫn nhìn ra. Nghỉ = xám lùi xuống. Chữ mã luôn hiện,
+     màu chỉ để liếc nhanh. Các biến --s-bg... là tên trang Lịch ca đang dùng. */
+  --s-bg:#DCEAF7;  --s-fg:#14466F;
+  --c-bg:#FBE3C4;  --c-fg:#6A3F05;
+  --n-bg:#EEEEEA;  --n-fg:#5E5E58;
+  --np-bg:#E7E7E2; --np-fg:#3F3F3A;
+  --h-bg:#F6EFD9;  --h-fg:#6A4E00;
+  --hc-bg:#FFFFFF; --hc-fg:#16202B;
+  --gd-c1-bg:#EAF2FA; --gd-c1-fg:#14466F;
+  --gd-c2-bg:#FDF0DF; --gd-c2-fg:#6A3F05;
+  --gd-c3-bg:#E6E9F2; --gd-c3-fg:#2E3A59;
+  --gd-vm-bg:#FBE9E7; --gd-vm-fg:#8C1D18;
+}
+
+/* ── Nền, chữ ── */
+body{font-family:var(--gd-phong)!important;background:var(--gd-nen);color:var(--gd-chu)}
+button,input,select,textarea{font-family:inherit}
+
+/* ── Đầu trang: một màu xanh cho mọi trang ── */
+.hdr{background:var(--gd-xanh)!important;color:#fff}
+.hdr-left h1{font-weight:800;letter-spacing:0}
+
+/* ── Nút: cao tối thiểu 44px trên điện thoại - tay đeo găng, dính dầu vẫn bấm trúng ── */
+.btn{border-radius:12px;font-weight:600}
+.btn-pri{background:var(--gd-xanh)!important;color:#fff!important;border-color:var(--gd-xanh)!important}
+.btn-pri:hover{background:var(--gd-xanh-dam)!important}
+.btn-sec{background:#fff!important;color:var(--gd-chu)!important;border:1px solid #C3C9C2!important}
+.btn-sec:hover{background:var(--gd-xanh-nhat)!important}
+@media(max-width:767px){
+  .btn,.kb{min-height:44px}
+}
+
+/* ── Ô nhập ── */
+input.search,input.form-input,select.form-input,.form-select,textarea.form-input{
+  border-radius:12px;border:1px solid #C3C9C2;min-height:44px}
+input.search:focus,input.form-input:focus,select.form-input:focus,textarea.form-input:focus{
+  border-color:var(--gd-xanh);outline:none;box-shadow:0 0 0 3px rgba(31,78,121,.15)}
+
+/* ── Tab con của trang (Lịch ca / Hôm nay / Tăng ca / Quản lý...) ── */
+.top-tabs .tab{font-weight:600;color:var(--gd-chu-phu)}
+.top-tabs .tab:hover{color:var(--gd-xanh)}
+.top-tabs .tab.active{color:var(--gd-xanh)!important;border-bottom-color:var(--gd-xanh)!important;font-weight:700}
+
+/* Điện thoại: tab con lên trên thành dải cuộn ngang; thanh dưới cũ của trang
+   nhường chỗ cho thanh điều hướng chung (giao-dien.js). */
+@media(max-width:767px){
+  body.gd .top-tabs{display:flex!important;overflow-x:auto;gap:6px;padding:8px 12px;
+    background:#fff;border-bottom:1px solid var(--gd-vien);scrollbar-width:none;
+    position:sticky;top:var(--hdr-h,52px);z-index:90}
+  body.gd .top-tabs::-webkit-scrollbar{display:none}
+  body.gd .top-tabs .tab{flex-shrink:0;display:flex;align-items:center;min-height:40px;padding:0 14px;
+    border:0!important;border-radius:20px;background:#F0F2EF;font-size:14px;white-space:nowrap}
+  body.gd .top-tabs .tab.active{background:var(--gd-xanh)!important;color:#fff!important}
+  body.gd .bot-nav,body.gd .more-sheet,body.gd .more-overlay{display:none!important}
+}
+
+/* ── Ô ca trong bảng Lịch ca ── */
+td.shL{box-shadow:inset 0 0 0 2px #C9A227}
+td.shHC{box-shadow:inset 0 0 0 1px #C3C9C2}
+td.shNP{box-shadow:inset 0 0 0 1.5px #8A8A82}
+td.shVM,tbody tr td.shVM{background-color:var(--gd-vm-bg)!important;color:var(--gd-vm-fg)!important}
+td.shC1,tbody tr td.shC1{background-color:var(--gd-c1-bg)!important;color:var(--gd-c1-fg)!important;box-shadow:inset 0 0 0 1.5px #8DB3D9}
+td.shC2,tbody tr td.shC2{background-color:var(--gd-c2-bg)!important;color:var(--gd-c2-fg)!important;box-shadow:inset 0 0 0 1.5px #E2B97A}
+td.shC3,tbody tr td.shC3{background-color:var(--gd-c3-bg)!important;color:var(--gd-c3-fg)!important;box-shadow:inset 0 0 0 1.5px #A9B3CC}
+td.shUN,tbody tr td.shUN{background-color:#fff!important;color:#8A8F94!important}
+/* Cột hôm nay: kẻ hai mép dọc thành một dải liền, không viền từng ô (rối mắt) */
+td.today-c,tbody tr td.today-c{outline:none!important;
+  box-shadow:inset 2px 0 0 var(--gd-xanh),inset -2px 0 0 var(--gd-xanh)!important}
+
+/* Chip mã ca ở trang Tra Cứu (.chX) và trang Lịch ca (.chip.X): cùng màu với bảng */
+.chS,.chip.S{background:var(--s-bg)!important;color:var(--s-fg)!important}
+.chC,.chip.C{background:var(--c-bg)!important;color:var(--c-fg)!important}
+.chN,.chip.N{background:var(--n-bg)!important;color:var(--n-fg)!important}
+.chL,.chip.L{background:var(--h-bg)!important;color:var(--h-fg)!important;box-shadow:inset 0 0 0 1.5px #C9A227}
+.chHC,.chip.HC{background:#fff!important;color:var(--gd-chu)!important;box-shadow:inset 0 0 0 1px #C3C9C2}
+.chNP,.chip.NP{background:var(--np-bg)!important;color:var(--np-fg)!important}
+.chVM{background:var(--gd-vm-bg)!important;color:var(--gd-vm-fg)!important}
+.chUN{background:#fff!important;color:#8A8F94!important;box-shadow:inset 0 0 0 1px #C3C9C2}
+.chC1{background:var(--gd-c1-bg)!important;color:var(--gd-c1-fg)!important}
+.chC2{background:var(--gd-c2-bg)!important;color:var(--gd-c2-fg)!important}
+.chC3{background:var(--gd-c3-bg)!important;color:var(--gd-c3-fg)!important}
+
+/* ═══════════ THANH ĐIỀU HƯỚNG CHUNG (giao-dien.js dựng) ═══════════ */
+/* Máy tính: dãy link nằm ngay trong đầu trang */
+.gd-nav-tren{display:none}
+@media(min-width:768px){
+  .gd-nav-tren{display:flex;align-items:center;gap:2px;flex:1 1 auto;min-width:0;margin:0 16px;overflow-x:auto;scrollbar-width:none}
+  .gd-nav-tren::-webkit-scrollbar{display:none}
+  .gd-nav-tren a,.gd-nav-tren button{flex-shrink:0;height:40px;padding:0 13px;display:flex;align-items:center;gap:6px;
+    border:0;border-radius:10px;background:transparent;color:#D3E0EC;font-size:14px;font-weight:600;
+    text-decoration:none;cursor:pointer;white-space:nowrap}
+  .gd-nav-tren a:hover,.gd-nav-tren button:hover{background:rgba(255,255,255,.1);color:#fff}
+  .gd-nav-tren .dang{background:#2C6599;color:#fff;font-weight:700}
+}
+.gd-them-menu{position:fixed;z-index:1200;min-width:220px;padding:6px;background:#fff;border:1px solid var(--gd-vien);
+  border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.18);display:none}
+.gd-them-menu.mo{display:block}
+.gd-them-menu a{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-radius:10px;
+  color:var(--gd-chu);font-size:15px;font-weight:600;text-decoration:none}
+.gd-them-menu a:hover{background:var(--gd-xanh-nhat)}
+.gd-them-menu a.dang{background:var(--gd-xanh-nhat);color:var(--gd-xanh)}
+
+/* Điện thoại: thanh 4 mục dính đáy màn hình */
+.gd-nav-duoi{display:none}
+@media(max-width:767px){
+  /* z=250: trên thanh công cụ của các trang (cao nhất 220), DƯỚI mọi cửa sổ bật lên
+     (thấp nhất 300) - để hộp mật khẩu, phiếu chấm... không bị thanh này đè mép dưới. */
+  .gd-nav-duoi{position:fixed;left:0;right:0;bottom:0;z-index:250;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+    height:calc(var(--gd-nav-duoi) + env(safe-area-inset-bottom));padding:6px 8px calc(8px + env(safe-area-inset-bottom));
+    box-sizing:border-box;background:#fff;border-top:1px solid var(--gd-vien);box-shadow:0 -2px 10px rgba(0,0,0,.05)}
+  .gd-nav-duoi a,.gd-nav-duoi button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    border:0;border-radius:12px;background:transparent;color:#4A5764;font-size:12px;font-weight:600;
+    text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .gd-nav-duoi .dang{background:var(--gd-xanh-nhat);color:var(--gd-xanh);font-weight:700}
+  body.gd-co-nav{padding-bottom:calc(var(--gd-nav-duoi) + env(safe-area-inset-bottom))!important}
+  /* Bong bóng Trợ Lý né thanh dưới */
+  body.gd-co-nav #tl-bong{bottom:calc(var(--gd-nav-duoi) + 14px + env(safe-area-inset-bottom))!important}
+  /* Đang mở tấm "Thêm" thì cất bong bóng đi cho khỏi đè lên các mục */
+  body.gd-tam-mo #tl-bong{display:none!important}
+}
+.gd-man{position:fixed;inset:0;z-index:1150;background:rgba(10,20,30,.4);display:none}
+.gd-man.mo{display:block}
+.gd-tam{position:fixed;left:0;right:0;bottom:0;z-index:1200;padding:10px 12px calc(16px + env(safe-area-inset-bottom));
+  background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.18);
+  transform:translateY(105%);transition:transform .22s ease}
+.gd-tam.mo{transform:translateY(0)}
+.gd-tam-quai{width:40px;height:4px;border-radius:2px;background:#D5DAD4;margin:0 auto 10px}
+.gd-tam a{display:flex;align-items:center;gap:14px;min-height:54px;padding:0 12px;border-radius:12px;
+  color:var(--gd-chu);font-size:16px;font-weight:600;text-decoration:none}
+.gd-tam a:active,.gd-tam a.dang{background:var(--gd-xanh-nhat);color:var(--gd-xanh)}
+.gd-tam small{display:block;font-size:12px;font-weight:500;color:var(--gd-chu-phu)}
+
+/* ═══════════ THÔNG BÁO NHỎ, THAY CHO HỘP alert() ═══════════ */
+.gd-tb-vung{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:10050;
+  display:flex;flex-direction:column;gap:8px;width:min(460px,calc(100vw - 24px));pointer-events:none}
+@media(max-width:767px){ body.gd-co-nav .gd-tb-vung{bottom:calc(var(--gd-nav-duoi) + 12px + env(safe-area-inset-bottom))} }
+.gd-tb{pointer-events:auto;display:flex;align-items:flex-start;gap:10px;padding:13px 14px;border-radius:12px;
+  background:#16202B;color:#fff;font-size:15px;font-weight:600;line-height:1.45;white-space:pre-line;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);cursor:pointer;animation:gd-vao .18s ease}
+.gd-tb.loi{background:var(--gd-loi-nen);color:#8C1D18;box-shadow:0 8px 24px rgba(140,29,24,.18),inset 0 0 0 1px #F0B7B1}
+.gd-tb svg{flex-shrink:0;margin-top:1px}
+@keyframes gd-vao{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ═══════════ TRANG LỊCH CA (index) ═══════════ */
+/* Ô tên: MSNV · máy nằm dòng dưới tên trên điện thoại để dành chỗ cho ngày */
+.gd-phu{display:none}
+@media(max-width:767px){
+  body.gd-trang-index .gd-phu{display:block;font-size:10.5px;font-weight:500;color:var(--gd-chu-phu);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;text-decoration:none}
+  body.gd-trang-index #tbl .c2,body.gd-trang-index #tbl .c3{display:none}
+  body.gd-trang-index{--col1-w:128px}
+  /* Chú thích cất sau nút dấu hỏi, nút kíp gọn một dải cuộn ngang */
+  body.gd-trang-index .legend{display:none}
+  body.gd-trang-index.gd-xem-chu-thich .legend{display:flex}
+  body.gd-trang-index .kip-row{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none}
+  body.gd-trang-index .kip-row::-webkit-scrollbar{display:none}
+  body.gd-trang-index .kip-row .kb{flex-shrink:0}
+}
+/* Máy tính: vùng bảng cũng phải trừ hàng tab. Bản gốc quên trừ nên trang cuộn
+   thừa đúng bằng chiều cao hàng tab (43px) - hai thanh cuộn chồng nhau. */
+@media(min-width:768px){
+  body.gd-trang-index .page.active,body.gd-trang-index #page-schedule.active{
+    height:calc(100vh - var(--hdr-h) - var(--gd-tab-h,43px))}
+}
+/* Máy tính: điều hướng ngày, tìm kiếm, lọc kíp gom lên một dải */
+@media(min-width:1100px){
+  body.gd-trang-index .gd-thanh{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 24px 10px}
+  body.gd-trang-index .gd-thanh>.ctrl,body.gd-trang-index .gd-thanh>.search-row,
+  body.gd-trang-index .gd-thanh>.kip-row{padding:0!important;margin:0!important}
+  body.gd-trang-index .gd-thanh>.search-row{flex:1 1 220px;max-width:340px}
+  body.gd-trang-index .gd-thanh>.legend{flex-basis:100%;padding:0!important;margin:0!important}
+}
+.gd-nut-hoi,.gd-chon-kip{display:none}
+@media(max-width:767px){
+  body.gd-trang-index .gd-nut-hoi{display:inline-flex;align-items:center;justify-content:center}
+  body.gd-trang-index .gd-chi-mt{display:none!important}
+  /* 6 nút kíp -> 1 ô chọn đứng cạnh ô tìm: bớt hẳn một dòng */
+  body.gd-trang-index .kip-row{display:none!important}
+  body.gd-trang-index .gd-chon-kip{display:block;flex:0 0 auto;width:auto;min-width:112px;height:44px;padding:0 10px;
+    font-size:14px;font-weight:600;color:var(--gd-chu);background:#fff}
+  body.gd-trang-index .search-row{flex-wrap:nowrap!important}
+  body.gd-trang-index .search-row .search{flex:1 1 auto;min-width:0}
+  body.gd-trang-index .ctrl{padding:8px 12px 6px!important}
+  /* Vùng bảng = màn hình − đầu trang − dải tab − thanh điều hướng dưới.
+     Tính sai là bảng tràn, thành hai thanh cuộn chồng nhau. */
+  body.gd-trang-index .page.active,body.gd-trang-index #page-schedule.active{
+    height:calc(100vh - var(--hdr-h) - var(--gd-tab-h,57px) - var(--gd-nav-duoi) - env(safe-area-inset-bottom));
+    height:calc(100dvh - var(--hdr-h) - var(--gd-tab-h,57px) - var(--gd-nav-duoi) - env(safe-area-inset-bottom))}
+  body.gd-trang-index #page-schedule .gd-thanh{flex-shrink:0}
+}
+
+/* Trang 5S, Tài liệu: màu nhấn riêng (xanh ngọc, xanh dương) -> màu chung */
+body.gd-trang-5s,body.gd-trang-huong-dan{--accent:#1F4E79;--accent-d:#163A5C;--accent-l:#E6EEF6}
+
+/* Trang Tra cứu, Xin nghỉ: đầu trang vốn là khối chữ căn giữa -> xếp hàng ngang
+   như các trang khác để có chỗ cho thanh điều hướng */
+.hdr.gd-hdr-khoi{display:flex;align-items:center;justify-content:space-between;text-align:left;gap:12px;
+  min-height:56px;padding:8px 16px!important;color:#fff}
+/* Chữ trắng: trang Xin nghỉ vốn tô tiêu đề màu xanh trên nền sáng, nền xanh
+   của lớp chung mà giữ chữ xanh là chữ chìm mất */
+.hdr.gd-hdr-khoi .hdr-left h1{margin:0;color:#fff!important;font-size:17px!important;font-weight:800}
+.hdr.gd-hdr-khoi .hdr-left p{margin:2px 0 0;color:#C9D8E8!important;font-size:12.5px!important}
+/* Trang Xin nghỉ đặt mọi thứ trong cột 400px có lề 16px: kéo riêng đầu trang
+   tràn ra hai mép cho giống các trang khác, phần đơn vẫn ở giữa */
+body.gd-trang-xin-nghi .hdr{align-self:stretch;width:auto!important;max-width:none!important;margin:-16px -16px 16px!important}
+
+/* In ấn: bỏ mọi thứ của lớp chung */
+@media print{ .gd-nav-tren,.gd-nav-duoi,.gd-tam,.gd-man,.gd-them-menu,.gd-tb-vung,.gd-thanh{display:none!important}
+  body.gd-co-nav{padding-bottom:0!important} }

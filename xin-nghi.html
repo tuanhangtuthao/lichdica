@@ -10,20 +10,20 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:'Segoe UI',sans-serif}
   body{background:linear-gradient(135deg,#f0f2f5,#e8eaf6);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px}
   .hdr{width:100%;max-width:400px;text-align:center;padding:10px 0 20px}
-  .hdr h1{font-size:1.4rem;color:#1a237e;margin-bottom:4px}
+  .hdr h1{font-size:1.4rem;color:#1F4E79;margin-bottom:4px}
   .hdr p{font-size:.85rem;color:#666}
   .card{background:#fff;width:100%;max-width:400px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:24px;position:relative;overflow:hidden}
-  .top-accent{position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#1a237e,#3949ab)}
+  .top-accent{position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#1F4E79,#2C6599)}
   .form-group{margin-bottom:16px}
   .form-label{display:block;font-size:.8rem;color:#555;font-weight:700;margin-bottom:6px}
   .form-input{width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:.95rem;background:#fafafa;transition:.2s;outline:none}
-  .form-input:focus{border-color:#1a237e;background:#fff;box-shadow:0 0 0 3px rgba(26,35,126,.1)}
+  .form-input:focus{border-color:#1F4E79;background:#fff;box-shadow:0 0 0 3px rgba(26,35,126,.1)}
   .date-row{display:flex;flex-direction:column;gap:0}
   .date-row .form-group{flex:1}
   @media(min-width:400px){
     .date-row{flex-direction:row;gap:12px}
   }
-  .btn-submit{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(90deg,#1a237e,#3949ab);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s;margin-top:10px;box-shadow:0 4px 15px rgba(26,35,126,.3)}
+  .btn-submit{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(90deg,#1F4E79,#2C6599);color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s;margin-top:10px;box-shadow:0 4px 15px rgba(26,35,126,.3)}
   .btn-submit:active{transform:scale(0.97)}
   .btn-submit:disabled{background:#b0bec5;box-shadow:none;cursor:not-allowed}
   .msg-box{margin-top:16px;padding:12px;border-radius:10px;font-size:.85rem;text-align:center;display:none;font-weight:600}
@@ -33,12 +33,17 @@
   .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
+<!-- Giao diện dùng chung: màu, phông, nút, thanh điều hướng, thông báo. Sửa ở giao-dien.css / giao-dien.js -->
+<link rel="stylesheet" href="giao-dien.css">
+<script src="giao-dien.js"></script>
 </head>
 <body>
 
-<div class="hdr">
-  <h1>🏖️ Đơn Xin Nghỉ Phép</h1>
+<div class="hdr gd-hdr-khoi">
+  <div class="hdr-left">
+  <h1>Đơn Xin Nghỉ Phép</h1>
   <p>Điền thông tin để gửi yêu cầu nghỉ đến quản lý</p>
+  </div>
 </div>
 
 <div class="card">

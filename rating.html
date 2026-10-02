@@ -23,7 +23,7 @@
 html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 
 /* LOADING */
-.loading-overlay{position:fixed;inset:0;background:#1a237e;z-index:9999;
+.loading-overlay{position:fixed;inset:0;background:#1F4E79;z-index:9999;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff}
 .loading-overlay.hide{display:none}
 .spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);
@@ -32,7 +32,7 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 .load-text{font-size:.95rem;opacity:.85}
 
 /* HEADER */
-.hdr{background:linear-gradient(135deg,#4a148c,#6a1b9a);color:#fff;height:var(--hdr-h);
+.hdr{background:linear-gradient(135deg,#1F4E79,#6a1b9a);color:#fff;height:var(--hdr-h);
   display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .hdr-left h1{font-size:1.05rem;font-weight:700;line-height:1.2}
@@ -47,8 +47,8 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
   position:sticky;top:var(--hdr-h);z-index:190;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .top-tabs .tab{display:inline-block;padding:12px 20px;cursor:pointer;font-size:.88rem;
   font-weight:600;color:#666;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s}
-.top-tabs .tab:hover{color:#4a148c}
-.top-tabs .tab.active{color:#4a148c;border-bottom-color:#4a148c}
+.top-tabs .tab:hover{color:#1F4E79}
+.top-tabs .tab.active{color:#1F4E79;border-bottom-color:#1F4E79}
 
 /* BOTTOM NAV – mobile */
 .bot-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:var(--nav-h);
@@ -59,7 +59,7 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
   background:none;color:#888;transition:.15s;font-family:inherit}
 .bot-nav .bnav .bicon{font-size:1.3rem;line-height:1}
 .bot-nav .bnav .blabel{font-size:.63rem;font-weight:600;white-space:nowrap}
-.bot-nav .bnav.active{color:#4a148c}
+.bot-nav .bnav.active{color:#1F4E79}
 .bot-nav .bnav.active .bicon{transform:scale(1.1)}
 
 /* PAGES */
@@ -76,13 +76,13 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 /* BUTTONS / FORM */
 .btn{padding:8px 14px;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;
   font-weight:600;transition:.15s;min-height:38px;display:inline-flex;align-items:center;gap:4px}
-.btn-pri{background:#4a148c;color:#fff}.btn-pri:active{opacity:.85}
+.btn-pri{background:#1F4E79;color:#fff}.btn-pri:active{opacity:.85}
 .btn-sec{background:#fff;border:1px solid #ccc;color:#333}
 .btn-sm{padding:6px 11px;font-size:.78rem;min-height:32px}
 .form-row{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
 .form-input{padding:9px 11px;border:1px solid #ccc;border-radius:8px;font-size:.85rem;
   outline:none;min-height:38px;flex:1;min-width:80px}
-.form-input:focus{border-color:#4a148c}
+.form-input:focus{border-color:#1F4E79}
 .form-select{padding:9px 11px;border:1px solid #ccc;border-radius:8px;font-size:.85rem;
   background:#fff;outline:none;min-height:38px}
 
@@ -106,7 +106,7 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 .res-wrap{padding:0 12px 16px}
 .res-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);
   overflow:hidden;box-shadow:var(--shadow);font-size:.82rem}
-.res-table th{background:#4a148c;color:#fff;padding:8px 10px;text-align:left;
+.res-table th{background:#1F4E79;color:#fff;padding:8px 10px;text-align:left;
   font-weight:600;white-space:nowrap}
 .res-table td{padding:8px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
 .res-table tr:last-child>td{border-bottom:none}
@@ -138,13 +138,13 @@ html,body{height:100%;font-family:'Segoe UI',sans-serif;background:#f0f2f5}
 .sc-sub{font-size:.68rem;color:#888}
 input.sc-num{width:62px;padding:6px 6px;border:1.5px solid #ccc;border-radius:8px;
   font-size:.9rem;text-align:center;outline:none;font-weight:700;min-height:34px;flex-shrink:0}
-input.sc-num:focus{border-color:#4a148c}
+input.sc-num:focus{border-color:#1F4E79}
 input.sc-note{flex:1;min-width:70px;padding:6px 8px;border:1px solid #ccc;border-radius:8px;
   font-size:.78rem;outline:none;min-height:34px}
-input.sc-note:focus{border-color:#4a148c}
+input.sc-note:focus{border-color:#1F4E79}
 .sc-save{padding:5px 10px;border:none;border-radius:8px;cursor:pointer;font-size:.75rem;
   font-weight:700;min-height:34px;white-space:nowrap;flex-shrink:0}
-.sc-save.new{background:#4a148c;color:#fff}
+.sc-save.new{background:#1F4E79;color:#fff}
 .sc-save.edit{background:#f57f17;color:#fff}
 .sc-del{background:none;border:none;cursor:pointer;color:#e57373;
   font-size:1rem;padding:4px 5px;min-height:32px;flex-shrink:0}
@@ -152,7 +152,7 @@ input.sc-note:focus{border-color:#4a148c}
 /* KÍP FILTER CHIPS */
 .kf-row{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 8px}
 .kf{padding:6px 14px;border:2px solid transparent;border-radius:20px;cursor:pointer;
-  font-size:.78rem;font-weight:700;transition:.15s;min-height:34px;background:#e8eaf6;color:#4a148c;border-color:#4a148c}
+  font-size:.78rem;font-weight:700;transition:.15s;min-height:34px;background:#e8eaf6;color:#1F4E79;border-color:#1F4E79}
 .kf.off{opacity:.35;background:#f0f0f0;color:#888;border-color:#ccc}
 .kf.k1{background:var(--k1l);color:var(--k1);border-color:var(--k1)}
 .kf.k2{background:var(--k2l);color:var(--k2);border-color:var(--k2)}
@@ -167,11 +167,11 @@ input.sc-note:focus{border-color:#4a148c}
 .pw-box{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:320px;
   box-shadow:0 10px 40px rgba(0,0,0,.25);text-align:center}
 .pw-icon{font-size:2.2rem;margin-bottom:10px}
-.pw-box h3{font-size:1.05rem;color:#4a148c;margin-bottom:5px}
+.pw-box h3{font-size:1.05rem;color:#1F4E79;margin-bottom:5px}
 .pw-box p{font-size:.8rem;color:#888;margin-bottom:18px}
 .pw-input{width:100%;padding:12px 14px;border:2px solid #e0e0e0;border-radius:10px;
   font-size:1.3rem;letter-spacing:6px;text-align:center;outline:none;transition:.15s}
-.pw-input:focus{border-color:#4a148c}
+.pw-input:focus{border-color:#1F4E79}
 .pw-input.error{border-color:#e53935;animation:shake .3s}
 .pw-err{color:#e53935;font-size:.78rem;margin-top:7px;min-height:18px}
 .pw-actions{display:flex;gap:8px;margin-top:14px;justify-content:center}
@@ -221,6 +221,9 @@ td:hover .del-btn{display:inline-block!important}
   #s5Modal.show{transform:translateY(0)!important}
 }
 </style>
+<!-- Giao diện dùng chung: màu, phông, nút, thanh điều hướng, thông báo. Sửa ở giao-dien.css / giao-dien.js -->
+<link rel="stylesheet" href="giao-dien.css">
+<script src="giao-dien.js"></script>
 </head>
 <body>
 
@@ -233,18 +236,17 @@ td:hover .del-btn{display:inline-block!important}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-left">
-    <h1>🏆 Đánh Giá Nhân Viên</h1>
+    <h1>Đánh Giá Nhân Viên</h1>
     <div class="sub" id="todayLabel"></div>
   </div>
-  <a href="index.html" class="btn-back">← Lịch Ca</a>
-</div>
+  </div>
 
 <!-- TOP TABS (desktop) -->
 <div class="top-tabs">
-  <div class="tab active" onclick="showTab('results')">📊 Kết Quả</div>
-  <div class="tab"        onclick="showTab('scoring')">✏️ Chấm Điểm</div>
-  <div class="tab"        onclick="showTab('approval')">✅ Duyệt Đánh Giá</div>
-  <div class="tab"        onclick="showTab('config')">⚙️ Cài Đặt Hạng</div>
+  <div class="tab active" data-tab="results"  onclick="showTab('results')">Kết quả</div>
+  <div class="tab"        data-tab="scoring"  onclick="showTab('scoring')">Chấm điểm</div>
+  <div class="tab"        data-tab="approval" onclick="showTab('approval')">Duyệt đánh giá</div>
+  <div class="tab"        data-tab="config"   onclick="showTab('config')">Cài đặt hạng</div>
 </div>
 
 <!-- PAGE 1: KẾT QUẢ -->
@@ -264,8 +266,8 @@ td:hover .del-btn{display:inline-block!important}
             <option value="3">Kíp 3</option>
             <option value="4">HC / Ca Xoay</option>
           </select>
-          <button class="btn" style="background:#2e7d32;color:#fff" onclick="openPrintPage()">🖨️ In Phiếu Ký</button>
-          <button class="btn" style="background:#1565c0;color:#fff" onclick="exportResultsToExcel()">📊 Xuất Excel</button>
+          <button class="btn btn-sec" onclick="openPrintPage()">In phiếu ký</button>
+          <button class="btn btn-sec" onclick="exportResultsToExcel()">Xuất Excel</button>
         </div>
       </div>
     </div>
@@ -279,7 +281,7 @@ td:hover .del-btn{display:inline-block!important}
     <label style="font-weight:600;font-size:.85rem;color:#555;white-space:nowrap">Tháng chấm:</label>
     <input type="month" class="form-input" id="scoreMonth" style="flex:0 0 auto" onchange="renderScoring()">
     <input type="text" class="form-input" id="scoreSearch" placeholder="🔍 Tìm nhân viên..." autocomplete="off" data-clear-on-load style="width:160px" oninput="filterScoring()">
-    <button class="btn btn-sm" style="background:#4a148c;color:#fff" onclick="scoreAllMonth(this)">💾 Lưu điểm Tháng</button>
+    <button class="btn btn-sm" style="background:#1F4E79;color:#fff" onclick="scoreAllMonth(this)">💾 Lưu điểm Tháng</button>
   </div>
   <div class="kf-row" id="kipFilterRow">
     <button class="kf" id="kf-0" onclick="setScoreKip(0)">Tất cả</button>
@@ -748,7 +750,7 @@ function renderResults(){
   let h = `<div style="overflow-x:auto; width:100%; border-radius:var(--radius); box-shadow:var(--shadow);">
     <table class="res-table" style="min-width: max-content; box-shadow:none; border-radius:0;">
     <thead><tr>
-      <th style="position:sticky;left:0;z-index:2;background:#4a148c;min-width:140px">Họ tên</th>
+      <th style="position:sticky;left:0;z-index:2;background:#1F4E79;min-width:140px">Họ tên</th>
       <th style="text-align:center">Kíp</th>
       <th style="text-align:center">Điểm TB</th>
       <th style="text-align:center">Hạng</th>
@@ -771,7 +773,7 @@ function renderResults(){
 
     h+=`<tr>
       <td style="position:sticky;left:0;z-index:1;background:#fafafa;border-right:1px solid #eee;">
-        <div style="font-weight:700;font-size:.85rem;color:#1a237e">${e.name}</div>
+        <div style="font-weight:700;font-size:.85rem;color:#1F4E79">${e.name}</div>
         <div style="font-size:.7rem;color:#999">${e.id}</div>
       </td>
       <td style="font-size:.75rem;color:#666;text-align:center">${GRP_LABEL[e.kip]||''}</td>
@@ -977,7 +979,7 @@ function renderScoring(){
   });
   const emps = Object.values(empsMap);
   const doneCount = emps.filter(e => statMap[e.id] && Object.keys(statMap[e.id].scores).length > 0).length;
-  document.getElementById('scoreProgress').innerHTML = `Đã chấm (ít nhất 1 ngày): <b style="color:#4a148c">${doneCount}</b> / ${emps.length} nhân viên <span style="font-style:italic;color:#888;font-size:.7rem;margin-left:5px">(Mẹo: Kích đúp vào ô điểm để viết ghi chú)</span>`;
+  document.getElementById('scoreProgress').innerHTML = `Đã chấm (ít nhất 1 ngày): <b style="color:#1F4E79">${doneCount}</b> / ${emps.length} nhân viên <span style="font-style:italic;color:#888;font-size:.7rem;margin-left:5px">(Mẹo: Kích đúp vào ô điểm để viết ghi chú)</span>`;
 
   const kipsToShow = scoreKip === 0 ? [1,2,3,4] : [scoreKip];
   let html='';
@@ -1368,7 +1370,7 @@ function renderApproval(){
 
   document.getElementById('approvalWrap').innerHTML = statsHtml;
   document.getElementById('apprProgress').innerHTML=
-    `Đang xem: <b style="color:#4a148c">${emps.length}</b> nhân viên`;
+    `Đang xem: <b style="color:#1F4E79">${emps.length}</b> nhân viên`;
 
   let html = statsHtml + `<div style="padding:0 12px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <button class="btn btn-pri" onclick="bulkApproveB(this)">⚡ Duyệt nhanh hạng B (danh sách đang xem)</button>
@@ -1391,7 +1393,7 @@ function renderApproval(){
     html+= `<div class="card" style="border:2px solid ${rev.approved?'#4caf50':rev.violation_note?'#ff6f00':'#e0e0e0'}">
       <div class="card-head" style="background:${rev.approved?'#e8f5e9':rev.violation_note?'#fff3e0':'#fafafa'}; cursor:pointer" onclick="toggleDet('appr-det-${e.id}', this.querySelector('.expand-btn'))">
         <div style="flex:1;min-width:0">
-          <div style="font-weight:700;color:#1a237e">${e.name}${rev.violation_note?' ⚠️':''}</div>
+          <div style="font-weight:700;color:#1F4E79">${e.name}${rev.violation_note?' ⚠️':''}</div>
           <div style="font-size:.7rem;color:#777">${e.id} - ${GRP_LABEL[e.kip]}</div>
         </div>
         <div style="text-align:right">
@@ -1701,7 +1703,7 @@ function showTab(tab){
 }
 function _doShowTab(tab){
   activeTab=tab;
-  document.querySelectorAll('.top-tabs .tab').forEach((t,i)=>t.classList.toggle('active',TABS[i]===tab));
+  document.querySelectorAll('.top-tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.bot-nav .bnav').forEach((b,i)=>b.classList.toggle('active',TABS[i]===tab));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+tab).classList.add('active');
