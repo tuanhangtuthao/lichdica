@@ -55,8 +55,10 @@ body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;lin
 .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 @keyframes bl{0%,60%,100%{opacity:.25}30%{opacity:1}}
 
-.chips{display:flex;gap:6px;padding:8px 12px 4px;overflow-x:auto;flex-shrink:0}
-.chips::-webkit-scrollbar{display:none}
+/* Xuống dòng thay vì cuộn ngang: trên điện thoại 375px một hàng chỉ chứa
+   được 2-3 nút, mấy nút sau nằm ngoài màn hình mà không có thanh cuộn nào
+   báo hiệu nên không ai biết để vuốt. */
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px 4px;flex-shrink:0}
 .chips button{flex-shrink:0;background:#fff;border:1.5px solid #c5cae9;color:#1a237e;
   font-family:inherit;font-size:.76rem;font-weight:600;padding:7px 13px;border-radius:20px;
   cursor:pointer;white-space:nowrap}
@@ -790,7 +792,7 @@ async answer(raw, ctx){
     const r = await TOOLS.tra_tang_ca({msnv, thang:monthKey});
     if(r.loi) return {html:notFound(msnv)};
     if(!r.lan.length) return {html:`<b>${esc(r.nhan_vien.ten)}</b> chưa có tăng ca nào trong ${monthLbl}.`,
-                              chips:['Ca của tôi hôm nay','Điểm đánh giá của tôi']};
+                              chips:['Ca của tôi hôm nay','Xếp loại của tôi']};
     let h = `<b>${esc(r.nhan_vien.ten)}</b> · tăng ca ${monthLbl}: <b style="color:#e65100">${hhmm(r.tong_gio)}</b> (${r.lan.length} lần)`;
     h += '<table>' + r.lan.map(o=>{
       const [,mm,dd]=o.ngay.split('-');
@@ -900,10 +902,11 @@ function helpText(){
     + '· Tìm tài liệu / video về ...';
 }
 function defaultChips(){
-  return ['Ca của tôi hôm nay','Lịch tuần sau','Khi nào tôi được nghỉ',
-          'Xếp loại của tôi','Tôi vi phạm 5S mấy lần','Tăng ca tháng này',
-          'Hôm nay kíp nào đi làm','Ai hạng A tháng này','Ai vi phạm 5S nhiều nhất',
-          'Tiêu chí 5S'];
+  // Chỉ 6 nút cho gọn. Các câu đã bỏ (khi nào tôi được nghỉ, hôm nay kíp nào
+  // đi làm, ai hạng A, ai vi phạm 5S nhiều nhất) VẪN trả lời được nếu gõ tay,
+  // và vẫn hiện làm gợi ý sau những câu trả lời liên quan.
+  return ['Ca của tôi hôm nay','Lịch tuần sau','Xếp loại của tôi',
+          'Tôi vi phạm 5S mấy lần','Tăng ca tháng này','Tiêu chí 5S'];
 }
 
 // ═══════════════════════════════════════════════════════════════
