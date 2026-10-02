@@ -330,8 +330,43 @@ table.th-bang tr:hover{background:#f5f9ff}
 }
 @media(min-width:1200px){:root{--cw:230px;--ch:62px;--gap:10px}.floor{gap:90px}}
 </style>
+<style>
+/* ── Màn khoá trang 5S ───────────────────────────────────────── */
+.khoa-man{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;
+  justify-content:center;padding:20px;background:linear-gradient(160deg,#1a3c5e,#0d2235);
+  transition:opacity .2s}
+.khoa-hop{width:100%;max-width:330px;background:#fff;border-radius:16px;
+  padding:30px 24px 24px;text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+.khoa-icon{font-size:2.4rem;line-height:1}
+.khoa-tieu{font-size:1.15rem;font-weight:800;color:#1a3c5e;margin-top:8px}
+.khoa-phu{font-size:.82rem;color:#78909c;line-height:1.5;margin:7px 0 18px}
+.khoa-hop input{width:100%;padding:13px 14px;font-size:1.05rem;text-align:center;
+  letter-spacing:3px;border:2px solid #cfd8dc;border-radius:10px;outline:none;
+  box-sizing:border-box;-webkit-appearance:none}
+.khoa-hop input:focus{border-color:#1976d2}
+.khoa-hop button{width:100%;margin-top:11px;padding:13px;font-size:1rem;font-weight:700;
+  color:#fff;background:#1976d2;border:0;border-radius:10px;cursor:pointer}
+.khoa-hop button:disabled{background:#90a4ae;cursor:default}
+.khoa-loi{min-height:18px;margin-top:9px;font-size:.8rem;font-weight:700;color:#c62828}
+.khoa-ve{display:inline-block;margin-top:12px;font-size:.8rem;color:#78909c;text-decoration:none}
+</style>
 </head>
 <body>
+
+<!-- Màn khoá. Nằm ngay đầu body và hiện sẵn bằng HTML tĩnh, không chờ JS,
+     nên nhân viên không kịp nhìn thấy nội dung trang phía sau. -->
+<div class="khoa-man" id="khoaMan">
+  <div class="khoa-hop">
+    <div class="khoa-icon">🔒</div>
+    <div class="khoa-tieu">Kiểm Tra 5S</div>
+    <div class="khoa-phu">Trang dành cho người đi kiểm.<br>Nhập mật khẩu để vào.</div>
+    <input type="password" id="khoaPw" placeholder="Mật khẩu"
+           autocomplete="off" inputmode="numeric">
+    <button id="khoaBtn" onclick="thuMoKhoa()">Vào trang</button>
+    <div class="khoa-loi" id="khoaLoi"></div>
+    <a class="khoa-ve" href="index.html">← Về trang Lịch Đi Ca</a>
+  </div>
+</div>
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
@@ -616,7 +651,13 @@ async function loadLayout(){
   try{
     const {data,error} = await sb.from('factory_layout').select('*').order('order_index');
     if(error) throw error;
-    if(data && data.length) FACTORY_DATA = data.map(d => ({title:d.title, grid:JSON.parse(d.grid_json)}));
+    if(data && data.length){
+      FACTORY_DATA = data.map(d => ({title:d.title, grid:JSON.parse(d.grid_json)}));
+    }else{
+      // Bảng rỗng khác với lỗi đọc: trang này không có sơ đồ mặc định nên sẽ
+      // trắng trơn. Nói rõ ra, đừng để người đi kiểm tưởng máy chưa tải xong.
+      toast('Chưa có sơ đồ xưởng — vào trang Nhân Sự Ca lưu sơ đồ trước', true);
+    }
   }catch(e){ console.warn(e); toast('Không đọc được sơ đồ xưởng', true); }
 }
 
@@ -1524,8 +1565,59 @@ addEventListener('keydown', e => {
 // ══════════════════════════════════════════════
 // KHỞI ĐỘNG
 // ══════════════════════════════════════════════
+// KHOÁ TRANG
+// ══════════════════════════════════════════════
+// Trang này GHI dữ liệu 5S nên chỉ người đi kiểm mới được vào - nhân viên vào
+// nhầm là chấm lung tung. Dùng lại hàm check_app_password sẵn có trên Supabase
+// (cùng mật khẩu với nút sửa sơ đồ bên Nhân Sự Ca), nhờ vậy mật khẩu KHÔNG
+// nằm trong mã nguồn trang; nhúng thẳng vào đây thì ai xem mã nguồn cũng đọc được.
+//
+// LƯU Ý: đây là rào phía trình duyệt, đủ để nhân viên không vô tình vào chấm.
+// Người rành kỹ thuật vẫn gọi thẳng Supabase được. Muốn chặn thật thì phải siết
+// RLS trên bảng s5_checks, không làm ở tầng giao diện được.
+const KHOA_KEY = 's5_da_mo_khoa';
+let _moKhoaXong;
+const choMoKhoa = new Promise(r => { _moKhoaXong = r; });
+
+function dongManKhoa(){
+  const m = document.getElementById('khoaMan');
+  if(m){ m.style.opacity = '0'; setTimeout(() => m.remove(), 220); }
+  _moKhoaXong();
+}
+
+async function thuMoKhoa(){
+  const inp = document.getElementById('khoaPw');
+  const loi = document.getElementById('khoaLoi');
+  const btn = document.getElementById('khoaBtn');
+  const pw  = inp.value.trim();
+  const treoLai = msg => { loi.textContent = msg; btn.disabled = false; btn.textContent = 'Vào trang'; };
+  if(!pw){ loi.textContent = 'Chưa nhập mật khẩu'; inp.focus(); return; }
+  if(!SB_OK){ loi.textContent = 'Chưa kết nối Supabase, thử lại sau'; return; }
+  btn.disabled = true; btn.textContent = 'Đang kiểm...'; loi.textContent = '';
+  try{
+    const {data, error} = await sb.rpc('check_app_password', {pw});
+    if(error) throw error;
+    if(data !== true){ inp.value = ''; inp.focus(); treoLai('Sai mật khẩu'); return; }
+  }catch(e){ treoLai('Lỗi kiểm tra mật khẩu: ' + e.message); return; }
+  // Chỉ nhớ trong phiên này: đóng trình duyệt là phải nhập lại. Máy tính để ở
+  // xưởng dùng chung nên không nhớ lâu hơn được.
+  try{ sessionStorage.setItem(KHOA_KEY, '1'); }catch(e){}
+  dongManKhoa();
+}
+
+(function dungManKhoa(){
+  let daMo = false;
+  try{ daMo = sessionStorage.getItem(KHOA_KEY) === '1'; }catch(e){}
+  if(daMo){ dongManKhoa(); return; }
+  const inp = document.getElementById('khoaPw');
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter') thuMoKhoa(); });
+  setTimeout(() => inp.focus(), 120);
+})();
+
+// ══════════════════════════════════════════════
 (async () => {
   try{
+    await choMoKhoa;   // chưa mở khoá thì chưa đụng tới dữ liệu
     const t = new Date();
     document.getElementById('todayLbl').textContent =
       `${DFUL[t.getDay()]}, ${t.getDate()}/${t.getMonth()+1}/${t.getFullYear()}`;

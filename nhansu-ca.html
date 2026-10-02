@@ -586,24 +586,38 @@ async function saveLayout(){
   
   if(SB_OK){
     try {
-      // Xóa cấu hình cũ và lưu mới để đơn giản hóa việc quản lý thứ tự
-      await sb.from('factory_layout').delete().neq('id', 0);
-      
+      // Ghi bản mới TRƯỚC, xoá bản cũ SAU.
+      // Trước đây làm ngược lại: xoá sạch bảng rồi mới ghi. Ghi hỏng giữa chừng
+      // (rớt mạng, Supabase chặn) là mất trắng sơ đồ xưởng, không hoàn tác được
+      // - mà trang 5S cũng đọc chung bảng này nên hỏng luôn cả hai trang.
+      const {data: cu, error: eDoc} = await sb.from('factory_layout').select('id');
+      if(eDoc) throw eDoc;
+      const idCu = (cu || []).map(r => r.id);
+
       const rows = FACTORY_DATA.map((z, idx) => ({
         title: z.title,
         grid_json: JSON.stringify(z.grid),
         order_index: idx
       }));
-      
+
       const {error} = await sb.from('factory_layout').insert(rows);
-      if(error) throw error;
+      if(error) throw error;          // chưa xoá gì -> sơ đồ cũ còn nguyên
+
+      if(idCu.length){
+        const {error: eXoa} = await sb.from('factory_layout').delete().in('id', idCu);
+        // Xoá hụt thì sơ đồ hiện trùng, nhưng KHÔNG mất dữ liệu.
+        // Bấm lưu lần nữa là sạch: lần sau sẽ xoá hết các dòng cũ lẫn dòng trùng.
+        if(eXoa) throw new Error('Đã lưu sơ đồ mới nhưng chưa xoá được bản cũ nên sơ đồ có thể hiện trùng. Bấm Lưu thêm lần nữa là hết. (' + eXoa.message + ')');
+      }
       
       showToast('✅ Đã lưu sơ đồ mới');
       layoutEditMode = false;
       document.getElementById('layoutEditBanner').classList.remove('show');
       renderFloor();
     } catch(e) {
-      alert('Lỗi lưu sơ đồ: ' + e.message + '\nLưu ý: Bạn cần tạo bảng factory_layout trên Supabase.');
+      // Ghi bản mới đi trước nên lỗi ở đây là CHƯA xoá gì cả. Nói rõ ra cho yên tâm;
+      // câu cũ ('cần tạo bảng factory_layout') là tàn dư hồi mới dựng, giờ sai.
+      alert('Lỗi lưu sơ đồ: ' + e.message + '\n\nSơ đồ cũ vẫn còn nguyên, chưa mất gì. Kiểm tra mạng rồi bấm Lưu lại.');
     }
   } else {
     alert('Chưa kết nối Supabase!');
