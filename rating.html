@@ -829,7 +829,10 @@ function openPrintPage(){
 // ── TAB 2: CHẤM ĐIỂM ──────────────────────
 function editDailyNote(el){
     const oldNote = el.dataset.note || '';
-    const newNote = prompt("📝 Nhập ghi chú cho ngày này (hiển thị khi di chuột):", oldNote);
+    const batBuoc = canLyDo(el.value);
+    const newNote = prompt(
+      (batBuoc ? `⚠️ Chấm dưới ${DIEM_CAN_LY_DO} điểm — BẮT BUỘC ghi lý do:\n` : '📝 Nhập ghi chú cho ngày này (hiện khi chỉ chuột vào):\n'),
+      oldNote);
     if(newNote !== null){
         el.dataset.note = newNote;
         el.title = newNote;
@@ -841,6 +844,20 @@ function editDailyNote(el){
 function handleScoreChange(el) {
     el.style.color = scoreColor(el.value);
     el.dataset.changed = "1";
+    nhacLyDo(el);
+}
+
+// Gõ điểm thấp mà chưa có lý do thì hỏi luôn. Bỏ qua cũng được, nhưng lúc
+// bấm Lưu sẽ bị chặn.
+let _dangHoi = false;
+function nhacLyDo(el){
+    if(_dangHoi) return;
+    if(!canLyDo(el.value)) return;
+    if(String(el.dataset.note || '').trim()) return;
+    _dangHoi = true;
+    setTimeout(() => {
+      try{ editDailyNote(el); } finally { _dangHoi = false; }
+    }, 150);
 }
 
 function filterScoring() {
@@ -1091,6 +1108,15 @@ async function scoreAllMonth(btn) {
     return;
   }
 
+  // chỉ soi những ô vừa gõ trong phiên này
+  const oDaSua = new Set();
+  inputs.forEach(el => { if(el.dataset.changed === "1") oDaSua.add(el.dataset.empid + '|' + el.dataset.date); });
+  const thieu = dailyRows
+    .filter(r => oDaSua.has(r.emp_id + '|' + r.date))
+    .filter(r => canLyDo(r.score) && !String(r.note || '').trim())
+    .map(r => ({ten: r.emp_name, ngay: parseInt(r.date.slice(-2), 10), diem: r.score}));
+  if(thieu.length){ alert(thieuLyDo(thieu)); return; }
+
   if(!SB_OK){
       alert('Không kết nối được lưc trữ DB.');
       return;
@@ -1165,6 +1191,25 @@ function setApprKip(k){
   renderApproval();
 }
 
+// ── RÀNG BUỘC: CHẤM DƯỚI NGƯỠNG PHẢI CÓ LÝ DO ────────────
+// Điểm thấp mà không ghi lý do thì tháng sau không ai tra được vì sao,
+// và người bị trừ cũng không biết đường sửa.
+const DIEM_CAN_LY_DO = 9;
+// CHỈ áp cho ô vừa chấm hoặc vừa sửa trong phiên làm việc này. Dữ liệu cũ
+// chấm trước khi có quy định thì bỏ qua - nếu bắt luôn thì mở tháng cũ ra
+// là không lưu nổi, phải ngồi điền lại lý do cho hàng trăm ngày đã qua.
+const canLyDo = s => s !== '' && s !== null && !isNaN(parseFloat(s)) && parseFloat(s) < DIEM_CAN_LY_DO;
+
+// Trả về chuỗi mô tả các ngày thiếu lý do, rỗng nghĩa là hợp lệ
+function thieuLyDo(dsThieu){
+  if(!dsThieu.length) return '';
+  const d = dsThieu.slice(0, 12).map(x => `· ${x.ten ? x.ten + ' — ' : ''}ngày ${x.ngay}: ${x.diem} điểm`).join('\n');
+  const them = dsThieu.length > 12 ? `\n... và ${dsThieu.length - 12} ngày nữa` : '';
+  return `Chấm dưới ${DIEM_CAN_LY_DO} điểm thì bắt buộc ghi lý do.\n\n`
+       + `Còn ${dsThieu.length} ngày chưa có lý do:\n${d}${them}\n\n`
+       + `Nháy đúp vào ô điểm để nhập lý do.`;
+}
+
 // ── LÝ DO TRỪ ĐIỂM ───────────────────────────────────────
 // Tooltip tự dựng, gắn thẳng vào body nên không bị thẻ cha cắt mất, và
 // hiện ngay chứ không phải chờ cả giây như tooltip mặc định của trình duyệt.
@@ -1185,7 +1230,36 @@ function tipEl(){
   return _tipEl;
 }
 
+// Sửa lý do ngay trong tab Duyệt. Cần có vì tab này sửa được điểm, mà sửa
+// xuống dưới ngưỡng thì bắt buộc phải ghi được lý do ở đây.
+function suaLyDoDuyet(o){
+  anLyDo(true);
+  const inp = o.querySelector('input');
+  const batBuoc = canLyDo(inp.value);
+  const cu = o.dataset.note || '';
+  const moi = prompt(
+    (batBuoc ? `⚠️ Chấm dưới ${DIEM_CAN_LY_DO} điểm — BẮT BUỘC ghi lý do:\n` : '📝 Lý do trừ điểm (hiện khi chỉ chuột vào):\n'),
+    cu);
+  if(moi === null) return;
+  const v = moi.trim();
+  o.dataset.note = v;
+  o.classList.toggle('co-note', !!v);
+  o.style.border = v ? '1.5px solid #ff9800' : '1px solid #ddd';
+  const cham = o.querySelector('.cham-note');
+  if(cham) cham.textContent = v ? '•' : '';
+}
+
+function doiDiemDuyet(inp){
+  inp.style.color = scoreColor(inp.value);
+  const o = inp.closest('.appr-day');
+  if(o) o.dataset.vuaSua = "1";   // đánh dấu để biết ô nào do người dùng vừa đổi
+  if(o && canLyDo(inp.value) && !String(o.dataset.note || '').trim()){
+    setTimeout(() => suaLyDoDuyet(o), 150);
+  }
+}
+
 function hienLyDo(o, gim){
+  if(!String(o.dataset.note || '').trim()) return;   // ngày không có lý do thì thôi
   const t = tipEl();
   if(gim){
     // bấm lần nữa vào đúng ô đang ghim thì tắt
@@ -1194,7 +1268,7 @@ function hienLyDo(o, gim){
   }else if(_tipGim){
     return;   // đang ghim bằng cú bấm thì rê chuột không đổi nội dung
   }
-  t.innerHTML = '<b>Ngày ' + escAttr(o.dataset.ngay) + ' · lý do trừ điểm</b>' + escAttr(o.dataset.note);
+  t.textContent = o.dataset.note;
   t.classList.add('show');
 
   // đặt phía trên ô; không đủ chỗ thì lật xuống dưới. Kẹp lại trong màn hình
@@ -1316,12 +1390,13 @@ function renderApproval(){
        // Ngày có lý do thì viền cam + chấm nhỏ, để biết chỗ nào đáng chỉ vào
        // mà xem, khỏi phải rà từng ô
        const vien = nVal ? '1.5px solid #ff9800' : '1px solid #ddd';
-       html += `<div class="appr-day${nVal ? ' co-note' : ''}"
-         ${nVal ? `data-ngay="${i}" data-note="${escAttr(nVal)}"
-           onmouseenter="hienLyDo(this)" onmouseleave="anLyDo()" onclick="hienLyDo(this,true)"` : ''}
+       html += `<div class="appr-day${nVal ? ' co-note' : ''}" id="appr-day-${e.id}-${i}"
+         data-ngay="${i}" data-note="${escAttr(nVal)}" title="Nháy đúp để nhập lý do"
+         onmouseenter="hienLyDo(this)" onmouseleave="anLyDo()" onclick="hienLyDo(this,true)"
+         ondblclick="suaLyDoDuyet(this)"
          style="display:inline-flex;flex-direction:column;align-items:center;background:#fff;border-radius:6px;padding:3px;border:${vien};min-width:38px;position:relative">
-         <span style="font-size:.65rem;font-weight:600;color:#888">${i}${nVal ? '<span style="color:#ff9800">•</span>' : ''}</span>
-         <input type="number" min="0" max="12" step="0.1" title="${dk}" id="appr-sc-${e.id}-${i}" value="${sVal}" style="width:100%;text-align:center;border:none;background:none;font-size:.85rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none" onchange="this.style.color=scoreColor(this.value)">
+         <span style="font-size:.65rem;font-weight:600;color:#888">${i}<span class="cham-note" style="color:#ff9800">${nVal ? '•' : ''}</span></span>
+         <input type="number" min="0" max="12" step="0.1" id="appr-sc-${e.id}-${i}" value="${sVal}" style="width:100%;text-align:center;border:none;background:none;font-size:.85rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none" onchange="doiDiemDuyet(this)">
        </div>`;
     }
 
@@ -1389,12 +1464,16 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
        if(isNaN(score) || score < 0 || score > 12){
           errorFound = true;
        } else {
+          // Lấy lý do từ ô trên màn hình. TRƯỚC ĐÂY ghi cứng '' nên mỗi lần
+          // bấm Lưu ở tab Duyệt là xoá sạch lý do đã nhập bên tab Chấm Điểm.
+          const oNgay = document.getElementById(`appr-day-${emp_id}-${i}`);
+          const ghiChu = oNgay ? String(oNgay.dataset.note || '').trim() : '';
           dailyRows.push({
              emp_id: emp_id,
              emp_name: emp.name,
              date: dk,
              score: score,
-             note: ''
+             note: ghiChu
           });
        }
     }
@@ -1413,6 +1492,16 @@ async function saveApproval(emp_id, month_key, daysInMonth, btn) {
     alert('Có điểm không hợp lệ (phải từ 0-12). Vui lòng kiểm tra lại!');
     return;
   }
+
+  const thieu = dailyRows
+    .filter(r => {
+      const ng = parseInt(r.date.slice(-2), 10);
+      const oNgay = document.getElementById(`appr-day-${emp_id}-${ng}`);
+      return oNgay && oNgay.dataset.vuaSua === "1";   // chỉ ô vừa sửa
+    })
+    .filter(r => canLyDo(r.score) && !String(r.note || '').trim())
+    .map(r => ({ngay: parseInt(r.date.slice(-2), 10), diem: r.score}));
+  if(thieu.length){ alert(thieuLyDo(thieu)); return; }
 
   // Tính điểm trung bình để xác định hạng
   const statMap = {};
