@@ -509,19 +509,7 @@ table.th-bang tr:hover{background:#f5f9ff}
 const SB_URL='https://xtutpuwesganunktrxcv.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
 const SB_OK=SB_URL.startsWith('https://')&&!SB_URL.includes('PASTE');
-// Phiên đăng nhập của người đi kiểm để RIÊNG một khoá, không dùng chung với
-// các trang khác: trang Đánh Giá chỉ cần đọc, không được thừa hưởng quyền ghi.
-// Để trong sessionStorage nên đóng trình duyệt là mất phiên, phải nhập lại -
-// máy ở xưởng dùng chung, không giữ quyền ghi lâu được.
-let _khoPhien; try{ _khoPhien = window.sessionStorage; }catch(e){ _khoPhien = undefined; }
-const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY, {
-  auth: {storageKey:'sb-5s-phien', storage:_khoPhien, persistSession:true, autoRefreshToken:true}
-}) : null;
-
-// Tài khoản dùng chung cho người đi kiểm. Mật khẩu KHÔNG nằm ở đây - người
-// dùng gõ vào màn khoá. Quyền ghi bảng s5_checks gắn vào tài khoản này qua
-// RLS (xem sql/5s-siet-rls.sql), nên khoá anon trong mã nguồn không ghi được.
-const TK_EMAIL = 'kiem5s@bachtung.vn';
+const sb=SB_OK?supabase.createClient(SB_URL,SB_KEY):null;
 
 const TABLE='s5_checks', BUCKET='s5-photos';
 
@@ -1579,13 +1567,15 @@ addEventListener('keydown', e => {
 // ══════════════════════════════════════════════
 // KHOÁ TRANG
 // ══════════════════════════════════════════════
-// Trang này GHI dữ liệu 5S nên chỉ người đi kiểm mới được vào.
+// Trang này GHI dữ liệu 5S nên chỉ người đi kiểm mới được vào - nhân viên vào
+// nhầm là chấm lung tung. Dùng lại hàm check_app_password sẵn có trên Supabase
+// (cùng mật khẩu với nút sửa sơ đồ bên Nhân Sự Ca), nhờ vậy mật khẩu KHÔNG
+// nằm trong mã nguồn trang; nhúng thẳng vào đây thì ai xem mã nguồn cũng đọc được.
 //
-// Màn khoá này KHÔNG phải rào trang trí: nó đăng nhập thật vào tài khoản dùng
-// chung ở trên. Quyền ghi bảng s5_checks và kho ảnh gắn vào tài khoản đó qua
-// RLS, nên người không có mật khẩu dù gọi thẳng Supabase bằng khoá anon trong
-// mã nguồn cũng bị database từ chối - không chỉ bị ẩn giao diện.
-// Xem sql/5s-siet-rls.sql.
+// LƯU Ý: đây là rào phía trình duyệt, đủ để nhân viên không vô tình vào chấm.
+// Người rành kỹ thuật vẫn gọi thẳng Supabase được. Muốn chặn thật thì phải siết
+// RLS trên bảng s5_checks, không làm ở tầng giao diện được.
+const KHOA_KEY = 's5_da_mo_khoa';
 let _moKhoaXong;
 const choMoKhoa = new Promise(r => { _moKhoaXong = r; });
 
@@ -1605,24 +1595,20 @@ async function thuMoKhoa(){
   if(!SB_OK){ loi.textContent = 'Chưa kết nối Supabase, thử lại sau'; return; }
   btn.disabled = true; btn.textContent = 'Đang kiểm...'; loi.textContent = '';
   try{
-    const {error} = await sb.auth.signInWithPassword({email: TK_EMAIL, password: pw});
-    if(error){
-      inp.value = ''; inp.focus();
-      // Sai mật khẩu và chưa tạo tài khoản đều trả về "Invalid login credentials",
-      // nên câu báo phải nói được cả hai khả năng.
-      treoLai(/invalid login/i.test(error.message)
-        ? 'Sai mật khẩu' : 'Không đăng nhập được: ' + error.message);
-      return;
-    }
-  }catch(e){ treoLai('Không đăng nhập được: ' + e.message); return; }
+    const {data, error} = await sb.rpc('check_app_password', {pw});
+    if(error) throw error;
+    if(data !== true){ inp.value = ''; inp.focus(); treoLai('Sai mật khẩu'); return; }
+  }catch(e){ treoLai('Lỗi kiểm tra mật khẩu: ' + e.message); return; }
+  // Chỉ nhớ trong phiên này: đóng trình duyệt là phải nhập lại. Máy tính để ở
+  // xưởng dùng chung nên không nhớ lâu hơn được.
+  try{ sessionStorage.setItem(KHOA_KEY, '1'); }catch(e){}
   dongManKhoa();
 }
 
-(async function dungManKhoa(){
-  // Còn phiên đăng nhập cũ thì vào thẳng, khỏi hỏi lại.
-  let coPhien = false;
-  try{ coPhien = !!(SB_OK && (await sb.auth.getSession()).data.session); }catch(e){}
-  if(coPhien){ dongManKhoa(); return; }
+(function dungManKhoa(){
+  let daMo = false;
+  try{ daMo = sessionStorage.getItem(KHOA_KEY) === '1'; }catch(e){}
+  if(daMo){ dongManKhoa(); return; }
   const inp = document.getElementById('khoaPw');
   inp.addEventListener('keydown', e => { if(e.key === 'Enter') thuMoKhoa(); });
   setTimeout(() => inp.focus(), 120);
