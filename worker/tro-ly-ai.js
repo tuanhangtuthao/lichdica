@@ -14,6 +14,11 @@ import { DINH_NGHIA_CONG_CU, DFUL, NHOM, dKey, homNayVN } from './du-lieu.js';
 const MODEL = 'claude-haiku-4-5';
 const VONG_TOI_DA = 4;          // 1 câu hỏi thường chỉ cần 1-2 vòng
 const MAX_TOKENS = 1500;        // câu trả lời Zalo ngắn, tối đa 2000 ký tự
+// Cloudflare chỉ cho chạy tiếp tối đa 30 giây sau khi đã trả lời Zalo. Qua
+// máy chủ bên thứ 3, một câu đo được tới 23,6 giây. Quá mốc này thì dừng và
+// báo chậm, thay vì bị Cloudflare cắt ngang làm người hỏi chờ suông.
+const HAN_CHOT_MS = 24000;
+export const CAU_CHAM = 'Trợ lý đang chậm, bạn hỏi lại sau ít phút nhé.';
 
 function lichMuoiBonNgay() {
   const t = homNayVN(), dong = [];
@@ -62,10 +67,14 @@ export async function hoiAI({ env, cauHoi, nhanVien, congCu }) {
   const system = taoSystem(nhanVien);
   const messages = [{ role: 'user', content: cauHoi }];
 
+  const batDau = Date.now();
   for (let vong = 0; vong < VONG_TOI_DA; vong++) {
+    const conLai = HAN_CHOT_MS - (Date.now() - batDau);
+    if (conLai < 2000) return CAU_CHAM;
+    // không tự thử lại: thử lại là vượt luôn hạn chót
     const res = await client.messages.create({
       model, max_tokens: MAX_TOKENS, system, tools: DINH_NGHIA_CONG_CU, messages,
-    });
+    }, { timeout: conLai, maxRetries: 0 });
 
     if (res.stop_reason === 'refusal')
       return 'Câu này mình không trả lời được. Bạn hỏi về lịch ca, đánh giá hay 5S của bạn nhé.';
@@ -91,6 +100,8 @@ export async function hoiAI({ env, cauHoi, nhanVien, congCu }) {
 
 // Đổi lỗi API thành câu dễ hiểu cho nhân viên; chi tiết thật thì ghi log
 export function cauBaoLoi(e) {
+  if (e instanceof Anthropic.APIConnectionTimeoutError)
+    return CAU_CHAM;
   if (e instanceof Anthropic.RateLimitError)
     return 'Trợ lý đang quá tải, bạn hỏi lại sau ít phút nhé.';
   if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError)
