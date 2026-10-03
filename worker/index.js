@@ -20,12 +20,21 @@ import { taoSb, timNV, layLienKet, luuLienKet, duocHoiTiep, taoCongCu, NHOM, GIO
 import { hoiAI, cauBaoLoi } from './tro-ly-ai.js';
 import { guiTin, datWebhook } from './zalo.js';
 
+// Bỏ mọi khoảng trắng / ký tự vô hình. Dán chuỗi vào Terminal trên Windows
+// hay dính thêm dấu cách, \r, ký tự BOM ở cuối mà mắt không thấy được, làm
+// key trong link không bao giờ khớp. Chuỗi bí mật vốn chỉ gồm chữ và số nên
+// bỏ mấy ký tự này không mất gì.
+function sach(s) {
+  return String(s || '').replace(/[\s​-‍⁠﻿]/g, '');
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const biMat = sach(env.ZALO_SECRET);
 
     if (url.pathname === '/api/zalo' && request.method === 'POST') {
-      if (!env.ZALO_SECRET || request.headers.get('X-Bot-Api-Secret-Token') !== env.ZALO_SECRET)
+      if (!biMat || sach(request.headers.get('X-Bot-Api-Secret-Token')) !== biMat)
         return new Response('forbidden', { status: 403 });
       const update = await request.json().catch(() => null);
       // Trả lời Zalo ngay, xử lý (gọi Claude mất vài giây) chạy nền
@@ -43,9 +52,13 @@ export default {
     }
 
     if (url.pathname === '/api/zalo/cai-dat') {
-      if (!env.ZALO_SECRET || url.searchParams.get('key') !== env.ZALO_SECRET)
-        return new Response('Sai key', { status: 403 });
-      const kq = await datWebhook(env, `${url.origin}/api/zalo`);
+      const nhap = sach(url.searchParams.get('key'));
+      if (!biMat || nhap !== biMat)
+        // Chỉ báo độ dài để dò lỗi gõ / dán, không bao giờ lộ nội dung
+        return new Response(`Sai key: chuỗi trong link dài ${nhap.length} ký tự, `
+          + `ZALO_SECRET đã lưu dài ${biMat.length} ký tự.`, { status: 403 });
+      // Đăng ký đúng chuỗi đã làm sạch -> header Zalo gửi về sẽ khớp biMat
+      const kq = await datWebhook({ ...env, ZALO_SECRET: biMat }, `${url.origin}/api/zalo`);
       return Response.json(kq);
     }
 
