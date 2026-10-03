@@ -75,6 +75,16 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   border-radius:14px;padding:3px 11px;font-size:.75rem;font-weight:800;cursor:pointer}
 
 /* ── TỔNG QUAN ── */
+.luot-bar{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:8px 16px;background:#fff;border-bottom:1px solid #e0e0e0}
+.luot-seg{display:flex;gap:2px;padding:3px;border-radius:12px;background:#EBEEEA}
+.luot-seg button{min-height:38px;padding:0 14px;border:0;border-radius:9px;background:transparent;cursor:pointer;
+  font-family:inherit;font-size:.82rem;font-weight:700;color:#3E4C5A}
+.luot-seg button.on{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.luot-mo{flex:1;min-width:150px;font-size:.78rem;color:#5A6876;line-height:1.4}
+.luot-mo b{color:#16202B}
+.luot-moi{min-height:38px}
+.mc-truoc{font-size:.66rem;color:#8a8f94;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media print{.luot-bar{display:none}}
 .stat-bar{display:flex;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid #e0e0e0;flex-wrap:wrap}
 .stat{flex:1;min-width:92px;border-radius:10px;padding:7px 12px;text-align:center;border:1.5px solid}
 .stat .n{font-size:1.15rem;font-weight:900;line-height:1.1}
@@ -408,6 +418,18 @@ table.th-bang tr:hover{background:#f5f9ff}
   <button class="qb-off" onclick="toggleQuick()">✕ Tắt</button>
 </div>
 
+<!-- Xem theo lượt. Một ca chấm nhiều lượt, nhiều người: người đi lượt sau mà
+     nhìn kết quả của cả ca thì máy nào cũng đã chấm, không biết mình còn sót
+     máy nào. "Lượt của tôi" chỉ tô màu máy CHÍNH MÌNH đã chấm trong lượt này. -->
+<div class="luot-bar">
+  <div class="luot-seg" role="group" aria-label="Xem theo lượt">
+    <button type="button" id="btnLuotToi" onclick="doiCheDo('toi')">Lượt của tôi</button>
+    <button type="button" id="btnLuotCa"  onclick="doiCheDo('ca')">Cả ca</button>
+  </div>
+  <div class="luot-mo" id="luotMo"></div>
+  <button type="button" class="btn btn-sec luot-moi" id="btnLuotMoi" onclick="batDauLuotMoi()">Bắt đầu lượt mới</button>
+</div>
+
 <div class="stat-bar">
   <div class="stat s-all"><div class="n" id="stTotal">0</div><div class="l">Tổng máy</div></div>
   <div class="stat s-ok"><div class="n" id="stOk">0</div><div class="l">Đạt</div></div>
@@ -631,6 +653,67 @@ function latestOf(cellId){
   return (ds && ds.length) ? ds[ds.length-1] : null;
 }
 function soLuot(cellId){ return (CHECKS[cellId] || []).length; }
+
+// ── LƯỢT CỦA TÔI ──────────────────────────────────────────
+// 'toi' = chỉ tính lượt của người đang kiểm (ô "Người kiểm"), từ mốc bắt đầu
+//         lượt. Mặc định, vì người mở trang này chủ yếu là người đi kiểm.
+// 'ca'  = như trước: lượt gần nhất của bất kỳ ai trong ca.
+let cheDoLuot = 'toi';
+try{ cheDoLuot = localStorage.getItem('s5_che_do_luot') || 'toi'; }catch(e){}
+
+const chuanTen = t => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
+function tenToi(){ return document.getElementById('inspector').value.trim(); }
+function xemLuotToi(){ return cheDoLuot === 'toi' && !!tenToi(); }
+
+// Mốc bắt đầu lượt, riêng cho từng (ngày, ca, người). Trống = tính từ đầu ca.
+// Một người đi 2 lượt trong ca thì bấm "Bắt đầu lượt mới" để đặt mốc lại.
+function khoaMoc(){ return `s5_moc_${curDate}_${curShift}_${chuanTen(tenToi())}`; }
+function mocLuot(){ try{ return localStorage.getItem(khoaMoc()) || ''; }catch(e){ return ''; } }
+
+// Các lượt CỦA TÔI ở một ô, tính từ mốc lượt hiện tại
+function luotCuaToi(cellId){
+  const ten = chuanTen(tenToi()), moc = mocLuot(), tMoc = moc ? Date.parse(moc) : 0;
+  return (CHECKS[cellId] || []).filter(r =>
+    chuanTen(r.inspector) === ten && (!tMoc || Date.parse(r.checked_at) >= tMoc));
+}
+// Lượt dùng để tô màu ô và đếm thống kê, theo chế độ đang xem
+function luotHienThi(cellId){
+  if(!xemLuotToi()) return latestOf(cellId);
+  const ds = luotCuaToi(cellId);
+  return ds.length ? ds[ds.length - 1] : null;
+}
+
+function doiCheDo(m){
+  cheDoLuot = m;
+  try{ localStorage.setItem('s5_che_do_luot', m); }catch(e){}
+  if(m === 'toi' && !tenToi()) kiemTraNguoiKiem();   // nhắc nhập tên
+  renderFloor();
+}
+
+function batDauLuotMoi(){
+  const ten = kiemTraNguoiKiem();
+  if(!ten) return;
+  if(!confirm(`Bắt đầu lượt mới cho ${ten}?\n\nSơ đồ sẽ tính lại từ đầu: máy nào bạn chấm trước lúc này sẽ hiện "Chưa kiểm" để bạn đi lại một vòng. Kết quả đã lưu KHÔNG bị xoá.`)) return;
+  try{ localStorage.setItem(khoaMoc(), new Date().toISOString()); }catch(e){}
+  renderFloor();
+  toast('Đã bắt đầu lượt mới');
+}
+
+function veThanhLuot(daCham, tong){
+  const ten = tenToi(), moc = mocLuot();
+  document.getElementById('btnLuotToi').classList.toggle('on', cheDoLuot === 'toi');
+  document.getElementById('btnLuotCa').classList.toggle('on', cheDoLuot === 'ca');
+  document.getElementById('btnLuotMoi').style.display = xemLuotToi() ? '' : 'none';
+  const mo = document.getElementById('luotMo');
+  if(cheDoLuot === 'ca'){
+    mo.innerHTML = 'Kết quả mới nhất của mọi người trong ca';
+  }else if(!ten){
+    mo.innerHTML = 'Nhập tên <b>Người kiểm</b> để xem lượt của bạn';
+  }else{
+    const tu = moc ? ' · từ ' + new Date(moc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) : '';
+    mo.innerHTML = `Lượt của <b>${esc(ten)}</b>${tu} — đã chấm <b>${daCham}/${tong}</b> máy`;
+  }
+}
 function gioCua(rec){
   if(!rec || !rec.checked_at) return '';
   const d = new Date(rec.checked_at);
@@ -722,12 +805,12 @@ function workerOf(code, cellId){
 }
 
 function buildCell(code, cellId){
-  const rec = latestOf(cellId), st = statusOf(rec), n = soLuot(cellId);
+  const rec = luotHienThi(cellId), st = statusOf(rec), n = soLuot(cellId);
   const cell = document.createElement('div');
   cell.className = `mc-cell st-${st}`;
   cell.dataset.code = code.toLowerCase();
   cell.onclick = () => quickMode ? chamNhanhDat(code, cellId) : openSheet(code, cellId);
-  if(quickMode && st !== 'ok') cell.classList.add('quick-ready');
+  if(quickMode && st !== 'ok') cell.classList.add('quick-ready');   // st đã theo chế độ xem
 
   const c = document.createElement('div'); c.className='mc-code'; c.textContent=code;
   cell.appendChild(c);
@@ -755,6 +838,16 @@ function buildCell(code, cellId){
     const n = document.createElement('div'); n.className='mc-sub'; n.textContent=rec.note;
     cell.appendChild(n);
   }
+
+  // Lượt của tôi mà máy này tôi chưa chấm: ghi mờ kết quả lượt trước (của người
+  // khác hoặc lượt cũ của tôi) để biết tình trạng, nhưng ô vẫn là "Chưa kiểm".
+  const truoc = latestOf(cellId);
+  if(xemLuotToi() && !rec && truoc){
+    const t = document.createElement('div'); t.className = 'mc-truoc';
+    const kq = statusOf(truoc) === 'ok' ? 'Đạt' : `Chưa đạt ${N_TC - failsOf(truoc).length}/${N_TC}`;
+    t.textContent = `Lượt trước: ${kq}${truoc.inspector ? ' · ' + truoc.inspector : ''}${gioCua(truoc) ? ' ' + gioCua(truoc) : ''}`;
+    cell.appendChild(t);
+  }
   return cell;
 }
 
@@ -762,13 +855,14 @@ function renderStats(){
   let total=0, ok=0, ng=0;
   eachCell(({cellId}) => {
     total++;
-    const st = statusOf(latestOf(cellId));   // tính theo lượt gần nhất
+    const st = statusOf(luotHienThi(cellId));   // theo chế độ: lượt của tôi / cả ca
     if(st==='ok') ok++; else if(st==='ng') ng++;
   });
   document.getElementById('stTotal').textContent = total;
   document.getElementById('stOk').textContent    = ok;
   document.getElementById('stNg').textContent    = ng;
   document.getElementById('stNone').textContent  = total-ok-ng;
+  veThanhLuot(ok + ng, total);
 }
 
 // ── CHẤM NHANH ────────────────────────────────────────────
@@ -787,9 +881,12 @@ async function chamNhanhDat(code, cellId){
   const nguoiKiem = kiemTraNguoiKiem();
   if(!nguoiKiem) return;
 
-  // Đã đạt sẵn ở lượt gần nhất thì thôi, tránh bấm nhầm đẻ ra lượt trùng.
-  // Muốn chấm lại thì tắt chấm nhanh rồi mở phiếu.
-  if(statusOf(latestOf(cellId)) === 'ok'){ toast(code + ' đã đạt rồi'); return; }
+  // Đã đạt sẵn thì thôi, tránh bấm nhầm đẻ ra lượt trùng. Ở chế độ "Lượt của
+  // tôi" chỉ xét lượt của chính mình - trước đây xét lượt gần nhất của BẤT KỲ
+  // AI nên người đi lượt sau không chấm nhanh được máy lượt trước đã đạt.
+  if(statusOf(luotHienThi(cellId)) === 'ok'){
+    toast(code + (xemLuotToi() ? ' đã chấm đạt trong lượt của bạn' : ' đã đạt rồi')); return;
+  }
 
   const row = {
     date: curDate, shift: curShift, kip: curKip,
@@ -856,7 +953,15 @@ function fillWorkerSelect(selected){
 // tạo thêm lượt trùng khi chỉ định xem lại.
 function openSheet(code, cellId){
   const ds = CHECKS[cellId] || [];
-  moPhieu(code, cellId, ds.length ? ds.length - 1 : -1);
+  let idx = ds.length ? ds.length - 1 : -1;
+  // Lượt của tôi: máy tôi đã chấm thì mở lượt của tôi để xem/sửa; chưa chấm thì
+  // vào lượt mới. Trước đây luôn mở lượt gần nhất - người đi lượt sau quên bấm
+  // "Lượt mới" mà lưu luôn là ghi đè lên lượt của người trước.
+  if(xemLuotToi()){
+    const cuaToi = luotCuaToi(cellId);
+    idx = cuaToi.length ? ds.indexOf(cuaToi[cuaToi.length - 1]) : -1;
+  }
+  moPhieu(code, cellId, idx);
   document.getElementById('ov').classList.add('show');
   document.getElementById('sheet').classList.add('show');
   loadCellHistory(code);
@@ -1448,6 +1553,9 @@ function toast(msg, isErr, action){
 
 function rememberInspector(){
   try{ localStorage.setItem('s5_inspector', document.getElementById('inspector').value); }catch(e){}
+  // "Lượt của tôi" phụ thuộc tên người kiểm -> đổi tên là sơ đồ đổi theo
+  clearTimeout(rememberInspector._t);
+  rememberInspector._t = setTimeout(() => { if(cheDoLuot === 'toi') renderFloor(); }, 250);
 }
 
 // Ô tìm kiếm luôn trống khi tải trang (xem ghi chú ở nhansu-ca.html)
