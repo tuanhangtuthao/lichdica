@@ -60,6 +60,21 @@ Thấy `"ok": true` là xong. Sai key thì trả 403.
 Nhắn riêng cho bot: gửi MSNV (ví dụ `1049`), rồi hỏi *"mai tôi làm ca gì"*.
 Đổi người: nhắn `đổi MSNV 1234`.
 
+## Trạm chuyển tiếp Supabase (bắt buộc khi dùng workers.dev)
+
+Zalo gửi webhook bằng User-Agent `Java/1.8...`. Tên miền `workers.dev` bật sẵn **Browser Integrity Check** của Cloudflare và chặn chữ ký đó bằng **lỗi 1010**, trước khi request tới được worker. Không tắt được trên `workers.dev`. Zalo báo lỗi này là `webhook.http.403`.
+
+Nên đường đi thực tế là:
+```
+Zalo ──▶ Supabase Edge Function "zalo-webhook" ──▶ worker /api/zalo
+```
+- Code trạm: `supabase/functions/zalo-webhook/index.ts`. Trạm chỉ chuyển nguyên văn tin nhắn và header secret sang worker, việc kiểm tra secret vẫn do worker làm.
+- `wrangler.jsonc` → `ZALO_WEBHOOK_URL`: địa chỉ trạm. `/api/zalo/cai-dat` đăng ký địa chỉ này với Zalo.
+- Trên Supabase, function này phải **tắt "Enforce JWT Verification"**, vì Zalo không gửi JWT của Supabase.
+- Sửa code trạm: Supabase → Edge Functions → `zalo-webhook` → *Code* → dán lại → *Deploy*.
+
+Sau này nếu gắn tên miền riêng và tắt BIC cho `/api/zalo`: xoá `ZALO_WEBHOOK_URL`, mở lại link cài đặt, Zalo sẽ gửi thẳng vào worker.
+
 ## Đang dùng key bên thứ 3 (vilao.ai)
 
 Key Claude hiện mua qua bên bán lại, nên `wrangler.jsonc` có khối `vars`:

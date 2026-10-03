@@ -2,6 +2,7 @@
 # Thư mục gốc vừa là web tĩnh vừa chứa mã worker, nên phải loại ra ở đây.
 node_modules
 worker
+supabase
 package.json
 package-lock.json
 wrangler.jsonc

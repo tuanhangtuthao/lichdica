@@ -21,6 +21,10 @@
   // Đổi sang key chính chủ Anthropic: xoá cả khối "vars" này đi.
   "vars": {
     "ANTHROPIC_BASE_URL": "https://api.vilao.ai",
-    "CLAUDE_MODEL": "claude-haiku-4.5"
+    "CLAUDE_MODEL": "claude-haiku-4.5",
+    // Zalo gửi webhook vào trạm chuyển tiếp Supabase (supabase/functions/
+    // zalo-webhook), trạm chuyển sang worker. Lý do: workers.dev chặn
+    // User-Agent "Java/1.8..." của Zalo bằng lỗi 1010, không tắt được.
+    "ZALO_WEBHOOK_URL": "https://xtutpuwesganunktrxcv.supabase.co/functions/v1/zalo-webhook"
   }
 }

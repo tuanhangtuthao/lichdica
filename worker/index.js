@@ -80,6 +80,7 @@ export default {
                      catch { return 'ANTHROPIC_BASE_URL sai dạng'; } })()
           : 'api.anthropic.com (chính chủ)',
         model: envSach.CLAUDE_MODEL || 'claude-haiku-4-5',
+        dia_chi_webhook: sach(env.ZALO_WEBHOOK_URL) || `${url.origin}/api/zalo`,
       });
     }
 
@@ -89,8 +90,12 @@ export default {
         // Chỉ báo độ dài để dò lỗi gõ / dán, không bao giờ lộ nội dung
         return new Response(`Sai key: chuỗi trong link dài ${nhap.length} ký tự, `
           + `ZALO_SECRET đã lưu dài ${biMat.length} ký tự.`, { status: 403 });
-      // Đăng ký đúng chuỗi đã làm sạch -> header Zalo gửi về sẽ khớp biMat
-      const kq = await datWebhook(envSach, `${url.origin}/api/zalo`);
+      // Đăng ký đúng chuỗi đã làm sạch -> header Zalo gửi về sẽ khớp biMat.
+      // ZALO_WEBHOOK_URL: địa chỉ trạm chuyển tiếp Supabase, vì workers.dev
+      // chặn User-Agent Java của Zalo (lỗi 1010). Không đặt thì Zalo gửi thẳng
+      // vào worker (dùng được khi worker có tên miền riêng đã tắt BIC).
+      const dich = sach(env.ZALO_WEBHOOK_URL) || `${url.origin}/api/zalo`;
+      const kq = await datWebhook(envSach, dich);
       return Response.json(kq);
     }
 
