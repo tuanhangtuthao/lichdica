@@ -32,22 +32,31 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const biMat = sach(env.ZALO_SECRET);
+    // Bản env đã làm sạch cả 3 secret, dùng cho mọi lời gọi Zalo / Claude
+    const envSach = { ...env, ZALO_SECRET: biMat,
+      ZALO_BOT_TOKEN: sach(env.ZALO_BOT_TOKEN), ANTHROPIC_API_KEY: sach(env.ANTHROPIC_API_KEY) };
 
     if (url.pathname === '/api/zalo' && request.method === 'POST') {
       if (!biMat || sach(request.headers.get('X-Bot-Api-Secret-Token')) !== biMat)
         return new Response('forbidden', { status: 403 });
       const update = await request.json().catch(() => null);
       // Trả lời Zalo ngay, xử lý (gọi Claude mất vài giây) chạy nền
-      ctx.waitUntil(xuLy(update, env).catch(e => console.error('[zalo]', e)));
+      ctx.waitUntil(xuLy(update, envSach).catch(e => console.error('[zalo]', e)));
       return Response.json({ message: 'Success' });
     }
 
     if (url.pathname === '/api/zalo' && request.method === 'GET') {
+      // "co_" = có đặt chưa; "hop_le_" = độ dài / dạng trông đúng chưa (dán
+      // vào Terminal Windows từng bị cắt còn 1 ký tự). Không lộ nội dung.
+      const tok = sach(env.ZALO_BOT_TOKEN), key = sach(env.ANTHROPIC_API_KEY);
       return Response.json({
         ok: true,
         co_ZALO_BOT_TOKEN: !!env.ZALO_BOT_TOKEN,
         co_ZALO_SECRET: !!env.ZALO_SECRET,
         co_ANTHROPIC_API_KEY: !!env.ANTHROPIC_API_KEY,
+        hop_le_ZALO_BOT_TOKEN: tok.length >= 20,
+        hop_le_ZALO_SECRET: biMat.length >= 8 && biMat.length <= 256,
+        hop_le_ANTHROPIC_API_KEY: key.startsWith('sk-ant-') && key.length >= 40,
       });
     }
 
@@ -58,7 +67,7 @@ export default {
         return new Response(`Sai key: chuỗi trong link dài ${nhap.length} ký tự, `
           + `ZALO_SECRET đã lưu dài ${biMat.length} ký tự.`, { status: 403 });
       // Đăng ký đúng chuỗi đã làm sạch -> header Zalo gửi về sẽ khớp biMat
-      const kq = await datWebhook({ ...env, ZALO_SECRET: biMat }, `${url.origin}/api/zalo`);
+      const kq = await datWebhook(envSach, `${url.origin}/api/zalo`);
       return Response.json(kq);
     }
 
