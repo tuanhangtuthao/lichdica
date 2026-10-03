@@ -49,13 +49,16 @@ export default {
       // "co_" = có đặt chưa; "hop_le_" = độ dài / dạng trông đúng chưa (dán
       // vào Terminal Windows từng bị cắt còn 1 ký tự). Không lộ nội dung.
       const tok = sach(env.ZALO_BOT_TOKEN), key = sach(env.ANTHROPIC_API_KEY);
+      // chữ giữ chỗ trong file mẫu zalo-secrets.json (DAN_..._VAO_DAY) từng bị
+      // nạp nhầm lên vì quên lưu file -> coi là chưa hợp lệ
+      const giuCho = s => /VAO_DAY/i.test(s);
       return Response.json({
         ok: true,
         co_ZALO_BOT_TOKEN: !!env.ZALO_BOT_TOKEN,
         co_ZALO_SECRET: !!env.ZALO_SECRET,
         co_ANTHROPIC_API_KEY: !!env.ANTHROPIC_API_KEY,
-        hop_le_ZALO_BOT_TOKEN: tok.length >= 20,
-        hop_le_ZALO_SECRET: biMat.length >= 8 && biMat.length <= 256,
+        hop_le_ZALO_BOT_TOKEN: tok.length >= 20 && !giuCho(tok),
+        hop_le_ZALO_SECRET: biMat.length >= 8 && biMat.length <= 256 && !giuCho(biMat),
         hop_le_ANTHROPIC_API_KEY: key.startsWith('sk-ant-') && key.length >= 40,
       });
     }
