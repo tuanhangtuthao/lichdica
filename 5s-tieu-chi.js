@@ -31,3 +31,6 @@ const S_DEFS = [
 
 // Số mục kiểm - đừng gõ số cứng ở nơi khác, dùng biến này
 const N_TC = S_DEFS.length;
+
+// Cho bot Zalo (worker/) dùng chung danh sách này.
+globalThis.TieuChi5S = { S_DEFS, N_TC };

@@ -133,3 +133,8 @@ function getBlockStatus(k, d) {
   }
   return { type: rest ? 'rest' : 'work', day: back + 1, total: back + 1 + fwd };
 }
+
+// Cho bot Zalo (worker/) dùng chung đúng bộ lịch này. Trên web không ảnh
+// hưởng gì - các trang vẫn gọi thẳng getShift() như cũ.
+globalThis.LichCa = { CYCLE, REF, PHASE, SCHED_OVR, SCHED_UNKNOWN_FROM,
+                      ovrKey, getShift, getBlockStatus };

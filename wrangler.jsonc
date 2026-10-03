@@ -1,0 +1,18 @@
+// Cấu hình Cloudflare Worker "lichdica".
+// Tên + ngày tương thích lấy đúng theo bản bot Cloudflare tự đề xuất
+// (nhánh cloudflare/workers-autoconfig) để vẫn là worker đang chạy web.
+// Thêm "main" để có chỗ nhận webhook Zalo; file tĩnh vẫn phục vụ như cũ.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lichdica",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-04-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS"
+  }
+}

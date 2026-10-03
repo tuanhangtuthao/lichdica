@@ -1,0 +1,13 @@
+# Những thứ KHÔNG được đưa lên web công khai.
+# Thư mục gốc vừa là web tĩnh vừa chứa mã worker, nên phải loại ra ở đây.
+node_modules
+worker
+package.json
+package-lock.json
+wrangler.jsonc
+.wrangler
+.dev.vars*
+.env*
+.git
+.gitignore
+.claude
