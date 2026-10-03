@@ -41,8 +41,16 @@ export default {
       CLAUDE_MODEL: sach(env.CLAUDE_MODEL) || undefined };
 
     if (url.pathname === '/api/zalo' && request.method === 'POST') {
-      if (!biMat || sach(request.headers.get('X-Bot-Api-Secret-Token')) !== biMat)
+      const hdr = sach(request.headers.get('X-Bot-Api-Secret-Token'));
+      if (!biMat || hdr !== biMat) {
+        // Ghi lý do từ chối để dò lỗi - chỉ độ dài, không bao giờ ghi giá trị
+        console.warn('[zalo] từ chối POST', JSON.stringify({
+          ua: request.headers.get('user-agent'), co_header: hdr.length > 0,
+          dai_header: hdr.length, dai_bi_mat: biMat.length,
+          ten_header: [...request.headers.keys()].filter(k => !/cookie|authorization/i.test(k)),
+        }));
         return new Response('forbidden', { status: 403 });
+      }
       const update = await request.json().catch(() => null);
       // Trả lời Zalo ngay, xử lý (gọi Claude mất vài giây) chạy nền
       ctx.waitUntil(xuLy(update, envSach).catch(e => console.error('[zalo]', e)));
