@@ -687,9 +687,25 @@ async answer(raw, ctx){
 
 const BRAIN = BRAIN_LOCAL;   // ← đổi thành BRAIN_CLAUDE khi gắn API
 
+// ── CHỈ CHO CHỌN CÂU HỎI CÓ SẴN ──
+// Bộ máy hiện tại (BRAIN_LOCAL) chỉ hiểu một số kiểu câu, nhân viên gõ tự do dễ
+// ra "Tôi chưa hiểu". Nên tạm GIẤU Ô GÕ: chỉ bấm nút câu hỏi. Mọi câu bộ máy trả
+// lời được đều có nút - 6 câu chính, còn lại nằm trong "Câu hỏi khác".
+// GẮN AI XONG (BRAIN_CLAUDE) thì đổi dòng dưới thành false để mở lại ô gõ.
+const CHI_CHON_SAN = true;
+
+// Nút điều hướng giữa các nhóm câu hỏi: bấm vào chỉ đổi danh sách nút, không gửi
+// câu hỏi nào. Tên nút không được trùng với câu hỏi thật.
+const NUT_KHAC = 'Câu hỏi khác', NUT_CHINH = 'Câu hỏi chính';
+
 function notFound(id){ return `Không tìm thấy MSNV "<b>${esc(id)}</b>".\nBấm tên ở đầu khung chat để nhập lại.`; }
 
 function helpText(){
+  if (CHI_CHON_SAN)
+    return 'Chào bạn 👋 Bấm một câu hỏi bên dưới để tra nhanh.\n\n'
+      + 'Câu hỏi về <b>của riêng bạn</b> (ca làm, tăng ca, xếp loại) cần MSNV: '
+      + 'bấm nút <b>Nhập MSNV</b> ở đầu khung chat.\n\n'
+      + 'Không thấy câu cần hỏi thì bấm <b>' + NUT_KHAC + '</b>.';
   return 'Chào bạn 👋 Tôi tra giúp mấy thứ sau:\n\n'
     + '<b>Của riêng bạn</b> (cần MSNV)\n'
     + '· Ca của tôi hôm nay / mai / thứ 5 / 15/10\n'
@@ -706,6 +722,13 @@ function helpText(){
     + '<b>Quy trình</b>\n'
     + '· Tiêu chí 5S gồm những gì\n'
     + '· Tìm tài liệu / video về ...';
+}
+// Các câu bộ máy trả lời được nhưng không nằm trong 6 nút chính. Thêm câu mới
+// vào BRAIN_LOCAL thì nhớ thêm vào đây, không thì nhân viên không bấm được.
+function cauHoiKhac(){
+  return ['Lịch tuần này','Khi nào tôi được nghỉ','Nghỉ phép của tôi',
+          'Hôm nay kíp nào đi làm','Hôm nay ai nghỉ phép','Ai tăng ca nhiều nhất',
+          'Ai hạng A tháng này','Ai vi phạm 5S nhiều nhất','Tài liệu hướng dẫn'];
 }
 function defaultChips(){
   // Chỉ 6 nút cho gọn. Các câu đã bỏ (khi nào tôi được nghỉ, hôm nay kíp nào
@@ -783,10 +806,11 @@ const CSS = `
 #tl-go i:nth-child(2){animation-delay:.2s}#tl-go i:nth-child(3){animation-delay:.4s}
 @keyframes tlbl{0%,60%,100%{opacity:.25}30%{opacity:1}}
 
-#tl-nut{display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px 3px;flex-shrink:0}
+#tl-nut{display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px 3px;flex-shrink:0;max-height:42%;overflow-y:auto}
 #tl-nut button{background:#fff;border:1.5px solid #c5cae9;color:#1a237e;font-family:inherit;
   font-size:.73rem;font-weight:600;padding:6px 11px;border-radius:20px;cursor:pointer}
 #tl-nut button:hover{background:#e8eaf6}
+#tl-nut button.dh{border-style:dashed;color:#455a64;border-color:#90a4ae;background:#f5f7f8}
 
 #tl-thanh{display:flex;gap:7px;padding:9px 10px;background:#fff;border-top:1px solid #e0e0e0;
   flex-shrink:0}
@@ -877,6 +901,7 @@ function dung() {
   root.querySelector('#tl-dong').onclick = dong;
   elGui.onclick   = gui;
   elInput.onkeydown = e => { if (e.key === 'Enter') gui(); };
+  if (CHI_CHON_SAN) root.querySelector('#tl-thanh').style.display = 'none';
   elAi.onclick    = moHoi;
   root.querySelector('#tl-bo').onclick  = () => elHoi.classList.remove('mo');
   root.querySelector('#tl-msnv').onkeydown = e => { if (e.key === 'Enter') luuAi(); };
@@ -893,10 +918,26 @@ function dat(html, ai) {
 }
 function datNut(ds) {
   elNut.innerHTML = '';
-  (ds || []).forEach(c => {
+  ds = [...new Set(ds || [])];
+  // Không có ô gõ thì sau mỗi câu trả lời phải còn nút để đi tiếp - nếu không
+  // nhân viên kẹt lại với 1-2 nút gợi ý và không quay về danh sách được.
+  if (CHI_CHON_SAN) {
+    const chinh = defaultChips(), khac = cauHoiKhac();
+    const laChinh = ds.length === chinh.length && ds.every(c => chinh.includes(c));
+    const laKhac  = ds.length === khac.length  && ds.every(c => khac.includes(c));
+    if (laChinh)      ds.push(NUT_KHAC);              // đang ở 6 câu chính
+    else if (laKhac)  ds.push(NUT_CHINH);             // đang ở nhóm câu khác
+    else              ds.push(NUT_CHINH, NUT_KHAC);   // gợi ý sau một câu trả lời
+  }
+  ds.forEach(c => {
     const b = document.createElement('button');
     b.textContent = c;
-    b.onclick = () => { elInput.value = c; gui(); };
+    if (c === NUT_KHAC || c === NUT_CHINH) {
+      b.className = 'dh';
+      b.onclick = () => datNut(c === NUT_KHAC ? cauHoiKhac() : defaultChips());
+    } else {
+      b.onclick = () => { elInput.value = c; gui(); };
+    }
     elNut.appendChild(b);
   });
 }
@@ -932,7 +973,7 @@ async function mo() {
       dat('⚠️ Không tải được dữ liệu: ' + esc(e.message), 'sys');
     }
   }
-  setTimeout(() => elInput.focus(), 50);
+  if (!CHI_CHON_SAN) setTimeout(() => elInput.focus(), 50);
 }
 function dong() { elKhung.classList.remove('mo'); elBong.classList.remove('an'); }
 function datTen(e) {
@@ -988,7 +1029,8 @@ async function gui() {
     dangGo(false);
     dat('Lỗi khi tra dữ liệu: ' + esc(e.message), 'bot');
   } finally {
-    ban = false; elGui.disabled = false; elInput.focus();
+    ban = false; elGui.disabled = false;
+    if (!CHI_CHON_SAN) elInput.focus();
   }
 }
 
