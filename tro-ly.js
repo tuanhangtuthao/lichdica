@@ -783,9 +783,16 @@ const CSS = `
   max-width:95%;text-align:center;border-radius:10px}
 #tl-root .msg b{color:#1a237e}
 #tl-root .msg.me b{color:#fff}
-#tl-root .msg table{border-collapse:collapse;margin-top:5px;font-size:.8rem;width:100%}
-#tl-root .msg td{padding:3px 5px;border-bottom:1px dashed #eee}
-#tl-root .msg td:first-child{color:#666;white-space:nowrap}
+/* Bong bóng nằm TRÊN trang chủ nhà nên CSS bảng của trang đó lan vào bảng trong
+   khung chat. Trang Lịch ca đặt th,td{white-space:nowrap;text-align:center;border..}
+   cho bảng lịch -> chữ trong khung chat không xuống dòng, chạy ra khỏi ô. Đặt lại
+   đủ mọi thứ ở đây; #tl-root (id) nên luôn thắng CSS bảng của trang. */
+#tl-root .msg{min-width:0;overflow-wrap:anywhere}
+#tl-root .msg table{border-collapse:collapse;margin-top:5px;font-size:.8rem;width:100%;max-width:100%;table-layout:auto}
+#tl-root .msg th,#tl-root .msg td{padding:4px 6px;border:0;border-bottom:1px dashed #eee;
+  white-space:normal;text-align:left;vertical-align:top;background:transparent;
+  position:static;height:auto;min-width:0;width:auto;overflow-wrap:anywhere}
+#tl-root .msg td:first-child{color:#666;white-space:nowrap;width:1%}
 #tl-root .msg .chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.74rem;
   font-weight:700}
 #tl-root .chS{background:#fff3e0;color:#e65100}#tl-root .chC{background:#e8eaf6;color:#283593}
