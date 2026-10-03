@@ -34,7 +34,11 @@ export default {
     const biMat = sach(env.ZALO_SECRET);
     // Bản env đã làm sạch cả 3 secret, dùng cho mọi lời gọi Zalo / Claude
     const envSach = { ...env, ZALO_SECRET: biMat,
-      ZALO_BOT_TOKEN: sach(env.ZALO_BOT_TOKEN), ANTHROPIC_API_KEY: sach(env.ANTHROPIC_API_KEY) };
+      ZALO_BOT_TOKEN: sach(env.ZALO_BOT_TOKEN), ANTHROPIC_API_KEY: sach(env.ANTHROPIC_API_KEY),
+      // Thư viện Claude tự thêm /v1/messages, nên bỏ /v1 nếu bên bán ghi kèm
+      // (vd https://api.vilao.ai/v1 -> https://api.vilao.ai)
+      ANTHROPIC_BASE_URL: sach(env.ANTHROPIC_BASE_URL).replace(/\/+$/, '').replace(/\/v1$/, '') || undefined,
+      CLAUDE_MODEL: sach(env.CLAUDE_MODEL) || undefined };
 
     if (url.pathname === '/api/zalo' && request.method === 'POST') {
       if (!biMat || sach(request.headers.get('X-Bot-Api-Secret-Token')) !== biMat)
@@ -59,7 +63,15 @@ export default {
         co_ANTHROPIC_API_KEY: !!env.ANTHROPIC_API_KEY,
         hop_le_ZALO_BOT_TOKEN: tok.length >= 20 && !giuCho(tok),
         hop_le_ZALO_SECRET: biMat.length >= 8 && biMat.length <= 256 && !giuCho(biMat),
-        hop_le_ANTHROPIC_API_KEY: key.startsWith('sk-ant-') && key.length >= 40,
+        // key chính chủ luôn là sk-ant-...; key bên thứ 3 thì dạng tuỳ bên bán
+        hop_le_ANTHROPIC_API_KEY: envSach.ANTHROPIC_BASE_URL
+          ? key.length >= 20 && !giuCho(key)
+          : key.startsWith('sk-ant-') && key.length >= 40,
+        may_chu_claude: envSach.ANTHROPIC_BASE_URL
+          ? (() => { try { return new URL(envSach.ANTHROPIC_BASE_URL).host + ' (bên thứ 3)'; }
+                     catch { return 'ANTHROPIC_BASE_URL sai dạng'; } })()
+          : 'api.anthropic.com (chính chủ)',
+        model: envSach.CLAUDE_MODEL || 'claude-haiku-4-5',
       });
     }
 

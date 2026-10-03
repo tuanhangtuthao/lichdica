@@ -14,5 +14,13 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS"
+  },
+  // Key Claude đang mua qua bên thứ 3 (vilao.ai) nên gọi qua máy chủ của họ,
+  // và bên đó đặt tên model là claude-haiku-4.5 (dấu chấm). Hai thông tin này
+  // không bí mật; key thật vẫn để ở secret ANTHROPIC_API_KEY.
+  // Đổi sang key chính chủ Anthropic: xoá cả khối "vars" này đi.
+  "vars": {
+    "ANTHROPIC_BASE_URL": "https://api.vilao.ai",
+    "CLAUDE_MODEL": "claude-haiku-4.5"
   }
 }

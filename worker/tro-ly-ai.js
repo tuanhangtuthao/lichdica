@@ -10,6 +10,7 @@ import { DINH_NGHIA_CONG_CU, DFUL, NHOM, dKey, homNayVN } from './du-lieu.js';
 
 // Haiku 4.5: rẻ và nhanh, đủ cho tra cứu lịch ca / điểm. Muốn thông minh
 // hơn thì đổi sang 'claude-opus-5-5' (đắt hơn khoảng 4-5 lần).
+// Secret CLAUDE_MODEL (tuỳ chọn) đè giá trị này nếu bên cung cấp key đặt tên model khác.
 const MODEL = 'claude-haiku-4-5';
 const VONG_TOI_DA = 4;          // 1 câu hỏi thường chỉ cần 1-2 vòng
 const MAX_TOKENS = 1500;        // câu trả lời Zalo ngắn, tối đa 2000 ký tự
@@ -49,13 +50,21 @@ function layChu(res) {
 }
 
 export async function hoiAI({ env, cauHoi, nhanVien, congCu }) {
-  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  // ANTHROPIC_BASE_URL: đang dùng key mua qua bên thứ 3 nên phải gọi qua máy
+  // chủ của họ (họ phải hỗ trợ đúng định dạng Messages API của Anthropic).
+  // LƯU Ý: khi đặt biến này, dữ liệu nhân sự trong câu hỏi đi qua máy chủ bên
+  // thứ 3 trước khi tới Claude. Đổi sang key chính chủ: xoá secret này đi.
+  const client = new Anthropic({
+    apiKey: env.ANTHROPIC_API_KEY,
+    ...(env.ANTHROPIC_BASE_URL ? { baseURL: env.ANTHROPIC_BASE_URL } : {}),
+  });
+  const model = env.CLAUDE_MODEL || MODEL;
   const system = taoSystem(nhanVien);
   const messages = [{ role: 'user', content: cauHoi }];
 
   for (let vong = 0; vong < VONG_TOI_DA; vong++) {
     const res = await client.messages.create({
-      model: MODEL, max_tokens: MAX_TOKENS, system, tools: DINH_NGHIA_CONG_CU, messages,
+      model, max_tokens: MAX_TOKENS, system, tools: DINH_NGHIA_CONG_CU, messages,
     });
 
     if (res.stop_reason === 'refusal')

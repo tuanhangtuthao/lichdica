@@ -60,6 +60,19 @@ Thấy `"ok": true` là xong. Sai key thì trả 403.
 Nhắn riêng cho bot: gửi MSNV (ví dụ `1049`), rồi hỏi *"mai tôi làm ca gì"*.
 Đổi người: nhắn `đổi MSNV 1234`.
 
+## Đang dùng key bên thứ 3 (vilao.ai)
+
+Key Claude hiện mua qua bên bán lại, nên `wrangler.jsonc` có khối `vars`:
+- `ANTHROPIC_BASE_URL = https://api.vilao.ai`: gọi qua máy chủ của họ (định dạng Messages API của Anthropic, đã thử: trả lời thường và gọi công cụ đều chạy).
+- `CLAUDE_MODEL = claude-haiku-4.5`: tên model bên đó đặt (dấu chấm, khác tên chính chủ `claude-haiku-4-5`).
+
+Cần biết:
+- **Dữ liệu nhân sự trong câu hỏi** (tên, lịch ca, điểm, 5S) đi qua máy chủ của bên bán trước khi tới Claude.
+- Key bán lại có thể bị khoá bất cứ lúc nào. Khi đó bot trả lời "Trợ lý đang bảo trì".
+- Lúc thử, một câu "xin chào" bị tính khoảng 1.100 token đầu vào, trong khi câu hỏi chỉ khoảng 20 token. Nghĩa là bên bán chèn thêm nội dung riêng vào mỗi lần gọi, và mình trả tiền cho phần đó.
+
+**Đổi sang key chính chủ:** xoá khối `vars` trong `wrangler.jsonc`, đặt lại secret `ANTHROPIC_API_KEY` bằng key `sk-ant-...` từ console.anthropic.com, rồi push.
+
 ## Chi phí
 Claude Haiku 4.5: $1 / $5 mỗi triệu token vào / ra. Mỗi câu hỏi thường 2 lượt gọi (1 lượt chọn công cụ, 1 lượt viết trả lời). Với 100 câu/ngày, ước khoảng **$10–20/tháng**. Muốn bot thông minh hơn thì đổi `MODEL` trong `tro-ly-ai.js` sang `claude-opus-5-5` (đắt hơn khoảng 4–5 lần).
 
