@@ -811,6 +811,8 @@ const CSS = `
   font-size:.73rem;font-weight:600;padding:6px 11px;border-radius:20px;cursor:pointer}
 #tl-nut button:hover{background:#e8eaf6}
 #tl-nut button.dh{border-style:dashed;color:#455a64;border-color:#90a4ae;background:#f5f7f8}
+#tl-nut button.da{opacity:.45}
+#tl-nut button.da:hover{opacity:.8}
 
 #tl-thanh{display:flex;gap:7px;padding:9px 10px;background:#fff;border-top:1px solid #e0e0e0;
   flex-shrink:0}
@@ -916,18 +918,25 @@ function dat(html, ai) {
   elLog.appendChild(d);
   elLog.scrollTop = elLog.scrollHeight;
 }
+// Chế độ chỉ chọn câu có sẵn: nhớ nhóm đang xem và các câu đã hỏi.
+let nhomDangXem = 'chinh';      // 'chinh' = 6 câu chính, 'khac' = Câu hỏi khác
+const daHoi = new Set();        // câu đã hỏi -> tô mờ (vẫn bấm lại được)
+
 function datNut(ds) {
   elNut.innerHTML = '';
   ds = [...new Set(ds || [])];
-  // Không có ô gõ thì sau mỗi câu trả lời phải còn nút để đi tiếp - nếu không
-  // nhân viên kẹt lại với 1-2 nút gợi ý và không quay về danh sách được.
   if (CHI_CHON_SAN) {
+    // Hỏi xong VẪN GIỮ NGUYÊN danh sách đang xem, không thay bằng 1-2 câu gợi ý
+    // như hồi còn ô gõ. Chỉ giữ thêm các nút HÀNH ĐỘNG đi kèm câu trả lời
+    // (Nhập MSNV, Mở trang 5S, Mở trang Tài Liệu) - những nút không phải câu hỏi.
     const chinh = defaultChips(), khac = cauHoiKhac();
     const laChinh = ds.length === chinh.length && ds.every(c => chinh.includes(c));
     const laKhac  = ds.length === khac.length  && ds.every(c => khac.includes(c));
-    if (laChinh)      ds.push(NUT_KHAC);              // đang ở 6 câu chính
-    else if (laKhac)  ds.push(NUT_CHINH);             // đang ở nhóm câu khác
-    else              ds.push(NUT_CHINH, NUT_KHAC);   // gợi ý sau một câu trả lời
+    if (laChinh) nhomDangXem = 'chinh';
+    else if (laKhac) nhomDangXem = 'khac';
+    const hanhDong = ds.filter(c => !chinh.includes(c) && !khac.includes(c));
+    ds = [...hanhDong, ...(nhomDangXem === 'khac' ? khac : chinh),
+          nhomDangXem === 'khac' ? NUT_CHINH : NUT_KHAC];
   }
   ds.forEach(c => {
     const b = document.createElement('button');
@@ -936,7 +945,9 @@ function datNut(ds) {
       b.className = 'dh';
       b.onclick = () => datNut(c === NUT_KHAC ? cauHoiKhac() : defaultChips());
     } else {
-      b.onclick = () => { elInput.value = c; gui(); };
+      const laCauHoi = defaultChips().includes(c) || cauHoiKhac().includes(c);
+      if (CHI_CHON_SAN && laCauHoi && daHoi.has(c)) { b.className = 'da'; b.title = 'Đã hỏi - bấm để hỏi lại'; }
+      b.onclick = () => { daHoi.add(c); elInput.value = c; gui(); };
     }
     elNut.appendChild(b);
   });
@@ -993,6 +1004,7 @@ async function luuAi() {
     await loadCore();
     const e = findEmp(id);
     if (!e) { loi.textContent = 'Không tìm thấy MSNV này.'; loi.style.display = 'block'; return; }
+    if (MSNV !== id) daHoi.clear();
     MSNV = id;
     try { localStorage.setItem('tracuu_msnv', id); } catch (ex) {}
     datTen(e);
