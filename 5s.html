@@ -467,14 +467,21 @@ table.th-bang tr:hover{background:#f5f9ff}
     <div class="wk-box">
       <div class="wk-lbl" id="shWorkerLbl">👷 Người đứng máy</div>
       <select class="wk-sel" id="shWorker"></select>
+      <!-- Khu vực: GÕ TAY được (kỹ thuật/QC/đóng gói chưa có trong danh sách), có gợi ý -->
+      <input class="wk-sel" id="shWorkerTay" list="dsNguoiKhu" autocomplete="off"
+             placeholder="Gõ tên người phụ trách" style="display:none">
+      <datalist id="dsNguoiKhu"></datalist>
       <div class="wk-hint" id="shWorkerHint"></div>
     </div>
 
     <!-- Kỹ thuật đang dùng máy: có chọn thì lỗi 5S tính cho kỹ thuật, thợ không bị tính -->
     <div class="wk-box" id="shTechBox">
       <div class="wk-lbl">🔧 Kỹ thuật đang dùng máy</div>
-      <select class="wk-sel" id="shTech"></select>
-      <div class="wk-hint">Để trống nếu máy do thợ đứng. Chọn kỹ thuật thì lỗi 5S tính cho <b>kỹ thuật</b>, thợ không bị tính.</div>
+      <input class="wk-sel" id="shTech" list="dsKyThuat" autocomplete="off"
+             placeholder="Gõ tên kỹ thuật (nếu có)">
+      <datalist id="dsKyThuat"></datalist>
+      <div class="wk-hint">Để trống nếu máy do thợ đứng. Có tên kỹ thuật thì lỗi 5S tính cho <b>kỹ thuật</b>, thợ không bị tính.
+        Chưa có trong danh sách thì cứ gõ tên — lưu xong tên tự vào danh sách.</div>
     </div>
 
     <button class="btn btn-ok" id="btnDatHet" onclick="tickDatHet()"
@@ -1016,17 +1023,41 @@ function themNhom5S(sel, nhom, selected){
   sel.appendChild(g);
 }
 
-// Ô "Kỹ thuật đang dùng máy": nhóm Kỹ thuật lên đầu, rồi đến các nhóm khác
+// Gợi ý cho ô gõ tay: người 5S, nhóm cần dùng xếp lên đầu
+function dienGoiY(idDs, nhomDau){
+  const thu = [nhomDau, ...['KT','QC','DG'].filter(n => n !== nhomDau)];
+  document.getElementById(idDs).innerHTML = thu.flatMap(nh =>
+    NGUOI5S.filter(n => n.nhom === nh).map(n =>
+      `<option value="${esc(n.ten)}">${esc((NHOM_5S[nh] || nh) + (n.msnv ? ' · ' + n.msnv : ''))}</option>`)).join('');
+}
+// Gõ tay hay chọn đều ra một tên, gọn khoảng trắng thừa
+const gonTen = t => String(t || '').trim().replace(/\s+/g, ' ');
+
+// Ô "Kỹ thuật đang dùng máy": gõ tay được, gợi ý nhóm Kỹ thuật trước
 function fillTechSelect(selected){
-  const sel = document.getElementById('shTech');
-  sel.innerHTML = '<option value="">— Không có —</option>';
-  ['KT','QC','DG'].forEach(n => themNhom5S(sel, n));
-  if(selected && ![...sel.options].some(o => o.value === selected)){
-    const o = document.createElement('option');
-    o.value = selected; o.textContent = selected + ' (ngoài danh sách)';
-    sel.appendChild(o);
-  }
-  sel.value = selected || '';
+  dienGoiY('dsKyThuat', 'KT');
+  document.getElementById('shTech').value = selected || '';
+}
+
+// Người đang chọn trong phiếu: máy lấy ở ô chọn thợ, khu vực lấy ở ô gõ tay
+function nguoiTrongPhieu(){
+  return laKhu({cell_id: cur.cellId}) ? gonTen(document.getElementById('shWorkerTay').value)
+                                      : document.getElementById('shWorker').value.trim();
+}
+
+// Tên gõ tay lần đầu -> tự thêm vào danh sách 5S để lần sau chỉ cần chọn.
+// Bỏ qua nếu đã có (trong danh sách 5S hoặc là nhân viên). Lỗi thì thôi, không
+// chặn việc lưu - lượt kiểm đã lưu xong rồi.
+async function themNeuChuaCo(ten, nhom){
+  ten = gonTen(ten);
+  if(!ten || !nhom) return false;
+  if(NGUOI5S.some(n => chuanTen(n.ten) === chuanTen(ten))) return false;
+  if(EMPS.some(e => chuanTen(e.name) === chuanTen(ten))) return false;
+  try{
+    const {error} = await sb.from('s5_nguoi').insert({ten, msnv: '', nhom});
+    if(error) throw error;
+    return true;
+  }catch(e){ console.warn('Không tự thêm được vào danh sách 5S:', e.message); return false; }
 }
 
 function fillWorkerSelect(selected, nhomDau){
@@ -1103,9 +1134,16 @@ function moPhieu(code, cellId, idx){
   const fromRoster = khu ? '' : (ROSTER[code] || '');
   const luotTruoc  = ds.length ? ds[ds.length-1].worker_name : '';
   fillWorkerSelect(rec.worker_name || luotTruoc || fromRoster, khu ? khu.nhom : '');
+  // Khu vực: ô GÕ TAY (người QC/KT/đóng gói phần lớn chưa có trong danh sách)
+  document.getElementById('shWorker').style.display    = khu ? 'none' : '';
+  document.getElementById('shWorkerTay').style.display = khu ? '' : 'none';
+  if(khu){
+    dienGoiY('dsNguoiKhu', khu.nhom);
+    document.getElementById('shWorkerTay').value = rec.worker_name || luotTruoc || '';
+  }
   document.getElementById('shWorkerLbl').textContent = khu ? '👤 Người phụ trách khu' : '👷 Người đứng máy';
   document.getElementById('shWorkerHint').textContent = khu
-    ? `Chọn người phụ trách khu ${khu.ten}. Chưa có tên thì bấm "Sửa danh sách người" dưới sơ đồ.`
+    ? `Gõ tên hoặc chọn người phụ trách khu ${khu.ten}. Tên mới lưu xong tự vào danh sách.`
     : fromRoster
       ? `Lấy từ phân công Kíp ${curKip}. Lịch sai thì chọn lại người khác.`
       : 'Chưa có phân công cho máy này ở ca đang xem — chọn tay.';
@@ -1296,8 +1334,8 @@ async function saveCheck(){
   const row = {
     date: curDate, shift: curShift, kip: curKip,
     cell_id: cur.cellId, machine_code: cur.code,
-    worker_name: document.getElementById('shWorker').value.trim(),
-    worker_id: idCuaTen(document.getElementById('shWorker').value),
+    worker_name: nguoiTrongPhieu(),
+    worker_id: idCuaTen(nguoiTrongPhieu()),
     note: document.getElementById('shNote').value.trim(),
     photos: cur.photos,
     inspector: nguoiKiem,
@@ -1306,7 +1344,7 @@ async function saveCheck(){
   };
   // Chỉ gửi cột kỹ thuật khi có dùng (hoặc xoá kỹ thuật khỏi lượt cũ), để chưa
   // chạy SQL thêm cột thì phiếu máy thường vẫn lưu được như cũ.
-  const kyThuat = laKhu({cell_id: cur.cellId}) ? '' : document.getElementById('shTech').value.trim();
+  const kyThuat = laKhu({cell_id: cur.cellId}) ? '' : gonTen(document.getElementById('shTech').value);
   if(kyThuat || cur.techGoc){ row.tech_name = kyThuat; row.tech_id = kyThuat ? idCuaTen(kyThuat) : ''; }
   try{
     let error;
@@ -1320,6 +1358,11 @@ async function saveCheck(){
     if(error) throw error;
     await donAnhBiBo();
     cur.photosGoc = [...cur.photos];   // đã lưu -> ảnh thuộc về bản ghi, đừng dọn khi đóng
+    // Tên gõ tay lần đầu -> vào danh sách 5S (kỹ thuật vào nhóm KT, người khu vào nhóm của khu)
+    const khuLuu = KHU_VUC.find(k => k.id === cur.cellId);
+    const moi = [kyThuat && await themNeuChuaCo(kyThuat, 'KT'),
+                 khuLuu && await themNeuChuaCo(row.worker_name, khuLuu.nhom)];
+    if(moi.some(Boolean)) await loadNguoi5S();
     await loadChecks();          // nạp lại để có id và thứ tự lượt chuẩn từ DB
     closeSheet(); renderFloor();
     toast('✅ Đã lưu ' + row.machine_code);
