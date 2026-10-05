@@ -86,7 +86,8 @@ MENU QUẢN LÝ – nhắn SỐ để xem:
 🔟 Tăng ca hôm nay / top tháng
 1️⃣1️⃣ Đơn xin nghỉ đang chờ duyệt
 1️⃣2️⃣ Liên kết Zalo (ai đã / chưa vào bot)
-1️⃣3️⃣ ➜ Menu cá nhân
+1️⃣3️⃣ Xác nhận xếp loại tháng (ai đã / chưa)
+1️⃣4️⃣ ➜ Menu cá nhân
 0️⃣ Xem lại menu quản lý
 💬 Hoặc gõ câu hỏi bất kỳ
 ```
@@ -105,10 +106,11 @@ MENU QUẢN LÝ – nhắn SỐ để xem:
 | 10 | Ai tăng ca hôm nay (giờ) + top 5 tăng ca tháng |
 | 11 | Đơn `leave_requests` đang `pending`: ai, ngày nào, lý do. Chỉ xem, không duyệt qua Zalo |
 | 12 | Liên kết Zalo: ai đã liên kết, ai cần kiểm tra (trùng MSNV / tên Zalo khác hẳn tên NV), ai chưa liên kết (chưa nhận được tin cá nhân). Quá 10 người liên kết đúng thì chỉ ghi số |
-| 13 | Chuyển sang menu cá nhân (8 mục như nhân viên) |
+| 13 | Xác nhận xếp loại tháng: ai đồng ý / không đồng ý (kèm lý do) / chờ / chưa liên kết bot (xem TONG-KET-THANG-ZALO.md) |
+| 14 | Chuyển sang menu cá nhân (8 mục như nhân viên) |
 | 0 | Gửi lại menu quản lý |
 
-- Cuối mỗi câu trả lời quản lý: `↩️ Nhắn 0 về menu quản lý · 13 sang menu cá nhân`
+- Cuối mỗi câu trả lời quản lý: `↩️ Nhắn 0 về menu quản lý · 14 sang menu cá nhân`
 - Đang ở **menu cá nhân**, quản lý nhắn `0` → **về menu quản lý**. Menu cá nhân của quản lý ghi dòng cuối `0️⃣ Về menu quản lý`.
 - **Phải nhớ người dùng đang ở menu nào** (số 1 ở hai menu khác nghĩa): thêm cột `menu text not null default 'ca_nhan'` vào `zalo_links` (giá trị `quan_ly` | `ca_nhan`). Cần chạy SQL thêm cột trên Supabase.
 - Nhân viên thường không bao giờ thấy menu quản lý.

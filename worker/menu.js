@@ -6,10 +6,11 @@
 // ═══════════════════════════════════════════════════════════════
 import { taoCongCu, homNayVN, dKey, addD, NHAN_CA, NHOM, DFUL, dsLienKet, boDau } from './du-lieu.js';
 import { taoXuong } from './du-lieu-xuong.js';
+import { trangThaiXacNhan } from './xep-loai.js';
 
 const { S_DEFS } = globalThis.TieuChi5S;
 
-const SO = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '1️⃣1️⃣', '1️⃣2️⃣', '1️⃣3️⃣'];
+const SO = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '1️⃣1️⃣', '1️⃣2️⃣', '1️⃣3️⃣', '1️⃣4️⃣'];
 const ICON = { S: '☀️', C: '🌙', N: '🏠', L: '🎌', HC: '🏢', NP: '🏖️', VM: '🔴', UN: '❔', C1: '🕕', C2: '🕑', C3: '🕙' };
 const NGAN = { S: 'Sáng', C: 'Chiều', N: 'Nghỉ', L: 'Nghỉ Lễ', HC: 'Hành Chính', NP: 'Nghỉ Phép',
   VM: 'Vắng Mặt', UN: 'Chưa có lịch', C1: 'Ca 1', C2: 'Ca 2', C3: 'Ca 3' };
@@ -39,9 +40,10 @@ const MUC_CA_NHAN = ['Ca ngày mai', 'Lịch 7 ngày tới', 'Vi phạm 5S thán
 const MUC_QUAN_LY = ['Ai làm ca Sáng hôm nay', 'Ai làm ca Tối hôm nay', 'Quân số hôm nay', 'Ai làm ca ngày mai',
   'Ai chưa được phân ca', 'Ai chưa được chấm điểm hôm nay', 'Xếp loại tháng (A/B/C/D + DS hạng C/D)',
   'Vi phạm 5S hôm nay', 'Top vi phạm 5S tháng / máy tái phạm', 'Tăng ca hôm nay / top tháng',
-  'Đơn xin nghỉ đang chờ duyệt', 'Liên kết Zalo (ai đã / chưa vào bot)'];
-export const SO_MUC_QL = MUC_QUAN_LY.length;          // 12
-export const SO_SANG_CA_NHAN = MUC_QUAN_LY.length + 1; // 13
+  'Đơn xin nghỉ đang chờ duyệt', 'Liên kết Zalo (ai đã / chưa vào bot)',
+  'Xác nhận xếp loại tháng (ai đã / chưa)'];
+export const SO_MUC_QL = MUC_QUAN_LY.length;          // 13
+export const SO_SANG_CA_NHAN = MUC_QUAN_LY.length + 1; // 14
 const CUOI_QL = `\n\n↩️ Nhắn **0** về menu quản lý · **${SO_SANG_CA_NHAN}** sang menu cá nhân`;
 
 export function menuCaNhan(nv, laQL) {
@@ -254,6 +256,10 @@ export async function traLoiQuanLy(sb, so) {
     }
     case 12: {
       s = await traLoiLienKet(sb);
+      break;
+    }
+    case 13: {
+      s = await trangThaiXacNhan(sb);
       break;
     }
     default:

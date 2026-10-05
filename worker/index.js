@@ -27,6 +27,7 @@ import { hoiAI, cauBaoLoi } from './tro-ly-ai.js';
 import { guiTin, datWebhook } from './zalo.js';
 import { quetBao5S, baoBuKhiLienKet } from './bao-5s.js';
 import { guiBanTin } from './ban-tin.js';
+import { quetXepLoai, baoBuXepLoai, xuLyXacNhan } from './xep-loai.js';
 
 // Bỏ mọi khoảng trắng / ký tự vô hình. Dán chuỗi vào Terminal trên Windows
 // hay dính thêm dấu cách, \r, ký tự BOM ở cuối mà mắt không thấy được, làm
@@ -54,8 +55,10 @@ export default {
     const e = lamSachEnv(env);
     if (controller.cron === '0 1 * * *')
       ctx.waitUntil(guiBanTin(e).catch(err => console.error('[bantin]', err)));
-    else
+    else {
       ctx.waitUntil(quetBao5S(e).catch(err => console.error('[bao5s]', err)));
+      ctx.waitUntil(quetXepLoai(e).catch(err => console.error('[xeploai]', err)));
+    }
   },
 
   async fetch(request, env, ctx) {
@@ -196,6 +199,9 @@ async function xuLyTin(msg, zaloId, gui, env) {
       // Hỏng thì chỉ ghi log - menu đã gửi rồi, không báo lỗi cho người dùng.
       try { await baoBuKhiLienKet(env, nvMoi, zaloId, qlMoi); }
       catch (e) { console.error('[bao5s] báo bù lỗi:', e); }
+      // Xếp loại tháng đã duyệt mà người này chưa nhận -> gửi bù kèm yêu cầu xác nhận
+      try { await baoBuXepLoai(env, nvMoi, zaloId); }
+      catch (e) { console.error('[xeploai] báo bù lỗi:', e); }
       return;
     }
     if (text === '2') {
@@ -239,6 +245,14 @@ async function xuLyTin(msg, zaloId, gui, env) {
     return gui(`✅ Đã gỡ ${biGo.length} tài khoản Zalo khỏi MSNV ${go[1]}`
       + (biGo.includes(zaloId) ? ' (gồm cả tài khoản của bạn — nhắn MSNV để liên kết lại)' : '') + '.');
   }
+
+  // ── xác nhận xếp loại: 1 Đồng ý · 2 Xem lại · 3 Không đồng ý, hoặc gõ "đồng ý" ──
+  // Phải chặn TRƯỚC khi coi số là mục menu thường và trước khi chuyển cho AI.
+  // Lỗi ở đây không được làm hỏng các tính năng khác -> chỉ ghi log rồi đi tiếp.
+  try {
+    const xn = await xuLyXacNhan({ sb, env, nv, lk, text, laQL: ql });
+    if (xn) return gui(xn.text);
+  } catch (e) { console.error('[xeploai] xử lý trả lời lỗi:', e); }
 
   // Nhân viên luôn ở menu cá nhân. Quản lý: theo cột menu; chưa chạy
   // sql/zalo-menu.sql (chưa có cột) thì coi như đang ở menu quản lý.

@@ -12,6 +12,7 @@
 // ═══════════════════════════════════════════════════════════════
 import { taoSb, homNayVN, dKey, DFUL, boDau } from './du-lieu.js';
 import { guiTin, guiAnh } from './zalo.js';
+import { SO_SANG_CA_NHAN } from './menu.js';
 
 const { S_DEFS } = globalThis.TieuChi5S;
 
@@ -127,7 +128,7 @@ export async function baoBuKhiLienKet(env, nv, zaloId, laQL) {
   const text = `📋 Bạn có ${ds.length} lượt 5S chưa đạt tháng ${String(m).padStart(2, '0')} chưa được báo:\n`
     + ds.map(x => `• ${ddmm(x.date)}${x.machine_code ? ' – máy ' + x.machine_code : ''} – ${mucHong(x).join(', ')}`).join('\n')
     // quản lý đang ở menu quản lý (số 3 là quân số) -> phải sang menu cá nhân trước
-    + `\n\n${laQL ? 'Nhắn 13 rồi 3' : 'Nhắn 3'} để xem chi tiết.`;
+    + `\n\n${laQL ? `Nhắn ${SO_SANG_CA_NHAN} rồi 3` : 'Nhắn 3'} để xem chi tiết.`;
   const kq = await guiTin(env, zaloId, text);
   if (!kq.ok) { await nhaCho(sb, ds.map(x => x.id)); return 0; }
   return ds.length;
