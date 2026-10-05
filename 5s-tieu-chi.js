@@ -67,16 +67,38 @@ function laKhu(r){ return String((r && r.cell_id) || '').startsWith('kv_'); }
 // không đổi; chỉ TÊN mục khác - hiện tên mục chưa đạt thì phải dùng hàm này.
 function tieuChiCua(r){ return laKhu(r) ? S_DEFS_KHU : S_DEFS; }
 
-// LỖI 5S TÍNH CHO AI. Máy có kỹ thuật đang dùng (tech_name) thì tính cho kỹ
-// thuật, THỢ KHÔNG BỊ TÍNH - máy đang trong tay kỹ thuật. Lỗi 5S kéo theo bot
-// Zalo nhắn báo lỗi và dòng "5S chưa đạt" trong tổng kết xếp loại tháng, nên
-// mọi chỗ gán lỗi cho người (web lẫn bot) đều phải đi qua hàm này.
-function nguoiChiu5S(r){
+// LỖI 5S TÍNH CHO AI. Lỗi 5S kéo theo bot Zalo nhắn báo lỗi và dòng "5S chưa
+// đạt" trong tổng kết xếp loại tháng, nên MỌI CHỖ gán lỗi cho người (web lẫn
+// bot) đều phải đi qua các hàm dưới đây.
+//
+// Máy có kỹ thuật đang dùng (tech_name) thì người kiểm chọn ai chịu lỗi, cột
+// chiu_loi: 'kt' = kỹ thuật (mặc định) | 'tho' = thợ | 'ca_hai' = cả hai.
+// Lượt cũ chưa có cột này (hoặc để trống) mà có kỹ thuật -> coi như 'kt'.
+// Không có kỹ thuật -> lỗi của thợ (hoặc người phụ trách khu) như thường.
+const CHIU_LOI = {kt:'Kỹ thuật', tho:'Thợ', ca_hai:'Cả hai'};
+function chiuLoiCua(r){
   r = r || {};
-  if(String(r.tech_name || '').trim())
-    return {ten: r.tech_name, msnv: r.tech_id || '', vai: 'Kỹ thuật'};
-  return {ten: r.worker_name || '', msnv: r.worker_id || '', vai: laKhu(r) ? 'Phụ trách' : 'Thợ'};
+  if(!String(r.tech_name || '').trim()) return 'tho';
+  return CHIU_LOI[r.chiu_loi] ? r.chiu_loi : 'kt';
+}
+// Danh sách người chịu lỗi của một lượt (1 hoặc 2 người)
+function dsNguoiChiu5S(r){
+  r = r || {};
+  const tho = {ten: r.worker_name || '', msnv: r.worker_id || '', vai: laKhu(r) ? 'Phụ trách' : 'Thợ'};
+  const kt  = {ten: r.tech_name || '',   msnv: r.tech_id || '',   vai: 'Kỹ thuật'};
+  const c = chiuLoiCua(r);
+  return c === 'kt' ? [kt] : c === 'ca_hai' ? [kt, tho] : [tho];
+}
+// Người chịu lỗi chính - dùng để hiển thị gọn một tên
+function nguoiChiu5S(r){ return dsNguoiChiu5S(r)[0]; }
+// Lượt này có tính lỗi cho người này không. Khớp MSNV trước; bản cũ chưa có
+// MSNV thì so tên. chuan = cách chuẩn hoá tên (bot Zalo dùng bỏ dấu).
+function laLoiCua5S(r, msnv, ten, chuan){
+  chuan = chuan || (s => String(s || '').trim().toLowerCase());
+  const t = ten ? chuan(ten) : '';
+  return dsNguoiChiu5S(r).some(p => p.msnv ? String(p.msnv) === String(msnv) : (!!t && chuan(p.ten) === t));
 }
 
 // Cho bot Zalo (worker/) dùng chung danh sách này.
-globalThis.TieuChi5S = { S_DEFS, N_TC, S_DEFS_KHU, KHU_VUC, NHOM_5S, laKhu, tieuChiCua, nguoiChiu5S };
+globalThis.TieuChi5S = { S_DEFS, N_TC, S_DEFS_KHU, KHU_VUC, NHOM_5S, CHIU_LOI, laKhu, tieuChiCua,
+                          chiuLoiCua, dsNguoiChiu5S, nguoiChiu5S, laLoiCua5S };

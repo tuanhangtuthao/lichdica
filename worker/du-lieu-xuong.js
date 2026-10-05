@@ -10,7 +10,7 @@ import {
   DINH_NGHIA_CONG_CU,
 } from './du-lieu.js';
 
-const { S_DEFS, tieuChiCua, nguoiChiu5S } = globalThis.TieuChi5S;
+const { S_DEFS, tieuChiCua, dsNguoiChiu5S } = globalThis.TieuChi5S;
 const { getShift } = globalThis.LichCa;
 const DI_LAM = ma => !['N', 'L', 'NP', 'VM', 'UN'].includes(ma);
 
@@ -131,9 +131,11 @@ export function taoXuong(sb) {
       if (r.error) throw new Error(r.error.message);
       const tong = (r.data || []).length;
       const ds = (r.data || []).filter(chuaDat).map(x => ({
-        // người chịu lỗi: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S)
-        ngay: x.date, ca: x.shift || '', may: x.machine_code || '', nguoi: nguoiChiu5S(x).ten || '',
-        msnv: nguoiChiu5S(x).msnv || '', vai_tro: nguoiChiu5S(x).vai,
+        // người chịu lỗi: thợ / kỹ thuật / cả hai (dsNguoiChiu5S) - "cả hai" nối bằng " + "
+        ngay: x.date, ca: x.shift || '', may: x.machine_code || '',
+        nguoi: dsNguoiChiu5S(x).map(p => p.ten).filter(Boolean).join(' + '),
+        msnv: dsNguoiChiu5S(x).map(p => p.msnv).filter(Boolean).join(' + '),
+        vai_tro: dsNguoiChiu5S(x).map(p => p.vai).join(' + '),
         muc_chua_dat: mucHong(x), ghi_chu: x.note || '', nguoi_kiem: x.inspector || '',
       }));
       return { tu_ngay: tu, den_ngay: den, so_luot_kiem: tong, so_luot_chua_dat: ds.length, chi_tiet: ds };

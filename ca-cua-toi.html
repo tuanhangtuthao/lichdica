@@ -420,9 +420,8 @@ function veTrang(e, D){
   let o5 = {lon: '—', phu: 'không tải được', mau: ''};
   if(D.S5){
     const ten = String(e.name || '').trim().toLowerCase();
-    // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
-    const cua = D.S5.filter(r => { const p = nguoiChiu5S(r);
-      return p.msnv ? String(p.msnv) === String(e.id) : String(p.ten || '').trim().toLowerCase() === ten; });
+    // Lỗi 5S tính cho ai: thợ / kỹ thuật / cả hai (laLoiCua5S, 5s-tieu-chi.js)
+    const cua = D.S5.filter(r => laLoiCua5S(r, e.id, e.name));
     const hongLan = cua.filter(r => !S_DEFS.every(s => r[s.k] === true)).length;
     o5 = !cua.length ? {lon: 'Chưa kiểm', phu: 'tháng này', mau: ''}
        : hongLan    ? {lon: `${hongLan} lần`, phu: 'chưa đạt', mau: 'color:var(--loi)'}

@@ -144,11 +144,9 @@ function s5MucHong(r){ return tieuChiCua(r).filter(d => r[d.k] !== true); }   //
 // Khớp theo MSNV trước; bản ghi cũ chưa có MSNV thì đối chiếu theo tên.
 function s5CuaNguoi(rows, empId, empName){
   const ten = String(empName||'').trim().toLowerCase();
-  // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
-  return rows.filter(r => { const p = nguoiChiu5S(r);
-      return p.msnv ? String(p.msnv) === String(empId)
-                    : (ten && String(p.ten||'').trim().toLowerCase() === ten); }
-    ).sort((a,b)=>a.date.localeCompare(b.date));
+  // Lỗi 5S tính cho ai: thợ / kỹ thuật / cả hai (laLoiCua5S, 5s-tieu-chi.js)
+  return rows.filter(r => laLoiCua5S(r, empId, empName))
+    .sort((a,b)=>a.date.localeCompare(b.date));
 }
 
 function findEmp(id){ return DB.emps.find(e=>String(e.id)===String(id)) || null; }
@@ -286,11 +284,13 @@ const TOOLS = {
     await loadCore();
     const rows = await loadS5(thang), m = {};
     rows.forEach(r=>{
-      const p = nguoiChiu5S(r);   // kỹ thuật nếu máy đang có kỹ thuật dùng
-      const key = p.msnv || ('ten:'+String(p.ten||'').trim().toLowerCase());
-      if(!key || key==='ten:') return;
-      if(!m[key]) m[key] = {ten:p.ten||'', lan:0, muc:0};
-      m[key].lan++; m[key].muc += s5MucHong(r).length;
+      // "Cả hai" chịu lỗi -> mỗi người đều bị tính một lần
+      dsNguoiChiu5S(r).forEach(p=>{
+        const key = p.msnv || ('ten:'+String(p.ten||'').trim().toLowerCase());
+        if(!key || key==='ten:') return;
+        if(!m[key]) m[key] = {ten:p.ten||'', lan:0, muc:0};
+        m[key].lan++; m[key].muc += s5MucHong(r).length;
+      });
     });
     const ds = Object.entries(m).map(([k,v])=>{
       const e = k.startsWith('ten:') ? null : findEmp(k);

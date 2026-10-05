@@ -13,7 +13,7 @@ import '../lich-ca.js';
 import '../5s-tieu-chi.js';
 
 const { getShift } = globalThis.LichCa;
-const { S_DEFS, tieuChiCua, nguoiChiu5S } = globalThis.TieuChi5S;
+const { S_DEFS, tieuChiCua, laLoiCua5S } = globalThis.TieuChi5S;
 
 // Khoá anon này vốn đã nằm công khai trong mọi trang web, không phải bí mật.
 const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
@@ -316,9 +316,8 @@ export function taoCongCu(sb, e) {
       const ten = String(e.name || '').trim().toLowerCase();
       const ds = (r.data || [])
         .filter(x => !S_DEFS.every(d => x[d.k] === true))
-        // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
-        .filter(x => { const p = nguoiChiu5S(x); return p.msnv ? String(p.msnv) === id
-          : (ten && String(p.ten || '').trim().toLowerCase() === ten); });
+        // Lỗi 5S tính cho ai: thợ / kỹ thuật / cả hai (laLoiCua5S, 5s-tieu-chi.js)
+        .filter(x => laLoiCua5S(x, id, e.name));
       return {
         thang, so_lan_chua_dat: ds.length,
         chi_tiet: ds.map(x => ({

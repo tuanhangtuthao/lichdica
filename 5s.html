@@ -137,6 +137,8 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 .khu-sua{font-size:.7rem;font-weight:700;color:var(--accent);background:none;border:1px dashed var(--accent);
   border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit;letter-spacing:0;text-transform:none}
 .mc-tech{font-size:.68rem;font-weight:700;color:#8a5a00;margin-top:1px}
+.chiu-seg{display:flex;width:100%}
+.chiu-seg button{flex:1;min-height:42px}
 .ng-them{display:flex;gap:6px;flex-wrap:wrap}
 .ng-them input,.ng-them select{flex:1;min-width:110px}
 .ng-nhom{font-size:.68rem;font-weight:800;color:#78909c;letter-spacing:.06em;margin:10px 0 4px}
@@ -477,10 +479,19 @@ table.th-bang tr:hover{background:#f5f9ff}
     <!-- Kỹ thuật đang dùng máy: có chọn thì lỗi 5S tính cho kỹ thuật, thợ không bị tính -->
     <div class="wk-box" id="shTechBox">
       <div class="wk-lbl">🔧 Kỹ thuật đang dùng máy</div>
-      <input class="wk-sel" id="shTech" list="dsKyThuat" autocomplete="off"
+      <input class="wk-sel" id="shTech" list="dsKyThuat" autocomplete="off" oninput="capNhatChiuLoi()"
              placeholder="Gõ tên kỹ thuật (nếu có)">
       <datalist id="dsKyThuat"></datalist>
-      <div class="wk-hint">Để trống nếu máy do thợ đứng. Có tên kỹ thuật thì lỗi 5S tính cho <b>kỹ thuật</b>, thợ không bị tính.
+      <!-- Chỉ hiện khi có tên kỹ thuật -->
+      <div id="shChiuBox" style="display:none;margin-top:9px">
+        <div class="wk-lbl" style="margin-bottom:5px">Ai chịu lỗi 5S?</div>
+        <div class="luot-seg chiu-seg" role="group" aria-label="Ai chịu lỗi">
+          <button type="button" data-chiu="tho"    onclick="chonChiuLoi('tho')">Thợ</button>
+          <button type="button" data-chiu="kt"     onclick="chonChiuLoi('kt')">Kỹ thuật</button>
+          <button type="button" data-chiu="ca_hai" onclick="chonChiuLoi('ca_hai')">Cả hai</button>
+        </div>
+      </div>
+      <div class="wk-hint">Để trống nếu máy do thợ đứng. Có tên kỹ thuật thì chọn <b>ai chịu lỗi</b>: thợ, kỹ thuật hay cả hai.
         Chưa có trong danh sách thì cứ gõ tên — lưu xong tên tự vào danh sách.</div>
     </div>
 
@@ -902,7 +913,8 @@ function buildCell(code, cellId){
   // Máy đang có kỹ thuật dùng: ghi rõ, vì lỗi 5S lượt này tính cho kỹ thuật
   if(rec && String(rec.tech_name || '').trim()){
     const kt = document.createElement('div'); kt.className = 'mc-tech';
-    kt.textContent = 'Kỹ thuật: ' + rec.tech_name;
+    // chưa đạt thì ghi rõ lỗi tính cho ai
+    kt.textContent = 'Kỹ thuật: ' + rec.tech_name + (statusOf(rec) === 'ng' ? ' · lỗi: ' + CHIU_LOI[chiuLoiCua(rec)] : '');
     cell.appendChild(kt);
   }
 
@@ -1039,6 +1051,18 @@ function fillTechSelect(selected){
   document.getElementById('shTech').value = selected || '';
 }
 
+// ── Ai chịu lỗi khi máy có kỹ thuật: Thợ / Kỹ thuật / Cả hai ──
+// Hàng 3 nút chỉ hiện khi ô kỹ thuật có tên. Mặc định Kỹ thuật (như trước khi có nút).
+function chonChiuLoi(c){
+  cur.chiuLoi = c;
+  document.querySelectorAll('.chiu-seg button').forEach(b => b.classList.toggle('on', b.dataset.chiu === c));
+}
+function capNhatChiuLoi(){
+  const coKT = !!gonTen(document.getElementById('shTech').value) && !laKhu({cell_id: cur.cellId});
+  document.getElementById('shChiuBox').style.display = coKT ? '' : 'none';
+  chonChiuLoi(cur.chiuLoi || 'kt');
+}
+
 // Người đang chọn trong phiếu: máy lấy ở ô chọn thợ, khu vực lấy ở ô gõ tay
 function nguoiTrongPhieu(){
   return laKhu({cell_id: cur.cellId}) ? gonTen(document.getElementById('shWorkerTay').value)
@@ -1151,7 +1175,10 @@ function moPhieu(code, cellId, idx){
   // lúc, mặc định theo lượt trước dễ tính lỗi oan cho kỹ thuật.
   document.getElementById('shTechBox').style.display = khu ? 'none' : '';
   cur.techGoc = rec.tech_name || '';
+  cur.chiuGoc = rec.chiu_loi || '';                       // để biết lượt cũ đã có giá trị chưa
+  cur.chiuLoi = rec.tech_name ? chiuLoiCua(rec) : 'kt';   // lượt cũ có KT mà trống -> 'kt'
   fillTechSelect(khu ? '' : cur.techGoc);
+  capNhatChiuLoi();
 
   renderRounds();
   renderSList();
@@ -1346,6 +1373,10 @@ async function saveCheck(){
   // chạy SQL thêm cột thì phiếu máy thường vẫn lưu được như cũ.
   const kyThuat = laKhu({cell_id: cur.cellId}) ? '' : gonTen(document.getElementById('shTech').value);
   if(kyThuat || cur.techGoc){ row.tech_name = kyThuat; row.tech_id = kyThuat ? idCuaTen(kyThuat) : ''; }
+  // Ai chịu lỗi: chỉ gửi khi khác mặc định (hoặc lượt cũ đã có giá trị) - để chưa
+  // chạy sql/5s-chiu-loi.sql thì chọn Kỹ thuật như trước vẫn lưu được.
+  const chiu = kyThuat ? (cur.chiuLoi || 'kt') : '';
+  if(chiu && chiu !== 'kt' || cur.chiuGoc) row.chiu_loi = chiu;
   try{
     let error;
     if(cur.id){
@@ -1372,9 +1403,11 @@ async function saveCheck(){
     const thieuNguoi = /inspector_khong_rong/.test(msg);
     const thieuAnh   = /khongdat_phai_co_anh/.test(msg);
     const chuaSql    = /tech_(name|id)/.test(msg);
+    const chuaSqlCL  = /chiu_loi/.test(msg);
     toast(thieuNguoi ? 'Thiếu tên người kiểm'
         : thieuAnh   ? 'Có mục chưa đạt — phải chụp ít nhất 1 ảnh mới lưu được'
         : chuaSql    ? 'Chưa bật ô Kỹ thuật: cần chạy file sql/5s-ky-thuat-khu-vuc.sql trên Supabase'
+        : chuaSqlCL  ? 'Chưa bật nút Ai chịu lỗi: cần chạy file sql/5s-chiu-loi.sql trên Supabase'
         : 'Lỗi lưu: ' + msg, true);
   }
   btn.disabled = false; btn.textContent = nhanCu;
@@ -1413,7 +1446,7 @@ function cardHTML(r){
       <span class="hs-mc">${esc(r.machine_code)}</span>
       <span class="hs-date">${fmtDs(r.date)}${gioCua(r)?' '+gioCua(r):''} · ${r.shift==='S'?'Ca Sáng':'Ca Tối'}${r.kip?' · Kíp '+r.kip:''}</span>
     </div>
-    ${(() => { const p = nguoiChiu5S(r); return p.ten ? `<div class="hs-who">${p.vai === 'Kỹ thuật' ? '🔧 Kỹ thuật: ' : '👷 '}${esc(tenKemId(p.ten, p.msnv))}${r.inspector ? ` <span style="color:#90a4ae;font-weight:600">· người kiểm: ${esc(r.inspector)}</span>` : ''}</div>` : ''; })()}
+    ${(() => { const ds = dsNguoiChiu5S(r).filter(p => p.ten); return ds.length ? `<div class="hs-who">${ds.map(p => (p.vai === 'Kỹ thuật' ? '🔧 Kỹ thuật: ' : '👷 ') + esc(tenKemId(p.ten, p.msnv))).join(' + ')}${r.inspector ? ` <span style="color:#90a4ae;font-weight:600">· người kiểm: ${esc(r.inspector)}</span>` : ''}</div>` : ''; })()}
     <div class="hs-fails">${fails}</div>
     ${r.note ? `<div class="hs-note">📝 ${esc(r.note)}</div>` : ''}
     ${phs ? `<div class="hs-ph">${phs}</div>` : ''}
@@ -1523,7 +1556,7 @@ async function taiThang(){
     // đổ danh sách người vào ô lọc, chỉ những người có mặt trong tháng
     const sel = document.getElementById('thNV'), giu = sel.value;
     const ten = [...new Set(THANG.filter(r => statusOf(r) !== 'ok')
-                                .map(r => nguoiChiu5S(r).ten).filter(Boolean))].sort();
+                                .flatMap(r => dsNguoiChiu5S(r).map(p => p.ten)).filter(Boolean))].sort();
     sel.innerHTML = '<option value="">Tất cả nhân viên</option>' +
       ten.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
     sel.value = giu;
@@ -1541,7 +1574,7 @@ function locThang(){
   const may = document.getElementById('thMay').value.toLowerCase().trim();
   return THANG.filter(r => {
     if(statusOf(r) === 'ok') return false;
-    if(nv && nguoiChiu5S(r).ten !== nv) return false;
+    if(nv && !dsNguoiChiu5S(r).some(p => p.ten === nv)) return false;
     if(may && !(r.machine_code||'').toLowerCase().includes(may)) return false;
     return true;
   });
@@ -1550,7 +1583,7 @@ function locThang(){
 function veThang(){
   const ds = locThang();
   const may  = new Set(ds.map(r => r.machine_code)).size;
-  const ngNV = new Set(ds.map(r => nguoiChiu5S(r).ten).filter(Boolean)).size;
+  const ngNV = new Set(ds.flatMap(r => dsNguoiChiu5S(r).map(p => p.ten)).filter(Boolean)).size;
   // mục nào hỏng nhiều nhất - cái này mới đáng xem để biết sửa quy trình
   const dem = {};
   ds.forEach(r => failsOf(r).forEach(s => dem[s.short] = (dem[s.short] || 0) + 1));
@@ -1574,8 +1607,8 @@ function veThang(){
     <th>Mục chưa đạt</th><th>Ghi chú</th><th>Ảnh</th><th></th></tr></thead><tbody>`;
   ds.forEach(r => {
     const st = statusOf(r), hong = failsOf(r);
-    const p = nguoiChiu5S(r);
-    const msnv = p.msnv || idCuaTen(p.ten);
+    const dsChiu = dsNguoiChiu5S(r), coKT = !!String(r.tech_name || '').trim();
+    const msnv = dsChiu.map(p => p.msnv || idCuaTen(p.ten)).filter(Boolean).join(' + ');
     const anh = (r.photos || []).slice(0,3)
       .map(u => `<img src="${esc(u)}" alt="" onclick="openLightbox('${esc(u)}')">`).join('');
     h += `<tr class="${st === 'ok' ? '' : 'ng'}">
@@ -1583,9 +1616,12 @@ function veThang(){
       <td style="white-space:nowrap">${r.shift === 'S' ? 'Sáng' : 'Tối'}${r.kip ? '<br><span style="color:#90a4ae;font-size:.68rem">Kíp '+r.kip+'</span>' : ''}</td>
       <td style="font-weight:800">${esc(r.machine_code)}</td>
       <td style="font-weight:700;color:#455a64;white-space:nowrap">${esc(msnv) || '<span style="color:#cfd8dc">—</span>'}</td>
-      <td>${p.vai === 'Kỹ thuật'
-            ? `<b>${esc(p.ten)}</b> <span class="th-tag">Kỹ thuật</span><div style="font-size:.68rem;color:#90a4ae;margin-top:3px">Thợ: ${esc(r.worker_name || '—')} (không tính lỗi)</div>`
-            : oChonNV(r)}</td>
+      <td>${!coKT ? oChonNV(r)
+            : chiuLoiCua(r) === 'tho'
+              ? oChonNV(r) + `<div style="font-size:.68rem;color:#90a4ae;margin-top:3px">Kỹ thuật: ${esc(r.tech_name)} (không tính lỗi)</div>`
+              : chiuLoiCua(r) === 'ca_hai'
+                ? `<b>${esc(r.tech_name)}</b> <span class="th-tag">Kỹ thuật</span> + <b>${esc(r.worker_name || '—')}</b> <span class="th-tag">Thợ</span><div style="font-size:.68rem;color:#90a4ae;margin-top:3px">Cả hai chịu lỗi</div>`
+                : `<b>${esc(r.tech_name)}</b> <span class="th-tag">Kỹ thuật</span><div style="font-size:.68rem;color:#90a4ae;margin-top:3px">Thợ: ${esc(r.worker_name || '—')} (không tính lỗi)</div>`}</td>
       <td style="color:#607d8b">${esc(r.inspector || '')}</td>
       <td>${hong.map(s => `<span class="th-tag">${esc(s.short)}</span>`).join('') || '<span style="color:#cfd8dc">—</span>'}</td>
       <td style="max-width:180px">${esc(r.note || '') || '<span style="color:#cfd8dc">—</span>'}</td>
@@ -1659,16 +1695,18 @@ function xuatExcelThang(){
   if(!ds.length){ toast('Không có dữ liệu để xuất', true); return; }
   if(typeof XLSX === 'undefined'){ toast('Chưa tải được thư viện Excel, thử lại sau', true); return; }
   const thang = document.getElementById('thThang').value;
-  const msnvCua = r => { const p = nguoiChiu5S(r); return p.msnv || idCuaTen(p.ten); };
+  // Mỗi lượt chưa đạt tách thành 1 dòng cho MỖI người chịu lỗi: chọn "Cả hai"
+  // thì thợ và kỹ thuật đều có dòng riêng, đều bị tính một lần.
+  const dong = ds.flatMap(r => dsNguoiChiu5S(r).map(p => ({r, p, msnv: p.msnv || idCuaTen(p.ten)})));
 
   // ── Sheet 1: tổng hợp theo nhân viên ──
   const gom = {};
-  ds.forEach(r => {
-    const k = nguoiChiu5S(r).ten || '(chưa rõ)';
-    if(!gom[k]) gom[k] = {msnv: msnvCua(r), lan:0, loi:{}, may:new Set()};
+  dong.forEach(({r, p, msnv}) => {
+    const k = p.ten || '(chưa rõ)';
+    if(!gom[k]) gom[k] = {msnv, lan:0, loi:{}, may:new Set()};
     const g = gom[k];
     g.lan++; g.may.add(r.machine_code);
-    if(!g.msnv) g.msnv = msnvCua(r);
+    if(!g.msnv) g.msnv = msnv;
     failsOf(r).forEach(s => g.loi[s.short] = (g.loi[s.short] || 0) + 1);
   });
   const s1 = [['MSNV','Nhân viên','Số lần chưa đạt','Số máy','Các mục chưa đạt']];
@@ -1683,9 +1721,9 @@ function xuatExcelThang(){
   // Cột từng mục: máy và khu vực dùng chung cột s1..s5 nên tiêu đề ghi cả hai tên
   const s2 = [['Ngày','Giờ','Ca','Kíp','Máy / Khu','MSNV','Người chịu lỗi','Vai trò','Người kiểm',
                ...S_DEFS.map((s,i) => s.short === S_DEFS_KHU[i].short ? s.short : `${s.short} / ${S_DEFS_KHU[i].short}`), 'Mục chưa đạt','Ghi chú','Số ảnh']];
-  ds.forEach(r => s2.push([
+  dong.forEach(({r, p, msnv}) => s2.push([
     fmtDs(r.date), gioCua(r), r.shift === 'S' ? 'Sáng' : 'Tối', r.kip || '',
-    r.machine_code, msnvCua(r), nguoiChiu5S(r).ten || '', nguoiChiu5S(r).vai, r.inspector || '',
+    r.machine_code, msnv, p.ten || '', p.vai + (chiuLoiCua(r) === 'ca_hai' ? ' (cả hai)' : ''), r.inspector || '',
     ...S_DEFS.map(s => r[s.k] ? 'Đạt' : 'Chưa đạt'),
     failsOf(r).map(s => s.short).join(', '),
     r.note || '', (r.photos || []).length

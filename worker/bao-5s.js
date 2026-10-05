@@ -14,7 +14,7 @@ import { taoSb, homNayVN, dKey, DFUL, boDau } from './du-lieu.js';
 import { guiTin, guiAnh } from './zalo.js';
 import { SO_SANG_CA_NHAN } from './menu.js';
 
-const { S_DEFS, tieuChiCua, laKhu, nguoiChiu5S } = globalThis.TieuChi5S;
+const { S_DEFS, tieuChiCua, laKhu, dsNguoiChiu5S, laLoiCua5S } = globalThis.TieuChi5S;
 
 // Mốc bật tính năng. Lượt kiểm TRƯỚC mốc này không báo tức thì (tránh dội
 // tin cũ lúc vừa bật) - chúng chỉ đến tay nhân viên qua báo bù khi liên kết.
@@ -92,11 +92,15 @@ export async function quetBao5S(env) {
 
   let bao = 0, boQua = 0;
   for (const x of can) {
-    // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
-    // -> máy có kỹ thuật thì KHÔNG nhắn cho thợ.
-    const chiu = nguoiChiu5S(x);
-    const msnv = chiu.msnv ? String(chiu.msnv) : theoTen[boDau(chiu.ten)];
-    const zid = msnv && zaloCua[msnv];
+    // Lỗi 5S tính cho người chịu: thợ / kỹ thuật / cả hai (dsNguoiChiu5S, 5s-tieu-chi.js)
+    // -> kỹ thuật chịu lỗi thì KHÔNG nhắn cho thợ. "Cả hai" thì nhắn cho người
+    // ĐẦU TIÊN có liên kết Zalo: bảng zalo_bao_5s giữ chỗ theo s5_id nên mỗi
+    // lượt chỉ báo một lần (thực tế kỹ thuật chưa liên kết -> nhắn thợ).
+    let msnv = null, zid = null;
+    for (const ng of dsNguoiChiu5S(x)) {
+      const m = ng.msnv ? String(ng.msnv) : theoTen[boDau(ng.ten)];
+      if (m && zaloCua[m]) { msnv = m; zid = zaloCua[m]; break; }
+    }
     if (!zid) { boQua++; continue; }                         // chưa liên kết -> chờ báo bù
     const giu = await giuCho(sb, [{ s5_id: x.id, msnv, zalo_id: zid, cach: 'tuc_thi' }]);
     if (!giu.length) continue;                               // lần quét khác đã báo
@@ -121,7 +125,7 @@ export async function baoBuKhiLienKet(env, nv, zaloId, laQL) {
   if (r.error) throw new Error('Đọc s5_checks lỗi: ' + r.error.message);
   const id = String(nv.id), ten = boDau(nv.name);
   const cuaNV = (r.data || []).filter(chuaDat)
-    .filter(x => { const p = nguoiChiu5S(x); return p.msnv ? String(p.msnv) === id : boDau(p.ten) === ten; });
+    .filter(x => laLoiCua5S(x, id, nv.name, boDau));   // thợ / kỹ thuật / cả hai
   if (!cuaNV.length) return 0;
   const da = await daBao(sb, cuaNV.map(x => x.id));
   const chua = cuaNV.filter(x => !da.has(x.id));

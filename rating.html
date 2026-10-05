@@ -607,10 +607,8 @@ function s5CuaNguoi(empId, empName, mVal){
   const ten = String(empName || '').trim().toLowerCase();
   return S5.filter(r => {
     if(!r.date.startsWith(mVal)) return false;
-    // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
-    const p = nguoiChiu5S(r);
-    if(p.msnv) return String(p.msnv) === String(empId);
-    return ten && String(p.ten || '').trim().toLowerCase() === ten;
+    // Lỗi 5S tính cho ai: thợ / kỹ thuật / cả hai (laLoiCua5S, 5s-tieu-chi.js)
+    return laLoiCua5S(r, empId, empName);
   }).sort((a,b) => a.date.localeCompare(b.date));
 }
 
