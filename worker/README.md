@@ -19,6 +19,9 @@ Zalo ──webhook──▶ Cloudflare Worker /api/zalo ──▶ Claude API (ch
 ## Menu số
 Nhân viên nhắn số để tra cứu ngay, không qua AI. Quản lý (Trưởng Ca / Tổ Trưởng / Trưởng Phòng) có thêm menu quản lý xem toàn xưởng. Đặc tả đầy đủ: [MENU-ZALO.md](MENU-ZALO.md). Câu hỏi tự do vẫn qua AI: nhân viên 10 câu/ngày, quản lý 40 câu/ngày.
 
+## Báo 5S chưa đạt
+Cron 5 phút/lần: lượt 5S chưa đạt mới thì nhắn riêng người bị đánh giá, kèm ảnh. Người chưa liên kết thì bỏ qua và được báo bù khi liên kết. Đặc tả: [BAO-5S-ZALO.md](BAO-5S-ZALO.md).
+
 ## Bảo mật đã chọn
 
 - **Chỉ cần MSNV**, giống trang Tra Cứu. Lần đầu nhắn, bot hỏi MSNV rồi nhớ tài khoản Zalo đó. Ai gõ MSNV người khác thì xem được dữ liệu người đó.

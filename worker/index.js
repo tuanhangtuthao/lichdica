@@ -25,6 +25,7 @@ import { taoCongCuQuanLy } from './du-lieu-xuong.js';
 import { menuCaNhan, menuQuanLy, traLoiCaNhan, traLoiQuanLy, SO_SANG_CA_NHAN } from './menu.js';
 import { hoiAI, cauBaoLoi } from './tro-ly-ai.js';
 import { guiTin, datWebhook } from './zalo.js';
+import { quetBao5S, baoBuKhiLienKet } from './bao-5s.js';
 
 // Bỏ mọi khoảng trắng / ký tự vô hình. Dán chuỗi vào Terminal trên Windows
 // hay dính thêm dấu cách, \r, ký tự BOM ở cuối mà mắt không thấy được, làm
@@ -34,17 +35,26 @@ function sach(s) {
   return String(s || '').replace(/[\s​-‍⁠﻿]/g, '');
 }
 
+// Bản env đã làm sạch cả 3 secret, dùng cho mọi lời gọi Zalo / Claude
+function lamSachEnv(env) {
+  return { ...env, ZALO_SECRET: sach(env.ZALO_SECRET),
+    ZALO_BOT_TOKEN: sach(env.ZALO_BOT_TOKEN), ANTHROPIC_API_KEY: sach(env.ANTHROPIC_API_KEY),
+    // Thư viện Claude tự thêm /v1/messages, nên bỏ /v1 nếu bên bán ghi kèm
+    // (vd https://api.vilao.ai/v1 -> https://api.vilao.ai)
+    ANTHROPIC_BASE_URL: sach(env.ANTHROPIC_BASE_URL).replace(/\/+$/, '').replace(/\/v1$/, '') || undefined,
+    CLAUDE_MODEL: sach(env.CLAUDE_MODEL) || undefined };
+}
+
 export default {
+  // Cron 5 phút/lần (wrangler.jsonc "triggers"): báo 5S chưa đạt qua Zalo
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(quetBao5S(lamSachEnv(env)).catch(e => console.error('[bao5s]', e)));
+  },
+
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const biMat = sach(env.ZALO_SECRET);
-    // Bản env đã làm sạch cả 3 secret, dùng cho mọi lời gọi Zalo / Claude
-    const envSach = { ...env, ZALO_SECRET: biMat,
-      ZALO_BOT_TOKEN: sach(env.ZALO_BOT_TOKEN), ANTHROPIC_API_KEY: sach(env.ANTHROPIC_API_KEY),
-      // Thư viện Claude tự thêm /v1/messages, nên bỏ /v1 nếu bên bán ghi kèm
-      // (vd https://api.vilao.ai/v1 -> https://api.vilao.ai)
-      ANTHROPIC_BASE_URL: sach(env.ANTHROPIC_BASE_URL).replace(/\/+$/, '').replace(/\/v1$/, '') || undefined,
-      CLAUDE_MODEL: sach(env.CLAUDE_MODEL) || undefined };
+    const envSach = lamSachEnv(env);
+    const biMat = envSach.ZALO_SECRET;
 
     if (url.pathname === '/api/zalo' && request.method === 'POST') {
       const hdr = sach(request.headers.get('X-Bot-Api-Secret-Token'));
@@ -174,7 +184,12 @@ async function xuLyTin(msg, zaloId, gui, env) {
       const qlMoi = laQuanLy(nvMoi);
       const biThay = await xacNhanLienKet(sb, zaloId, nvMoi.id, msg.from.display_name, qlMoi ? 'quan_ly' : 'ca_nhan');
       await baoNguoiKhac(env, biThay, BAO_BI_THAY(nvMoi.id));
-      return gui(qlMoi ? menuQuanLy(nvMoi) : menuCaNhan(nvMoi, false));
+      await gui(qlMoi ? menuQuanLy(nvMoi) : menuCaNhan(nvMoi, false));
+      // Báo bù các lượt 5S chưa đạt tháng này chưa từng báo cho người này.
+      // Hỏng thì chỉ ghi log - menu đã gửi rồi, không báo lỗi cho người dùng.
+      try { await baoBuKhiLienKet(env, nvMoi, zaloId, qlMoi); }
+      catch (e) { console.error('[bao5s] báo bù lỗi:', e); }
+      return;
     }
     if (text === '2') {
       await huyChoXacNhan(sb, zaloId);

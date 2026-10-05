@@ -36,6 +36,16 @@ export async function guiTin(env, chatId, text) {
   return goi(env, 'sendMessage', { chat_id: chatId, text: t.replace(/\*\*/g, '') });
 }
 
+// Gửi ảnh kèm chữ. Chữ trơn (không markdown) vì tài liệu sendPhoto không nói
+// caption có nhận parse_mode. Ảnh hỏng thì gửi phần chữ, đừng bỏ mất tin.
+export async function guiAnh(env, chatId, photo, caption) {
+  let c = String(caption || '').trim();
+  if (c.length > TOI_DA) c = c.slice(0, TOI_DA - 1) + '…';
+  const kq = await goi(env, 'sendPhoto', { chat_id: chatId, photo, ...(c ? { caption: c } : {}) });
+  if (kq.ok || !c) return kq;
+  return goi(env, 'sendMessage', { chat_id: chatId, text: c });
+}
+
 export function datWebhook(env, url) {
   return goi(env, 'setWebhook', { url, secret_token: env.ZALO_SECRET });
 }

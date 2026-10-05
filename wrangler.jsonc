@@ -11,6 +11,10 @@
   "observability": {
     "enabled": true
   },
+  // 5 phút/lần: báo 5S chưa đạt qua Zalo (worker/bao-5s.js, BAO-5S-ZALO.md)
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
   "assets": {
     "directory": ".",
     "binding": "ASSETS"
