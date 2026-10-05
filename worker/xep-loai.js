@@ -21,7 +21,7 @@ import {
 } from './du-lieu.js';
 import { guiTin } from './zalo.js';
 
-const { S_DEFS } = globalThis.TieuChi5S;
+const { S_DEFS, nguoiChiu5S } = globalThis.TieuChi5S;
 
 export const BAT_DAU_THANG = '2026-10';   // chỉ xét xếp loại từ tháng này trở đi
 const HAN_NGAY = 4;                        // hạn: hết ngày 4 của tháng sau
@@ -91,7 +91,8 @@ function noiDungTongKet(ctx, nv, rv) {
   // 5S chưa đạt: cùng công thức rating.html (theo MSNV, bản cũ theo tên)
   const ten = boDau(nv.name);
   const vp5s = ctx.s5.filter(x => !S_DEFS.every(d => x[d.k] === true))
-    .filter(x => (x.worker_id ? String(x.worker_id) === id : boDau(x.worker_name) === ten)).length;
+    // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
+    .filter(x => { const p = nguoiChiu5S(x); return p.msnv ? String(p.msnv) === id : boDau(p.ten) === ten; }).length;
 
   let gio = 0, caCa = 0;
   ctx.ot.filter(o => String(o.emp_id) === id).forEach(o => {

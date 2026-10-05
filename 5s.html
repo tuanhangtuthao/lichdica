@@ -132,6 +132,16 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
   opacity:0;pointer-events:none;transition:.2s}
 .sheet.show{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
 .sheet.wide{width:min(1100px,96vw)}
+/* Khu vực ngoài sơ đồ máy + danh sách người phụ trách */
+.khu-dau{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.khu-sua{font-size:.7rem;font-weight:700;color:var(--accent);background:none;border:1px dashed var(--accent);
+  border-radius:8px;padding:5px 10px;cursor:pointer;font-family:inherit;letter-spacing:0;text-transform:none}
+.mc-tech{font-size:.68rem;font-weight:700;color:#8a5a00;margin-top:1px}
+.ng-them{display:flex;gap:6px;flex-wrap:wrap}
+.ng-them input,.ng-them select{flex:1;min-width:110px}
+.ng-nhom{font-size:.68rem;font-weight:800;color:#78909c;letter-spacing:.06em;margin:10px 0 4px}
+.ng-dong{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #eee;font-size:.85rem}
+.ng-dong button{background:none;border:0;color:var(--ng);font-size:1rem;cursor:pointer;min-width:36px;min-height:36px}
 .sh-head{padding:13px 16px;background:linear-gradient(135deg,var(--accent-d),var(--accent));
   color:#fff;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .sh-head.warn{background:linear-gradient(135deg,#bf360c,#e64a19)}
@@ -431,7 +441,7 @@ table.th-bang tr:hover{background:#f5f9ff}
 </div>
 
 <div class="stat-bar">
-  <div class="stat s-all"><div class="n" id="stTotal">0</div><div class="l">Tổng máy</div></div>
+  <div class="stat s-all"><div class="n" id="stTotal">0</div><div class="l">Máy + khu</div></div>
   <div class="stat s-ok"><div class="n" id="stOk">0</div><div class="l">Đạt</div></div>
   <div class="stat s-ng"><div class="n" id="stNg">0</div><div class="l">Chưa đạt</div></div>
   <div class="stat s-none"><div class="n" id="stNone">0</div><div class="l">Chưa kiểm</div></div>
@@ -455,9 +465,16 @@ table.th-bang tr:hover{background:#f5f9ff}
     <div class="rd-row" id="shRounds"></div>
 
     <div class="wk-box">
-      <div class="wk-lbl">👷 Người đứng máy</div>
+      <div class="wk-lbl" id="shWorkerLbl">👷 Người đứng máy</div>
       <select class="wk-sel" id="shWorker"></select>
       <div class="wk-hint" id="shWorkerHint"></div>
+    </div>
+
+    <!-- Kỹ thuật đang dùng máy: có chọn thì lỗi 5S tính cho kỹ thuật, thợ không bị tính -->
+    <div class="wk-box" id="shTechBox">
+      <div class="wk-lbl">🔧 Kỹ thuật đang dùng máy</div>
+      <select class="wk-sel" id="shTech"></select>
+      <div class="wk-hint">Để trống nếu máy do thợ đứng. Chọn kỹ thuật thì lỗi 5S tính cho <b>kỹ thuật</b>, thợ không bị tính.</div>
     </div>
 
     <button class="btn btn-ok" id="btnDatHet" onclick="tickDatHet()"
@@ -485,6 +502,27 @@ table.th-bang tr:hover{background:#f5f9ff}
 </div>
 
 <!-- LỊCH SỬ VI PHẠM TOÀN XƯỞNG -->
+<!-- Danh sách người chỉ dùng cho 5S: kỹ thuật, QC, đóng gói (bảng s5_nguoi) -->
+<div class="sheet" id="nguoiSheet">
+  <div class="sh-head">
+    <div><h3>Người phụ trách 5S</h3><div class="sh-sub">Kỹ thuật · QC · Đóng gói — chỉ dùng cho trang 5S</div></div>
+    <button class="sh-close" onclick="dongNguoi()">✕</button>
+  </div>
+  <div class="sh-body">
+    <div id="ngDs"></div>
+    <div class="fld-lbl" style="margin-top:12px">Thêm người</div>
+    <div class="ng-them">
+      <input id="ngTen" class="ctrl-date" placeholder="Họ tên" autocomplete="off">
+      <input id="ngMa" class="ctrl-date" placeholder="MSNV (nếu có)" autocomplete="off" inputmode="numeric">
+      <select id="ngNhom" class="ctrl-date">
+        <option value="KT">Kỹ thuật</option><option value="QC">QC</option><option value="DG">Đóng gói</option>
+      </select>
+      <button class="btn btn-ok" onclick="themNguoi()">Thêm</button>
+    </div>
+    <div class="wk-hint" style="margin-top:8px">Những người này không hiện trên Lịch ca hay trang Đánh giá. Bot Zalo chưa nhắn báo 5S được cho họ.</div>
+  </div>
+</div>
+
 <div class="sheet wide" id="histSheet">
   <div class="sh-head warn">
     <div><h3>📋 Lịch sử &amp; Duyệt 5S</h3><div class="sh-sub" id="hsSub">Các lần kiểm còn mục chưa đạt</div></div>
@@ -576,6 +614,7 @@ let FACTORY_DATA = [];   // sơ đồ, dùng chung bảng factory_layout với t
 let CHECKS  = {};
 let ROSTER  = {};        // mã máy -> tên thợ, lấy từ shift_roster
 let EMPS    = [];        // danh sách nhân viên, để chọn lại khi lịch sai
+let NGUOI5S = [];        // kỹ thuật / QC / đóng gói - bảng s5_nguoi, chỉ dùng cho 5S
 let HIST    = [];        // lịch sử vi phạm đã tải
 let curDate='', curShift='S', curKip=1, cur=null;
 let quickMode = false;      // chế độ bấm-là-ghi-ĐẠT
@@ -593,6 +632,17 @@ async function loadLayout(){
       toast('Chưa có sơ đồ xưởng — vào trang Nhân Sự Ca lưu sơ đồ trước', true);
     }
   }catch(e){ console.warn(e); toast('Không đọc được sơ đồ xưởng', true); }
+}
+
+// Người phụ trách chỉ dùng cho 5S. Chưa chạy sql/5s-ky-thuat-khu-vuc.sql thì
+// bảng chưa có: trang vẫn chạy, chỉ là danh sách rỗng.
+async function loadNguoi5S(){
+  if(!SB_OK) return;
+  try{
+    const {data,error} = await sb.from('s5_nguoi').select('*').order('nhom').order('ten');
+    if(error) throw error;
+    NGUOI5S = data || [];
+  }catch(e){ NGUOI5S = []; console.warn('Chưa có bảng s5_nguoi (chưa chạy SQL?):', e.message); }
 }
 
 async function loadEmployees(){
@@ -711,7 +761,7 @@ function veThanhLuot(daCham, tong){
     mo.innerHTML = 'Nhập tên <b>Người kiểm</b> để xem lượt của bạn';
   }else{
     const tu = moc ? ' · từ ' + new Date(moc).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) : '';
-    mo.innerHTML = `Lượt của <b>${esc(ten)}</b>${tu} — đã chấm <b>${daCham}/${tong}</b> máy`;
+    mo.innerHTML = `Lượt của <b>${esc(ten)}</b>${tu} — đã chấm <b>${daCham}/${tong}</b> ô (máy + khu)`;
   }
 }
 function gioCua(rec){
@@ -724,7 +774,8 @@ function statusOf(rec){
   if(!rec) return 'none';
   return S_DEFS.every(s => rec[s.k] === true) ? 'ok' : 'ng';
 }
-function failsOf(rec){ return S_DEFS.filter(s => rec[s.k] !== true); }
+// Tên mục theo đúng loại ô: máy dùng S_DEFS, khu vực dùng S_DEFS_KHU (cùng khoá s1..s5)
+function failsOf(rec){ return tieuChiCua(rec).filter(s => rec[s.k] !== true); }
 
 // Phiếu đang mở có mục nào chưa đạt không (đọc từ bản nháp, không phải DB)
 function dangCoMucChuaDat(){ return !S_DEFS.every(s => cur.vals[s.k] === true); }
@@ -753,6 +804,20 @@ function eachCell(fn){
     const code = (item && typeof item==='object') ? item.c : item;
     if(code) fn({cellId:`${zIdx}_${rIdx}_${cIdx}`, code});
   })));
+  // Khu vực ngoài sơ đồ cũng phải kiểm -> tính vào thống kê và "Lượt của tôi"
+  KHU_VUC.forEach(k => fn({cellId:k.id, code:k.ten}));
+}
+
+// Khu vực ngoài sơ đồ máy: QC, Kỹ thuật, Đóng gói (danh sách ở 5s-tieu-chi.js)
+function makeKhuSection(){
+  const sec = document.createElement('div'); sec.className = 'section';
+  const lbl = document.createElement('div'); lbl.className = 'section-lbl khu-dau';
+  lbl.innerHTML = 'KHU VỰC KHÁC <button type="button" class="khu-sua" onclick="moNguoi()">Sửa danh sách người</button>';
+  sec.appendChild(lbl);
+  const grid = document.createElement('div'); grid.className = 'mc-grid';
+  KHU_VUC.forEach(k => grid.appendChild(buildCell(k.ten, k.id)));
+  sec.appendChild(grid);
+  return sec;
 }
 
 function renderFloor(){
@@ -764,6 +829,10 @@ function renderFloor(){
       const dv = document.createElement('div'); dv.className='floor-divider'; floor.appendChild(dv);
     }
   });
+  if(FACTORY_DATA.length){
+    const dv = document.createElement('div'); dv.className='floor-divider'; floor.appendChild(dv);
+  }
+  floor.appendChild(makeKhuSection());
   renderStats();
   filterCells();
 }
@@ -789,7 +858,9 @@ function idCuaTen(ten){
   const k = String(ten || '').trim().toLowerCase();
   if(!k) return '';
   const e = EMPS.find(x => String(x.name || '').trim().toLowerCase() === k);
-  return e ? e.id : '';
+  if(e) return e.id;
+  const n = NGUOI5S.find(x => String(x.ten || '').trim().toLowerCase() === k);
+  return n ? (n.msnv || '') : '';
 }
 // Hiển thị "Tên (MSNV)", không có mã thì chỉ tên
 function tenKemId(ten, id){
@@ -818,8 +889,15 @@ function buildCell(code, cellId){
   const w = workerOf(code, cellId);
   const wd = document.createElement('div');
   wd.className = 'mc-worker' + (w ? '' : ' none');
-  wd.textContent = w || 'chưa gán thợ';
+  wd.textContent = w || (laKhu({cell_id:cellId}) ? 'chưa chọn người phụ trách' : 'chưa gán thợ');
   cell.appendChild(wd);
+
+  // Máy đang có kỹ thuật dùng: ghi rõ, vì lỗi 5S lượt này tính cho kỹ thuật
+  if(rec && String(rec.tech_name || '').trim()){
+    const kt = document.createElement('div'); kt.className = 'mc-tech';
+    kt.textContent = 'Kỹ thuật: ' + rec.tech_name;
+    cell.appendChild(kt);
+  }
 
   const s = document.createElement('div');
   s.className = `mc-st st-${st}`;
@@ -924,9 +1002,38 @@ function filterCells(){
 // ══════════════════════════════════════════════
 // CHẤM 1 MÁY
 // ══════════════════════════════════════════════
-function fillWorkerSelect(selected){
+// Thêm một nhóm người 5S (KT/QC/DG) vào ô chọn, nhóm cần dùng xếp lên đầu
+function themNhom5S(sel, nhom, selected){
+  const ds = NGUOI5S.filter(n => n.nhom === nhom);
+  if(!ds.length) return;
+  const g = document.createElement('optgroup');
+  g.label = NHOM_5S[nhom] || nhom;
+  ds.forEach(n => {
+    const o = document.createElement('option');
+    o.value = n.ten; o.textContent = n.msnv ? `${n.ten} (${n.msnv})` : n.ten;
+    g.appendChild(o);
+  });
+  sel.appendChild(g);
+}
+
+// Ô "Kỹ thuật đang dùng máy": nhóm Kỹ thuật lên đầu, rồi đến các nhóm khác
+function fillTechSelect(selected){
+  const sel = document.getElementById('shTech');
+  sel.innerHTML = '<option value="">— Không có —</option>';
+  ['KT','QC','DG'].forEach(n => themNhom5S(sel, n));
+  if(selected && ![...sel.options].some(o => o.value === selected)){
+    const o = document.createElement('option');
+    o.value = selected; o.textContent = selected + ' (ngoài danh sách)';
+    sel.appendChild(o);
+  }
+  sel.value = selected || '';
+}
+
+function fillWorkerSelect(selected, nhomDau){
   const sel = document.getElementById('shWorker');
   sel.innerHTML = '<option value="">— Chưa rõ —</option>';
+  // Khu vực: người phụ trách đúng nhóm khu (QC / Kỹ thuật / Đóng gói) xếp lên đầu
+  if(nhomDau) themNhom5S(sel, nhomDau);
   const byKip = {};
   EMPS.forEach(e => { (byKip[e.kip] = byKip[e.kip] || []).push(e); });
   Object.keys(byKip).sort().forEach(k => {
@@ -992,12 +1099,21 @@ function moPhieu(code, cellId, idx){
 
   // Lượt mới thì lấy tên của lượt trước (nếu lượt trước đã sửa lại người),
   // không quay về phân công gốc - tránh bắt sửa lại mỗi lượt.
-  const fromRoster = ROSTER[code] || '';
+  const khu = KHU_VUC.find(k => k.id === cellId);
+  const fromRoster = khu ? '' : (ROSTER[code] || '');
   const luotTruoc  = ds.length ? ds[ds.length-1].worker_name : '';
-  fillWorkerSelect(rec.worker_name || luotTruoc || fromRoster);
-  document.getElementById('shWorkerHint').textContent = fromRoster
-    ? `Lấy từ phân công Kíp ${curKip}. Lịch sai thì chọn lại người khác.`
-    : 'Chưa có phân công cho máy này ở ca đang xem — chọn tay.';
+  fillWorkerSelect(rec.worker_name || luotTruoc || fromRoster, khu ? khu.nhom : '');
+  document.getElementById('shWorkerLbl').textContent = khu ? '👤 Người phụ trách khu' : '👷 Người đứng máy';
+  document.getElementById('shWorkerHint').textContent = khu
+    ? `Chọn người phụ trách khu ${khu.ten}. Chưa có tên thì bấm "Sửa danh sách người" dưới sơ đồ.`
+    : fromRoster
+      ? `Lấy từ phân công Kíp ${curKip}. Lịch sai thì chọn lại người khác.`
+      : 'Chưa có phân công cho máy này ở ca đang xem — chọn tay.';
+  // Kỹ thuật chỉ có ở máy. Lượt mới để trống: kỹ thuật thường chỉ ghé máy một
+  // lúc, mặc định theo lượt trước dễ tính lỗi oan cho kỹ thuật.
+  document.getElementById('shTechBox').style.display = khu ? 'none' : '';
+  cur.techGoc = rec.tech_name || '';
+  fillTechSelect(khu ? '' : cur.techGoc);
 
   renderRounds();
   renderSList();
@@ -1041,7 +1157,7 @@ async function closeSheet(){
     document.getElementById('ov').classList.remove('show');
   cur = null;
 }
-function closeAll(){ closeSheet(); closeHistory(); }
+function closeAll(){ closeSheet(); closeHistory(); dongNguoi(); }
 
 // Tick hết 4 mục trong phiếu (vẫn phải bấm Lưu)
 function tickDatHet(){
@@ -1053,7 +1169,7 @@ function tickDatHet(){
 function renderSList(){
   const box = document.getElementById('sList');
   box.innerHTML = '';
-  S_DEFS.forEach(s => {
+  tieuChiCua({cell_id: cur.cellId}).forEach(s => {
     const on = cur.vals[s.k];
     const it = document.createElement('div');
     it.className = 's-item ' + (on ? 'on' : 'off');
@@ -1188,6 +1304,10 @@ async function saveCheck(){
     updated_at: new Date().toISOString(),
     ...cur.vals,
   };
+  // Chỉ gửi cột kỹ thuật khi có dùng (hoặc xoá kỹ thuật khỏi lượt cũ), để chưa
+  // chạy SQL thêm cột thì phiếu máy thường vẫn lưu được như cũ.
+  const kyThuat = laKhu({cell_id: cur.cellId}) ? '' : document.getElementById('shTech').value.trim();
+  if(kyThuat || cur.techGoc){ row.tech_name = kyThuat; row.tech_id = kyThuat ? idCuaTen(kyThuat) : ''; }
   try{
     let error;
     if(cur.id){
@@ -1208,8 +1328,10 @@ async function saveCheck(){
     const msg = e.message || '';
     const thieuNguoi = /inspector_khong_rong/.test(msg);
     const thieuAnh   = /khongdat_phai_co_anh/.test(msg);
+    const chuaSql    = /tech_(name|id)/.test(msg);
     toast(thieuNguoi ? 'Thiếu tên người kiểm'
         : thieuAnh   ? 'Có mục chưa đạt — phải chụp ít nhất 1 ảnh mới lưu được'
+        : chuaSql    ? 'Chưa bật ô Kỹ thuật: cần chạy file sql/5s-ky-thuat-khu-vuc.sql trên Supabase'
         : 'Lỗi lưu: ' + msg, true);
   }
   btn.disabled = false; btn.textContent = nhanCu;
@@ -1248,7 +1370,7 @@ function cardHTML(r){
       <span class="hs-mc">${esc(r.machine_code)}</span>
       <span class="hs-date">${fmtDs(r.date)}${gioCua(r)?' '+gioCua(r):''} · ${r.shift==='S'?'Ca Sáng':'Ca Tối'}${r.kip?' · Kíp '+r.kip:''}</span>
     </div>
-    ${r.worker_name ? `<div class="hs-who">👷 ${esc(tenKemId(r.worker_name, r.worker_id))}${r.inspector ? ` <span style="color:#90a4ae;font-weight:600">· người kiểm: ${esc(r.inspector)}</span>` : ''}</div>` : ''}
+    ${(() => { const p = nguoiChiu5S(r); return p.ten ? `<div class="hs-who">${p.vai === 'Kỹ thuật' ? '🔧 Kỹ thuật: ' : '👷 '}${esc(tenKemId(p.ten, p.msnv))}${r.inspector ? ` <span style="color:#90a4ae;font-weight:600">· người kiểm: ${esc(r.inspector)}</span>` : ''}</div>` : ''; })()}
     <div class="hs-fails">${fails}</div>
     ${r.note ? `<div class="hs-note">📝 ${esc(r.note)}</div>` : ''}
     ${phs ? `<div class="hs-ph">${phs}</div>` : ''}
@@ -1358,7 +1480,7 @@ async function taiThang(){
     // đổ danh sách người vào ô lọc, chỉ những người có mặt trong tháng
     const sel = document.getElementById('thNV'), giu = sel.value;
     const ten = [...new Set(THANG.filter(r => statusOf(r) !== 'ok')
-                                .map(r => r.worker_name).filter(Boolean))].sort();
+                                .map(r => nguoiChiu5S(r).ten).filter(Boolean))].sort();
     sel.innerHTML = '<option value="">Tất cả nhân viên</option>' +
       ten.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
     sel.value = giu;
@@ -1376,7 +1498,7 @@ function locThang(){
   const may = document.getElementById('thMay').value.toLowerCase().trim();
   return THANG.filter(r => {
     if(statusOf(r) === 'ok') return false;
-    if(nv && r.worker_name !== nv) return false;
+    if(nv && nguoiChiu5S(r).ten !== nv) return false;
     if(may && !(r.machine_code||'').toLowerCase().includes(may)) return false;
     return true;
   });
@@ -1385,7 +1507,7 @@ function locThang(){
 function veThang(){
   const ds = locThang();
   const may  = new Set(ds.map(r => r.machine_code)).size;
-  const ngNV = new Set(ds.map(r => r.worker_name).filter(Boolean)).size;
+  const ngNV = new Set(ds.map(r => nguoiChiu5S(r).ten).filter(Boolean)).size;
   // mục nào hỏng nhiều nhất - cái này mới đáng xem để biết sửa quy trình
   const dem = {};
   ds.forEach(r => failsOf(r).forEach(s => dem[s.short] = (dem[s.short] || 0) + 1));
@@ -1409,7 +1531,8 @@ function veThang(){
     <th>Mục chưa đạt</th><th>Ghi chú</th><th>Ảnh</th><th></th></tr></thead><tbody>`;
   ds.forEach(r => {
     const st = statusOf(r), hong = failsOf(r);
-    const msnv = r.worker_id || idCuaTen(r.worker_name);
+    const p = nguoiChiu5S(r);
+    const msnv = p.msnv || idCuaTen(p.ten);
     const anh = (r.photos || []).slice(0,3)
       .map(u => `<img src="${esc(u)}" alt="" onclick="openLightbox('${esc(u)}')">`).join('');
     h += `<tr class="${st === 'ok' ? '' : 'ng'}">
@@ -1417,7 +1540,9 @@ function veThang(){
       <td style="white-space:nowrap">${r.shift === 'S' ? 'Sáng' : 'Tối'}${r.kip ? '<br><span style="color:#90a4ae;font-size:.68rem">Kíp '+r.kip+'</span>' : ''}</td>
       <td style="font-weight:800">${esc(r.machine_code)}</td>
       <td style="font-weight:700;color:#455a64;white-space:nowrap">${esc(msnv) || '<span style="color:#cfd8dc">—</span>'}</td>
-      <td>${oChonNV(r)}</td>
+      <td>${p.vai === 'Kỹ thuật'
+            ? `<b>${esc(p.ten)}</b> <span class="th-tag">Kỹ thuật</span><div style="font-size:.68rem;color:#90a4ae;margin-top:3px">Thợ: ${esc(r.worker_name || '—')} (không tính lỗi)</div>`
+            : oChonNV(r)}</td>
       <td style="color:#607d8b">${esc(r.inspector || '')}</td>
       <td>${hong.map(s => `<span class="th-tag">${esc(s.short)}</span>`).join('') || '<span style="color:#cfd8dc">—</span>'}</td>
       <td style="max-width:180px">${esc(r.note || '') || '<span style="color:#cfd8dc">—</span>'}</td>
@@ -1432,6 +1557,15 @@ function veThang(){
 function oChonNV(r){
   const hien = r.worker_name || '';
   let op = '<option value="">— Chưa rõ —</option>';
+  // Lượt khu vực: người phụ trách 5S (QC / Kỹ thuật / Đóng gói) xếp lên đầu, nhóm của khu trước
+  const khu = KHU_VUC.find(k => k.id === r.cell_id);
+  if(khu){
+    [khu.nhom, ...['KT','QC','DG'].filter(n => n !== khu.nhom)].forEach(nh => {
+      const ds = NGUOI5S.filter(n => n.nhom === nh);
+      if(ds.length) op += `<optgroup label="${esc(NHOM_5S[nh] || nh)}">` +
+        ds.map(n => `<option value="${esc(n.ten)}"${n.ten === hien ? ' selected' : ''}>${esc(n.ten)}</option>`).join('') + '</optgroup>';
+    });
+  }
   const byKip = {};
   EMPS.forEach(e => { (byKip[e.kip] = byKip[e.kip] || []).push(e); });
   Object.keys(byKip).sort().forEach(k => {
@@ -1440,7 +1574,7 @@ function oChonNV(r){
       '</optgroup>';
   });
   // tên không còn trong danh sách NV vẫn giữ, không làm mất dữ liệu cũ
-  if(hien && !EMPS.some(e => e.name === hien))
+  if(hien && !EMPS.some(e => e.name === hien) && !NGUOI5S.some(n => n.ten === hien))
     op += `<option value="${esc(hien)}" selected>${esc(hien)} (ngoài danh sách)</option>`;
   return `<select class="th-nv" onchange="doiNVThang(${r.id}, this.value)">${op}</select>`;
 }
@@ -1482,12 +1616,12 @@ function xuatExcelThang(){
   if(!ds.length){ toast('Không có dữ liệu để xuất', true); return; }
   if(typeof XLSX === 'undefined'){ toast('Chưa tải được thư viện Excel, thử lại sau', true); return; }
   const thang = document.getElementById('thThang').value;
-  const msnvCua = r => r.worker_id || idCuaTen(r.worker_name);
+  const msnvCua = r => { const p = nguoiChiu5S(r); return p.msnv || idCuaTen(p.ten); };
 
   // ── Sheet 1: tổng hợp theo nhân viên ──
   const gom = {};
   ds.forEach(r => {
-    const k = r.worker_name || '(chưa rõ)';
+    const k = nguoiChiu5S(r).ten || '(chưa rõ)';
     if(!gom[k]) gom[k] = {msnv: msnvCua(r), lan:0, loi:{}, may:new Set()};
     const g = gom[k];
     g.lan++; g.may.add(r.machine_code);
@@ -1503,11 +1637,12 @@ function xuatExcelThang(){
     ]));
 
   // ── Sheet 2: chi tiết từng lượt chưa đạt ──
-  const s2 = [['Ngày','Giờ','Ca','Kíp','Máy','MSNV','Nhân viên','Người kiểm',
-               ...S_DEFS.map(s => s.name), 'Mục chưa đạt','Ghi chú','Số ảnh']];
+  // Cột từng mục: máy và khu vực dùng chung cột s1..s5 nên tiêu đề ghi cả hai tên
+  const s2 = [['Ngày','Giờ','Ca','Kíp','Máy / Khu','MSNV','Người chịu lỗi','Vai trò','Người kiểm',
+               ...S_DEFS.map((s,i) => s.short === S_DEFS_KHU[i].short ? s.short : `${s.short} / ${S_DEFS_KHU[i].short}`), 'Mục chưa đạt','Ghi chú','Số ảnh']];
   ds.forEach(r => s2.push([
     fmtDs(r.date), gioCua(r), r.shift === 'S' ? 'Sáng' : 'Tối', r.kip || '',
-    r.machine_code, msnvCua(r), r.worker_name || '', r.inspector || '',
+    r.machine_code, msnvCua(r), nguoiChiu5S(r).ten || '', nguoiChiu5S(r).vai, r.inspector || '',
     ...S_DEFS.map(s => r[s.k] ? 'Đạt' : 'Chưa đạt'),
     failsOf(r).map(s => s.short).join(', '),
     r.note || '', (r.photos || []).length
@@ -1518,7 +1653,7 @@ function xuatExcelThang(){
   w1['!cols'] = [{wch:9},{wch:24},{wch:15},{wch:8},{wch:42}];
   XLSX.utils.book_append_sheet(wb, w1, 'Tổng hợp theo NV');
   const w2 = XLSX.utils.aoa_to_sheet(s2);
-  w2['!cols'] = [{wch:11},{wch:7},{wch:7},{wch:6},{wch:10},{wch:9},{wch:22},{wch:18},
+  w2['!cols'] = [{wch:11},{wch:7},{wch:7},{wch:6},{wch:10},{wch:9},{wch:22},{wch:10},{wch:18},
                  ...S_DEFS.map(() => ({wch:14})), {wch:26},{wch:34},{wch:7}];
   XLSX.utils.book_append_sheet(wb, w2, 'Chi tiết');
 
@@ -1549,6 +1684,65 @@ function toast(msg, isErr, action){
   t.className = 'toast show' + (isErr ? ' err' : '');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), isErr ? 5000 : (action ? 5000 : 2200));
+}
+
+// ══════════════════════════════════════════════
+// DANH SÁCH NGƯỜI PHỤ TRÁCH 5S (kỹ thuật / QC / đóng gói)
+// ══════════════════════════════════════════════
+// Trang 5S đã qua màn khoá mật khẩu nên ai vào được đây là người được phép sửa.
+function moNguoi(){
+  veNguoi();
+  document.getElementById('ov').classList.add('show');
+  document.getElementById('nguoiSheet').classList.add('show');
+}
+function dongNguoi(){
+  const s = document.getElementById('nguoiSheet');
+  if(!s || !s.classList.contains('show')) return;
+  s.classList.remove('show');
+  if(!document.getElementById('sheet').classList.contains('show') &&
+     !document.getElementById('histSheet').classList.contains('show'))
+    document.getElementById('ov').classList.remove('show');
+}
+function veNguoi(){
+  const box = document.getElementById('ngDs');
+  if(!NGUOI5S.length){
+    box.innerHTML = '<div class="wk-hint">Chưa có ai. Thêm kỹ thuật, QC, đóng gói ở ô bên dưới.</div>';
+    return;
+  }
+  box.innerHTML = ['KT','QC','DG'].map(nh => {
+    const ds = NGUOI5S.filter(n => n.nhom === nh);
+    if(!ds.length) return '';
+    return `<div class="ng-nhom">${esc((NHOM_5S[nh] || nh).toUpperCase())}</div>` + ds.map(n =>
+      `<div class="ng-dong"><span><b>${esc(n.ten)}</b>${n.msnv ? ' <span style="color:#90a4ae">· ' + esc(n.msnv) + '</span>' : ''}</span>
+        <button type="button" title="Xoá" aria-label="Xoá ${esc(n.ten)}" onclick="xoaNguoi(${n.id})">✕</button></div>`).join('');
+  }).join('');
+}
+async function themNguoi(){
+  const ten = document.getElementById('ngTen').value.trim();
+  const msnv = document.getElementById('ngMa').value.trim();
+  const nhom = document.getElementById('ngNhom').value;
+  if(!ten){ toast('Nhập họ tên trước đã', true); document.getElementById('ngTen').focus(); return; }
+  if(NGUOI5S.some(n => n.nhom === nhom && chuanTen(n.ten) === chuanTen(ten))){ toast(ten + ' đã có trong danh sách', true); return; }
+  try{
+    const {error} = await sb.from('s5_nguoi').insert({ten, msnv, nhom});
+    if(error) throw error;
+    await loadNguoi5S(); veNguoi(); renderFloor();
+    document.getElementById('ngTen').value = ''; document.getElementById('ngMa').value = '';
+    toast('Đã thêm ' + ten);
+  }catch(e){
+    toast(/s5_nguoi/.test(e.message || '') ? 'Chưa có bảng: cần chạy file sql/5s-ky-thuat-khu-vuc.sql trên Supabase'
+                                           : 'Lỗi thêm người: ' + e.message, true);
+  }
+}
+async function xoaNguoi(id){
+  const n = NGUOI5S.find(x => x.id === id);
+  if(!n || !confirm(`Xoá ${n.ten} khỏi danh sách ${NHOM_5S[n.nhom] || ''}?\n\nCác lượt kiểm đã ghi tên người này vẫn giữ nguyên.`)) return;
+  try{
+    const {error} = await sb.from('s5_nguoi').delete().eq('id', id);
+    if(error) throw error;
+    await loadNguoi5S(); veNguoi();
+    toast('Đã xoá ' + n.ten);
+  }catch(e){ toast('Lỗi xoá: ' + e.message, true); }
 }
 
 function rememberInspector(){
@@ -1648,7 +1842,7 @@ async function thuMoKhoa(){
       if(saved) document.getElementById('inspector').value = saved;
     }catch(e){}
 
-    await Promise.all([loadLayout(), loadEmployees()]);
+    await Promise.all([loadLayout(), loadEmployees(), loadNguoi5S()]);
     await reload();
   }catch(e){
     console.error('Init error:', e);

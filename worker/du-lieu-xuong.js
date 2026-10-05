@@ -10,7 +10,7 @@ import {
   DINH_NGHIA_CONG_CU,
 } from './du-lieu.js';
 
-const { S_DEFS } = globalThis.TieuChi5S;
+const { S_DEFS, tieuChiCua, nguoiChiu5S } = globalThis.TieuChi5S;
 const { getShift } = globalThis.LichCa;
 const DI_LAM = ma => !['N', 'L', 'NP', 'VM', 'UN'].includes(ma);
 
@@ -26,7 +26,7 @@ function thangSau(thang) {
   const [y, m] = thang.split('-').map(Number);
   return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
 }
-const mucHong = x => S_DEFS.filter(d => x[d.k] !== true).map(d => d.name);
+const mucHong = x => tieuChiCua(x).filter(d => x[d.k] !== true).map(d => d.name);   // máy / khu vực
 const chuaDat = x => !S_DEFS.every(d => x[d.k] === true);
 
 export function taoXuong(sb) {
@@ -131,8 +131,10 @@ export function taoXuong(sb) {
       if (r.error) throw new Error(r.error.message);
       const tong = (r.data || []).length;
       const ds = (r.data || []).filter(chuaDat).map(x => ({
-        ngay: x.date, ca: x.shift || '', may: x.machine_code || '', nguoi: x.worker_name || '',
-        msnv: x.worker_id || '', muc_chua_dat: mucHong(x), ghi_chu: x.note || '', nguoi_kiem: x.inspector || '',
+        // người chịu lỗi: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S)
+        ngay: x.date, ca: x.shift || '', may: x.machine_code || '', nguoi: nguoiChiu5S(x).ten || '',
+        msnv: nguoiChiu5S(x).msnv || '', vai_tro: nguoiChiu5S(x).vai,
+        muc_chua_dat: mucHong(x), ghi_chu: x.note || '', nguoi_kiem: x.inspector || '',
       }));
       return { tu_ngay: tu, den_ngay: den, so_luot_kiem: tong, so_luot_chua_dat: ds.length, chi_tiet: ds };
     },

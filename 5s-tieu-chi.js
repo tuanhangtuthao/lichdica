@@ -32,5 +32,51 @@ const S_DEFS = [
 // Số mục kiểm - đừng gõ số cứng ở nơi khác, dùng biến này
 const N_TC = S_DEFS.length;
 
+// ═══════════════════════════════════════════════════════════════
+// KHU VỰC NGOÀI SƠ ĐỒ MÁY: QC, Kỹ thuật, Đóng gói
+// ═══════════════════════════════════════════════════════════════
+// Mỗi khu là một ô riêng dưới sơ đồ máy, chấm y như một máy. Lưu chung bảng
+// s5_checks, cell_id bắt đầu bằng "kv_" để phân biệt với máy.
+// nhom = nhóm người phụ trách trong bảng s5_nguoi (KT / QC / DG).
+const KHU_VUC = [
+  {id:'kv_qc', ten:'QC',       nhom:'QC'},
+  {id:'kv_kt', ten:'Kỹ thuật', nhom:'KT'},
+  {id:'kv_dg', ten:'Đóng gói', nhom:'DG'},
+];
+const NHOM_5S = {KT:'Kỹ thuật', QC:'QC', DG:'Đóng gói'};
+
+// Tiêu chí cho khu vực. 5 mục máy ở trên ("Thân máy", "Bộ cấp phôi"...) không
+// áp dụng cho bàn QC hay khu đóng gói. ĐÂY LÀ BẢN MẪU - sửa chữ thoải mái,
+// nhưng GIỮ ĐÚNG 5 MỤC và khoá s1..s5 vì dùng chung cột với máy.
+const S_DEFS_KHU = [
+  {k:'s1', name:'Đường đi, sàn nhà', short:'Đường đi / Sàn',
+   desc:'Sàn sạch, không rác, không dầu mỡ, lối đi thông thoáng'},
+  {k:'s2', name:'Bàn làm việc', short:'Bàn làm việc',
+   desc:'Bàn gọn gàng, chỉ để đồ đang dùng, không để đồ cá nhân'},
+  {k:'s3', name:'Dụng cụ, tài liệu', short:'Dụng cụ / Tài liệu',
+   desc:'Dụng cụ đo, tài liệu, check sheet để đúng vị trí quy định'},
+  {k:'s4', name:'Hàng hoá', short:'Hàng hoá',
+   desc:'Hàng phân loại rõ ràng (đạt / chờ / lỗi), có tem nhãn'},
+  {k:'s5', name:'Vật dụng thừa', short:'Vật dụng thừa',
+   desc:'Không có thùng hộp hư, vật dụng thừa, rác tồn đọng'},
+];
+
+// Ô này là khu vực hay máy
+function laKhu(r){ return String((r && r.cell_id) || '').startsWith('kv_'); }
+// Bộ tiêu chí đúng cho một lượt kiểm. Cùng khoá s1..s5 nên đếm đạt/chưa đạt
+// không đổi; chỉ TÊN mục khác - hiện tên mục chưa đạt thì phải dùng hàm này.
+function tieuChiCua(r){ return laKhu(r) ? S_DEFS_KHU : S_DEFS; }
+
+// LỖI 5S TÍNH CHO AI. Máy có kỹ thuật đang dùng (tech_name) thì tính cho kỹ
+// thuật, THỢ KHÔNG BỊ TÍNH - máy đang trong tay kỹ thuật. Lỗi 5S kéo theo bot
+// Zalo nhắn báo lỗi và dòng "5S chưa đạt" trong tổng kết xếp loại tháng, nên
+// mọi chỗ gán lỗi cho người (web lẫn bot) đều phải đi qua hàm này.
+function nguoiChiu5S(r){
+  r = r || {};
+  if(String(r.tech_name || '').trim())
+    return {ten: r.tech_name, msnv: r.tech_id || '', vai: 'Kỹ thuật'};
+  return {ten: r.worker_name || '', msnv: r.worker_id || '', vai: laKhu(r) ? 'Phụ trách' : 'Thợ'};
+}
+
 // Cho bot Zalo (worker/) dùng chung danh sách này.
-globalThis.TieuChi5S = { S_DEFS, N_TC };
+globalThis.TieuChi5S = { S_DEFS, N_TC, S_DEFS_KHU, KHU_VUC, NHOM_5S, laKhu, tieuChiCua, nguoiChiu5S };

@@ -140,13 +140,14 @@ async function loadS5(monthKey){
   DB.s5[monthKey] = (r.data||[]).filter(x => !S_DEFS.every(d => x[d.k] === true));
   return DB.s5[monthKey];
 }
-function s5MucHong(r){ return S_DEFS.filter(d => r[d.k] !== true); }
+function s5MucHong(r){ return tieuChiCua(r).filter(d => r[d.k] !== true); }   // máy / khu vực
 // Khớp theo MSNV trước; bản ghi cũ chưa có MSNV thì đối chiếu theo tên.
 function s5CuaNguoi(rows, empId, empName){
   const ten = String(empName||'').trim().toLowerCase();
-  return rows.filter(r => r.worker_id
-      ? String(r.worker_id) === String(empId)
-      : (ten && String(r.worker_name||'').trim().toLowerCase() === ten)
+  // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
+  return rows.filter(r => { const p = nguoiChiu5S(r);
+      return p.msnv ? String(p.msnv) === String(empId)
+                    : (ten && String(p.ten||'').trim().toLowerCase() === ten); }
     ).sort((a,b)=>a.date.localeCompare(b.date));
 }
 
@@ -285,9 +286,10 @@ const TOOLS = {
     await loadCore();
     const rows = await loadS5(thang), m = {};
     rows.forEach(r=>{
-      const key = r.worker_id || ('ten:'+String(r.worker_name||'').trim().toLowerCase());
+      const p = nguoiChiu5S(r);   // kỹ thuật nếu máy đang có kỹ thuật dùng
+      const key = p.msnv || ('ten:'+String(p.ten||'').trim().toLowerCase());
       if(!key || key==='ten:') return;
-      if(!m[key]) m[key] = {ten:r.worker_name||'', lan:0, muc:0};
+      if(!m[key]) m[key] = {ten:p.ten||'', lan:0, muc:0};
       m[key].lan++; m[key].muc += s5MucHong(r).length;
     });
     const ds = Object.entries(m).map(([k,v])=>{

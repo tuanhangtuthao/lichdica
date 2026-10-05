@@ -607,12 +607,14 @@ function s5CuaNguoi(empId, empName, mVal){
   const ten = String(empName || '').trim().toLowerCase();
   return S5.filter(r => {
     if(!r.date.startsWith(mVal)) return false;
-    if(r.worker_id) return String(r.worker_id) === String(empId);
-    return ten && String(r.worker_name || '').trim().toLowerCase() === ten;
+    // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
+    const p = nguoiChiu5S(r);
+    if(p.msnv) return String(p.msnv) === String(empId);
+    return ten && String(p.ten || '').trim().toLowerCase() === ten;
   }).sort((a,b) => a.date.localeCompare(b.date));
 }
 
-function s5MucHong(r){ return S_DEFS.filter(s => r[s.k] !== true); }
+function s5MucHong(r){ return tieuChiCua(r).filter(s => r[s.k] !== true); }   // máy / khu vực
 
 // Bảng chi tiết 5S - chỉ để xem, không có nút sửa hay xoá nào
 function moChiTiet5S(empId){

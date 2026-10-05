@@ -14,7 +14,7 @@ import { taoSb, homNayVN, dKey, DFUL, boDau } from './du-lieu.js';
 import { guiTin, guiAnh } from './zalo.js';
 import { SO_SANG_CA_NHAN } from './menu.js';
 
-const { S_DEFS } = globalThis.TieuChi5S;
+const { S_DEFS, tieuChiCua, laKhu, nguoiChiu5S } = globalThis.TieuChi5S;
 
 // Mốc bật tính năng. Lượt kiểm TRƯỚC mốc này không báo tức thì (tránh dội
 // tin cũ lúc vừa bật) - chúng chỉ đến tay nhân viên qua báo bù khi liên kết.
@@ -24,7 +24,9 @@ const LUI_TOI_DA_MS = 2 * 864e5;    // mỗi lần quét chỉ nhìn lại 2 ng�
 const ANH_TOI_DA = 3;               // tối đa 3 ảnh / lượt
 
 const chuaDat = x => !S_DEFS.every(d => x[d.k] === true);
-const mucHong = x => S_DEFS.filter(d => x[d.k] !== true).map(d => d.name);
+// Tên mục theo đúng loại ô: máy dùng S_DEFS, khu QC/Kỹ thuật/Đóng gói dùng S_DEFS_KHU
+const mucHong = x => tieuChiCua(x).filter(d => x[d.k] !== true).map(d => d.name);
+const noiKiem = x => x.machine_code ? (laKhu(x) ? `Khu ${x.machine_code}` : `Máy ${x.machine_code}`) : '';
 const gioVN = iso => new Date(new Date(iso).getTime() + 7 * 3600e3).toISOString().slice(11, 16);
 const ddmm = k => `${k.slice(8, 10)}/${k.slice(5, 7)}`;
 function thuNgay(k) {
@@ -36,7 +38,7 @@ function thuNgay(k) {
 export function noiDungBao(x) {
   return '⚠️ Bạn có 1 lượt 5S CHƯA ĐẠT\n'
     + `📅 ${thuNgay(x.date)} – Ca ${x.shift === 'C' ? 'Tối' : 'Sáng'}${x.checked_at ? ' – ' + gioVN(x.checked_at) : ''}\n`
-    + (x.machine_code ? `🔧 Máy ${x.machine_code}\n` : '')
+    + (x.machine_code ? `🔧 ${noiKiem(x)}\n` : '')
     + `❌ Mục: ${mucHong(x).join(', ')}\n`
     + (x.note ? `📝 ${x.note}\n` : '')
     + (x.inspector ? `👤 Người kiểm: ${x.inspector}\n` : '')
@@ -90,7 +92,10 @@ export async function quetBao5S(env) {
 
   let bao = 0, boQua = 0;
   for (const x of can) {
-    const msnv = x.worker_id ? String(x.worker_id) : theoTen[boDau(x.worker_name)];
+    // Lỗi 5S tính cho người chịu: kỹ thuật nếu máy đang có kỹ thuật dùng (nguoiChiu5S, 5s-tieu-chi.js)
+    // -> máy có kỹ thuật thì KHÔNG nhắn cho thợ.
+    const chiu = nguoiChiu5S(x);
+    const msnv = chiu.msnv ? String(chiu.msnv) : theoTen[boDau(chiu.ten)];
     const zid = msnv && zaloCua[msnv];
     if (!zid) { boQua++; continue; }                         // chưa liên kết -> chờ báo bù
     const giu = await giuCho(sb, [{ s5_id: x.id, msnv, zalo_id: zid, cach: 'tuc_thi' }]);
@@ -116,7 +121,7 @@ export async function baoBuKhiLienKet(env, nv, zaloId, laQL) {
   if (r.error) throw new Error('Đọc s5_checks lỗi: ' + r.error.message);
   const id = String(nv.id), ten = boDau(nv.name);
   const cuaNV = (r.data || []).filter(chuaDat)
-    .filter(x => x.worker_id ? String(x.worker_id) === id : boDau(x.worker_name) === ten);
+    .filter(x => { const p = nguoiChiu5S(x); return p.msnv ? String(p.msnv) === id : boDau(p.ten) === ten; });
   if (!cuaNV.length) return 0;
   const da = await daBao(sb, cuaNV.map(x => x.id));
   const chua = cuaNV.filter(x => !da.has(x.id));
@@ -126,7 +131,7 @@ export async function baoBuKhiLienKet(env, nv, zaloId, laQL) {
   const ds = chua.filter(x => giu.has(x.id));
   if (!ds.length) return 0;
   const text = `📋 Bạn có ${ds.length} lượt 5S chưa đạt tháng ${String(m).padStart(2, '0')} chưa được báo:\n`
-    + ds.map(x => `• ${ddmm(x.date)}${x.machine_code ? ' – máy ' + x.machine_code : ''} – ${mucHong(x).join(', ')}`).join('\n')
+    + ds.map(x => `• ${ddmm(x.date)}${x.machine_code ? ' – ' + noiKiem(x).toLowerCase() : ''} – ${mucHong(x).join(', ')}`).join('\n')
     // quản lý đang ở menu quản lý (số 3 là quân số) -> phải sang menu cá nhân trước
     + `\n\n${laQL ? `Nhắn ${SO_SANG_CA_NHAN} rồi 3` : 'Nhắn 3'} để xem chi tiết.`;
   const kq = await guiTin(env, zaloId, text);
