@@ -116,6 +116,51 @@ export async function luuMenu(sb, zaloId, menu) {
   if (r.error) console.warn('[zalo] chưa lưu được menu (đã chạy sql/zalo-menu.sql chưa?):', r.error.message);
 }
 
+// ── LIÊN KẾT AN TOÀN (cách 1-2-3 đã chốt 05/10/2026) ───────────
+// 1. Nhắn MSNV -> chỉ ghi vào msnv_cho, bot hỏi "Bạn là <tên>?"
+// 2. Trả lời 1 -> liên kết; MỌI tài khoản khác đang giữ MSNV đó bị gỡ và
+//    được báo, để tin cá nhân (vd báo 5S) chỉ tới đúng một người.
+// 3. Quản lý xem danh sách và gỡ liên kết sai (menu.js).
+// Cần sql/zalo-xac-nhan.sql (msnv được để trống + cột msnv_cho).
+export async function ghiChoXacNhan(sb, zaloId, msnv, tenZalo) {
+  const r = await sb.from('zalo_links').upsert({
+    zalo_id: zaloId, msnv_cho: String(msnv), ten_zalo: tenZalo || '',
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'zalo_id' });
+  if (r.error) throw new Error('Lưu MSNV chờ xác nhận lỗi: ' + r.error.message);
+}
+export async function huyChoXacNhan(sb, zaloId) {
+  const r = await sb.from('zalo_links').update({ msnv_cho: null }).eq('zalo_id', zaloId);
+  if (r.error) throw new Error(r.error.message);
+}
+// Trả về danh sách zalo_id vừa bị gỡ khỏi MSNV này (để báo cho họ)
+export async function xacNhanLienKet(sb, zaloId, msnv, tenZalo, menu) {
+  const ms = String(msnv);
+  const cu = await sb.from('zalo_links').select('zalo_id').eq('msnv', ms).neq('zalo_id', zaloId);
+  if (cu.error) throw new Error(cu.error.message);
+  const biGo = (cu.data || []).map(x => x.zalo_id);
+  if (biGo.length) {
+    const d = await sb.from('zalo_links').delete().in('zalo_id', biGo);
+    if (d.error) throw new Error('Gỡ liên kết cũ lỗi: ' + d.error.message);
+  }
+  const r = await sb.from('zalo_links').update({
+    msnv: ms, msnv_cho: null, ten_zalo: tenZalo || '', menu, updated_at: new Date().toISOString(),
+  }).eq('zalo_id', zaloId);
+  if (r.error) throw new Error('Lưu liên kết lỗi: ' + r.error.message);
+  return biGo;
+}
+// Quản lý gỡ: xoá mọi tài khoản đang gắn MSNV này, trả về zalo_id để báo
+export async function goLienKet(sb, msnv) {
+  const r = await sb.from('zalo_links').delete().eq('msnv', String(msnv)).select('zalo_id');
+  if (r.error) throw new Error(r.error.message);
+  return (r.data || []).map(x => x.zalo_id);
+}
+export async function dsLienKet(sb) {
+  const r = await sb.from('zalo_links').select('zalo_id,msnv,ten_zalo,updated_at').not('msnv', 'is', null);
+  if (r.error) throw new Error(r.error.message);
+  return r.data || [];
+}
+
 export async function luuLienKet(sb, zaloId, msnv, tenZalo) {
   const r = await sb.from('zalo_links').upsert({
     zalo_id: zaloId, msnv: String(msnv), ten_zalo: tenZalo || '',

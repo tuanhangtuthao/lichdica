@@ -17,7 +17,8 @@
 // Hướng dẫn cài đặt: worker/README.md
 // ═══════════════════════════════════════════════════════════════
 import {
-  taoSb, timNV, layLienKet, luuLienKet, luuMenu, duocHoiTiep, taoCongCu, laQuanLy, boDau,
+  taoSb, timNV, layLienKet, luuMenu, duocHoiTiep, taoCongCu, laQuanLy, boDau,
+  ghiChoXacNhan, huyChoXacNhan, xacNhanLienKet, goLienKet, NHOM,
   GIOI_HAN_NV, GIOI_HAN_QL,
 } from './du-lieu.js';
 import { taoCongCuQuanLy } from './du-lieu-xuong.js';
@@ -108,6 +109,22 @@ export default {
   },
 };
 
+// ── Liên kết an toàn: xác nhận tên, 1 MSNV = 1 tài khoản Zalo ──
+function hoiXacNhan(nv) {
+  return `Bạn là **${nv.name}**${nv.role ? ' – ' + nv.role : ''} (${NHOM[nv.kip] || ''})?\n`
+    + '1️⃣ Đúng\n2️⃣ Không phải, nhập lại';
+}
+const BAO_BI_THAY = ms => `⚠️ MSNV ${ms} vừa được liên kết với một tài khoản Zalo khác.\n`
+  + `Nếu không phải bạn, báo ngay cho quản lý.\nTài khoản này đã ngừng nhận thông tin của MSNV ${ms}.`;
+const BAO_BI_GO = ms => `ℹ️ Quản lý đã gỡ tài khoản Zalo này khỏi MSNV ${ms}.\n`
+  + 'Nếu đúng là bạn, nhắn lại MSNV để liên kết.';
+// Báo cho tài khoản khác; lỗi gửi không được làm hỏng câu trả lời chính
+async function baoNguoiKhac(env, ds, text) {
+  for (const id of ds) {
+    try { await guiTin(env, id, text); } catch (e) { console.error('[zalo] báo người khác lỗi:', e); }
+  }
+}
+
 // Lời chào -> gửi menu. Chỉ tính khi tin ngắn (≤ 3 từ): "chào, mai tôi làm
 // ca gì" là câu hỏi thật, phải đưa cho AI.
 const LOI_CHAO = /^(chao|xin chao|hi|hello|helo|alo|hey|menu|bat dau|start)\b/;
@@ -142,26 +159,65 @@ async function xuLyTin(msg, zaloId, gui, env) {
   const sb = taoSb();
   const lk = await layLienKet(sb, zaloId);
 
-  // ── nhập / đổi MSNV -> gửi luôn menu "nhà" ──
   const doi = tx.match(/^(?:doi )?msnv:? ?([a-z0-9]+)$/);
   const laMa = /^\d{3,6}$/.test(text);
-  if (doi || (!lk && laMa)) {
+  const daLK = !!(lk && lk.msnv);
+
+  // ── đang chờ xác nhận "Bạn là <tên>?" ──
+  if (lk && lk.msnv_cho) {
+    if (text === '1') {
+      const nvMoi = await timNV(sb, lk.msnv_cho);
+      if (!nvMoi) {
+        await huyChoXacNhan(sb, zaloId);
+        return gui(`MSNV ${lk.msnv_cho} không còn trong danh sách. Bạn nhắn lại MSNV giúp mình nhé.`);
+      }
+      const qlMoi = laQuanLy(nvMoi);
+      const biThay = await xacNhanLienKet(sb, zaloId, nvMoi.id, msg.from.display_name, qlMoi ? 'quan_ly' : 'ca_nhan');
+      await baoNguoiKhac(env, biThay, BAO_BI_THAY(nvMoi.id));
+      return gui(qlMoi ? menuQuanLy(nvMoi) : menuCaNhan(nvMoi, false));
+    }
+    if (text === '2') {
+      await huyChoXacNhan(sb, zaloId);
+      return gui(daLK ? `Đã huỷ. Bạn vẫn dùng MSNV **${lk.msnv}** như cũ. Nhắn **0** để xem menu.`
+                      : 'Bạn nhắn lại MSNV giúp mình nhé (ví dụ: 1049).');
+    }
+    if (!doi && !laMa) {
+      const nvCho = await timNV(sb, lk.msnv_cho);
+      return gui('Bạn xác nhận giúp mình trước nhé:\n' + (nvCho ? hoiXacNhan(nvCho) : 'Nhắn **2** để nhập lại MSNV.'));
+    }
+    // gõ MSNV khác -> xuống dưới, đặt chờ xác nhận MSNV mới
+  }
+
+  // ── nhập / đổi MSNV -> hỏi xác nhận tên, CHƯA liên kết ──
+  if (doi || (!daLK && laMa)) {
     const ma = doi ? doi[1] : text;
     const nv = await timNV(sb, ma);
     if (!nv) return gui(`Không tìm thấy MSNV **${ma}**. Bạn kiểm tra lại giúp mình nhé.`);
-    const ql = laQuanLy(nv);
-    await luuLienKet(sb, zaloId, nv.id, msg.from.display_name);
-    await luuMenu(sb, zaloId, ql ? 'quan_ly' : 'ca_nhan');
-    return gui(ql ? menuQuanLy(nv) : menuCaNhan(nv, false));
+    if (daLK && String(nv.id) === String(lk.msnv))
+      return gui(`Bạn đang dùng MSNV **${nv.id}** (${nv.name}) rồi. Nhắn **0** để xem menu.`);
+    await ghiChoXacNhan(sb, zaloId, nv.id, msg.from.display_name);
+    return gui(hoiXacNhan(nv));
   }
 
-  if (!lk)
+  if (!daLK)
     return gui(`Chào ${msg.from.display_name || 'bạn'} 👋 Mình là Trợ Lý Phân Xưởng 1.\n`
       + 'Bạn nhắn **MSNV** của mình (ví dụ: 1049) để bắt đầu nhé.');
 
   const nv = await timNV(sb, lk.msnv);
   if (!nv) return gui(`MSNV ${lk.msnv} không còn trong danh sách. Nhắn "đổi MSNV <số>" để cập nhật.`);
   const ql = laQuanLy(nv);
+
+  // ── quản lý gỡ liên kết sai: "gỡ 1050" ──
+  const go = tx.match(/^go (\d{3,6})$/);
+  if (go) {
+    if (!ql) return gui('Lệnh này chỉ dành cho quản lý. Nhắn **0** để xem menu nhé.');
+    const biGo = await goLienKet(sb, go[1]);
+    if (!biGo.length) return gui(`MSNV ${go[1]} chưa liên kết tài khoản Zalo nào.`);
+    await baoNguoiKhac(env, biGo.filter(id => id !== zaloId), BAO_BI_GO(go[1]));
+    return gui(`✅ Đã gỡ ${biGo.length} tài khoản Zalo khỏi MSNV ${go[1]}`
+      + (biGo.includes(zaloId) ? ' (gồm cả tài khoản của bạn — nhắn MSNV để liên kết lại)' : '') + '.');
+  }
+
   // Nhân viên luôn ở menu cá nhân. Quản lý: theo cột menu; chưa chạy
   // sql/zalo-menu.sql (chưa có cột) thì coi như đang ở menu quản lý.
   const menu = ql && lk.menu !== 'ca_nhan' ? 'quan_ly' : 'ca_nhan';

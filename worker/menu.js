@@ -4,12 +4,12 @@
 // Đặc tả: worker/MENU-ZALO.md. Đổi chữ / thứ tự mục thì sửa MUC_CA_NHAN,
 // MUC_QUAN_LY và hàm tương ứng bên dưới, nhớ cập nhật lại file đặc tả.
 // ═══════════════════════════════════════════════════════════════
-import { taoCongCu, homNayVN, dKey, addD, NHAN_CA, NHOM, DFUL } from './du-lieu.js';
+import { taoCongCu, homNayVN, dKey, addD, NHAN_CA, NHOM, DFUL, dsLienKet, boDau } from './du-lieu.js';
 import { taoXuong } from './du-lieu-xuong.js';
 
 const { S_DEFS } = globalThis.TieuChi5S;
 
-const SO = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '1️⃣1️⃣', '1️⃣2️⃣'];
+const SO = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '1️⃣1️⃣', '1️⃣2️⃣', '1️⃣3️⃣'];
 const ICON = { S: '☀️', C: '🌙', N: '🏠', L: '🎌', HC: '🏢', NP: '🏖️', VM: '🔴', UN: '❔', C1: '🕕', C2: '🕑', C3: '🕙' };
 const NGAN = { S: 'Sáng', C: 'Chiều', N: 'Nghỉ', L: 'Nghỉ Lễ', HC: 'Hành Chính', NP: 'Nghỉ Phép',
   VM: 'Vắng Mặt', UN: 'Chưa có lịch', C1: 'Ca 1', C2: 'Ca 2', C3: 'Ca 3' };
@@ -31,7 +31,7 @@ const nhanDam = nhan => { const i = nhan.indexOf(' ('); return i < 0 ? `**${nhan
 
 const CUOI_NV = '\n\n↩️ Nhắn **0** về menu · nhắn số khác để xem tiếp';
 const CUOI_QL_CA_NHAN = '\n\n↩️ Nhắn **0** về menu quản lý · nhắn số khác để xem tiếp';
-const CUOI_QL = '\n\n↩️ Nhắn **0** về menu quản lý · **12** sang menu cá nhân';
+
 
 // ── MENU ───────────────────────────────────────────────────────
 const MUC_CA_NHAN = ['Ca ngày mai', 'Lịch 7 ngày tới', 'Vi phạm 5S tháng này', 'Điểm & xếp loại tháng này',
@@ -39,9 +39,10 @@ const MUC_CA_NHAN = ['Ca ngày mai', 'Lịch 7 ngày tới', 'Vi phạm 5S thán
 const MUC_QUAN_LY = ['Ai làm ca Sáng hôm nay', 'Ai làm ca Đêm hôm nay', 'Quân số hôm nay', 'Ai làm ca ngày mai',
   'Ai chưa được phân ca', 'Ai chưa được chấm điểm hôm nay', 'Xếp loại tháng (A/B/C/D + DS hạng C/D)',
   'Vi phạm 5S hôm nay', 'Top vi phạm 5S tháng / máy tái phạm', 'Tăng ca hôm nay / top tháng',
-  'Đơn xin nghỉ đang chờ duyệt'];
-export const SO_MUC_QL = MUC_QUAN_LY.length;          // 11
-export const SO_SANG_CA_NHAN = MUC_QUAN_LY.length + 1; // 12
+  'Đơn xin nghỉ đang chờ duyệt', 'Liên kết Zalo (ai đã / chưa vào bot)'];
+export const SO_MUC_QL = MUC_QUAN_LY.length;          // 12
+export const SO_SANG_CA_NHAN = MUC_QUAN_LY.length + 1; // 13
+const CUOI_QL = `\n\n↩️ Nhắn **0** về menu quản lý · **${SO_SANG_CA_NHAN}** sang menu cá nhân`;
 
 export function menuCaNhan(nv, laQL) {
   return `👋 Chào **${nv.name}** (${NHOM[nv.kip] || ''})\nNhắn SỐ để xem:\n\n`
@@ -251,8 +252,55 @@ export async function traLoiQuanLy(sb, so) {
         : '✅ Không có đơn xin nghỉ nào đang chờ duyệt.';
       break;
     }
+    case 12: {
+      s = await traLoiLienKet(sb);
+      break;
+    }
     default:
       return khongCoMuc(so);
   }
   return s + CUOI_QL;
+}
+
+// Tên Zalo khác hẳn tên nhân viên (không chung chữ nào) -> nên kiểm tra.
+// Chỉ là gợi ý: nhiều người đặt tên Zalo là biệt danh.
+function tenKhop(tenZalo, tenNV) {
+  const a = new Set(boDau(tenNV).split(' '));
+  return boDau(tenZalo).split(' ').some(w => w.length > 1 && a.has(w));
+}
+
+async function traLoiLienKet(sb) {
+  const [lk, er] = await Promise.all([
+    dsLienKet(sb),
+    sb.from('employees').select('id,name,kip').order('kip').order('sort_order'),
+  ]);
+  if (er.error) throw new Error(er.error.message);
+  const emps = er.data || [];
+  const theoMs = {};
+  lk.forEach(l => { (theoMs[l.msnv] = theoMs[l.msnv] || []).push(l); });
+  const ok = [], kiemTra = [], chua = [];
+  emps.forEach(e => {
+    const ds = theoMs[String(e.id)] || [];
+    if (!ds.length) { chua.push(e); return; }
+    ds.forEach(l => {
+      const dong = `• ${e.name} (${e.id}) ← Zalo "${l.ten_zalo || '?'}"`;
+      if (ds.length > 1) kiemTra.push(dong + ' – trùng MSNV');
+      else if (!tenKhop(l.ten_zalo, e.name)) kiemTra.push(dong + ' – tên khác');
+      else ok.push(dong);
+    });
+  });
+  const daLK = emps.length - chua.length;
+  const theoKip = {};
+  chua.forEach(e => { (theoKip[e.kip] = theoKip[e.kip] || []).push(e.name); });
+  const phan = [`🔗 **Liên kết Zalo** – ${daLK}/${emps.length} nhân viên`];
+  // Cả xưởng liên kết xong thì danh sách này dài ~44 dòng, vượt 2000 ký tự
+  // của Zalo -> quá 10 người chỉ ghi số; người cần kiểm tra vẫn ghi đủ tên.
+  if (ok.length) phan.push(ok.length <= 10 ? ok.join('\n') : `✅ Đã liên kết đúng: ${ok.length} người`);
+  if (kiemTra.length) phan.push('⚠️ **Nên kiểm tra:**\n' + kiemTra.join('\n'));
+  phan.push(chua.length
+    ? `❌ **Chưa liên kết (${chua.length})** – chưa nhận được tin cá nhân:\n`
+      + Object.keys(theoKip).sort().map(k => `${NHOM[k]}: ${theoKip[k].join(', ')}`).join('\n')
+    : '✅ Cả xưởng đã liên kết.');
+  phan.push('Gỡ liên kết sai: nhắn **gỡ <MSNV>**, vd: gỡ 1050');
+  return phan.join('\n\n');
 }

@@ -85,7 +85,8 @@ MENU QUẢN LÝ – nhắn SỐ để xem:
 9️⃣ Top vi phạm 5S tháng / máy tái phạm
 🔟 Tăng ca hôm nay / top tháng
 1️⃣1️⃣ Đơn xin nghỉ đang chờ duyệt
-1️⃣2️⃣ ➜ Menu cá nhân
+1️⃣2️⃣ Liên kết Zalo (ai đã / chưa vào bot)
+1️⃣3️⃣ ➜ Menu cá nhân
 0️⃣ Xem lại menu quản lý
 💬 Hoặc gõ câu hỏi bất kỳ
 ```
@@ -103,10 +104,11 @@ MENU QUẢN LÝ – nhắn SỐ để xem:
 | 9 | Top người vi phạm 5S tháng + máy hay tái phạm (đếm theo `machine_code`) |
 | 10 | Ai tăng ca hôm nay (giờ) + top 5 tăng ca tháng |
 | 11 | Đơn `leave_requests` đang `pending`: ai, ngày nào, lý do. Chỉ xem, không duyệt qua Zalo |
-| 12 | Chuyển sang menu cá nhân (8 mục như nhân viên) |
+| 12 | Liên kết Zalo: ai đã liên kết, ai cần kiểm tra (trùng MSNV / tên Zalo khác hẳn tên NV), ai chưa liên kết (chưa nhận được tin cá nhân). Quá 10 người liên kết đúng thì chỉ ghi số |
+| 13 | Chuyển sang menu cá nhân (8 mục như nhân viên) |
 | 0 | Gửi lại menu quản lý |
 
-- Cuối mỗi câu trả lời quản lý: `↩️ Nhắn 0 về menu quản lý · 12 sang menu cá nhân`
+- Cuối mỗi câu trả lời quản lý: `↩️ Nhắn 0 về menu quản lý · 13 sang menu cá nhân`
 - Đang ở **menu cá nhân**, quản lý nhắn `0` → **về menu quản lý**. Menu cá nhân của quản lý ghi dòng cuối `0️⃣ Về menu quản lý`.
 - **Phải nhớ người dùng đang ở menu nào** (số 1 ở hai menu khác nghĩa): thêm cột `menu text not null default 'ca_nhan'` vào `zalo_links` (giá trị `quan_ly` | `ca_nhan`). Cần chạy SQL thêm cột trên Supabase.
 - Nhân viên thường không bao giờ thấy menu quản lý.
@@ -116,6 +118,12 @@ MENU QUẢN LÝ – nhắn SỐ để xem:
 - **Xác thực: chỉ cần MSNV**, kể cả với quản lý. Đã nêu rủi ro (ai biết MSNV của quản lý là xem được điểm, vi phạm cả xưởng); chủ dự án chọn không dùng PIN.
 - **Câu hỏi tự do của quản lý:** AI được **đủ quyền**, tức là thêm bộ công cụ tra cả xưởng (ai làm ca X ngày Y, quân số, điểm / xếp loại / 5S / tăng ca / nghỉ phép của người khác, đơn chờ duyệt). Nhân viên thường vẫn chỉ có công cụ tra dữ liệu của chính mình.
 - **Giới hạn câu hỏi tự do:** quản lý **40 câu/ngày**, nhân viên **10 câu/ngày**.
+
+## Liên kết an toàn (chốt + làm 05/10/2026)
+1. **Xác nhận tên:** nhắn MSNV → bot hỏi "Bạn là <tên> – <chức vụ> (<nhóm>)? 1 Đúng / 2 Không phải". Chỉ liên kết khi nhắn 1. Đang chờ mà nhắn chữ khác thì bot nhắc lại câu hỏi. Đổi MSNV ("đổi MSNV 1234") cũng phải xác nhận; huỷ thì giữ MSNV cũ.
+2. **1 MSNV = 1 tài khoản Zalo:** xác nhận xong, mọi tài khoản khác đang giữ MSNV đó bị gỡ và nhận tin "⚠️ MSNV … vừa được liên kết với một tài khoản Zalo khác. Nếu không phải bạn, báo ngay cho quản lý…".
+3. **Quản lý:** mục 12 xem danh sách; nhắn `gỡ <MSNV>` gỡ mọi tài khoản của MSNV đó (người bị gỡ được báo). Nhân viên thường nhắn `gỡ …` → "Lệnh này chỉ dành cho quản lý".
+- Cần `sql/zalo-xac-nhan.sql` (msnv được để trống, thêm cột msnv_cho).
 
 ## CÒN CHỜ XÁC NHẬN
 - Gửi ngay "⏳ Đang tra, bạn chờ chút nhé…" khi câu hỏi tự do chuyển cho AI (AI mất 6–24 giây)? Đã đề xuất, chưa có trả lời.
