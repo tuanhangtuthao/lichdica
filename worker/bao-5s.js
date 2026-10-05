@@ -34,7 +34,7 @@ function thuNgay(k) {
 // Mẫu tin đã chốt (chữ trơn: dùng làm caption ảnh)
 export function noiDungBao(x) {
   return '⚠️ Bạn có 1 lượt 5S CHƯA ĐẠT\n'
-    + `📅 ${thuNgay(x.date)} – Ca ${x.shift === 'C' ? 'Đêm' : 'Sáng'}${x.checked_at ? ' – ' + gioVN(x.checked_at) : ''}\n`
+    + `📅 ${thuNgay(x.date)} – Ca ${x.shift === 'C' ? 'Tối' : 'Sáng'}${x.checked_at ? ' – ' + gioVN(x.checked_at) : ''}\n`
     + (x.machine_code ? `🔧 Máy ${x.machine_code}\n` : '')
     + `❌ Mục: ${mucHong(x).join(', ')}\n`
     + (x.note ? `📝 ${x.note}\n` : '')

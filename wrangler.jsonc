@@ -11,9 +11,10 @@
   "observability": {
     "enabled": true
   },
-  // 5 phút/lần: báo 5S chưa đạt qua Zalo (worker/bao-5s.js, BAO-5S-ZALO.md)
+  // */5: báo 5S chưa đạt qua Zalo (worker/bao-5s.js, BAO-5S-ZALO.md)
+  // 0 1 * * *: 01:00 UTC = 8:00 giờ VN, bản tin nhân sự (worker/ban-tin.js)
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": ["*/5 * * * *", "0 1 * * *"]
   },
   "assets": {
     "directory": ".",
@@ -26,6 +27,8 @@
   "vars": {
     "ANTHROPIC_BASE_URL": "https://api.vilao.ai",
     "CLAUDE_MODEL": "claude-haiku-4.5",
+    // MSNV nhận bản tin nhân sự 8:00, cách nhau bằng dấu phẩy (vd "1050,1049")
+    "BAN_TIN_MSNV": "1050",
     // Zalo gửi webhook vào trạm chuyển tiếp Supabase (supabase/functions/
     // zalo-webhook), trạm chuyển sang worker. Lý do: workers.dev chặn
     // User-Agent "Java/1.8..." của Zalo bằng lỗi 1010, không tắt được.

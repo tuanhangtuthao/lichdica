@@ -57,7 +57,7 @@ const QUYEN_NHAN_VIEN = `- Bạn chỉ tra được thông tin CỦA CHÍNH ngư
 
 const QUYEN_QUAN_LY = `- Người đang nhắn là QUẢN LÝ, được xem dữ liệu của CẢ XƯỞNG: ai làm ca nào, quân số, điểm / xếp loại, vi phạm 5S, tăng ca, nghỉ phép của bất kỳ ai, đơn xin nghỉ chờ duyệt.
 - Hỏi về một người cụ thể theo tên thì dùng tim_nhan_vien để lấy MSNV trước, rồi dùng du_lieu_nhan_vien. Tên trùng nhiều người thì liệt kê để người hỏi chọn.
-- "Ca đêm" chính là Ca Chiều (mã C, 18h-6h). Hỏi về chính người đang nhắn thì dùng các công cụ cá nhân.
+- "Ca tối" hay "ca đêm" chính là Ca Chiều (mã C, 18h-6h). Hỏi về chính người đang nhắn thì dùng các công cụ cá nhân.
 - Chuyện ngoài các mục trên (lương, nội quy...) thì nói lịch sự là chưa tra được, gợi ý nhắn **0** để xem menu.`;
 
 function layChu(res) {

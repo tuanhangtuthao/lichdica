@@ -21,8 +21,8 @@ const MA_TU_NHAN = Object.fromEntries(Object.entries(NHAN_CA).map(([k, v]) => [v
 const maCa = nhan => MA_TU_NHAN[nhan] || 'UN';
 
 function tuKey(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
-const ddmm = k => `${k.slice(8, 10)}/${k.slice(5, 7)}`;
-const thuNgay = k => `${DFUL[tuKey(k).getDay()]}, ${ddmm(k)}`;
+export const ddmm = k => `${k.slice(8, 10)}/${k.slice(5, 7)}`;
+export const thuNgay = k => `${DFUL[tuKey(k).getDay()]}, ${ddmm(k)}`;
 const thangHienTai = () => dKey(homNayVN()).slice(0, 7);
 const tenThang = t => `${t.slice(5)}/${t.slice(0, 4)}`;
 const gio = h => (h % 1 === 0 ? h : h.toFixed(1)) + 'h';
@@ -36,7 +36,7 @@ const CUOI_QL_CA_NHAN = '\n\n↩️ Nhắn **0** về menu quản lý · nhắn 
 // ── MENU ───────────────────────────────────────────────────────
 const MUC_CA_NHAN = ['Ca ngày mai', 'Lịch 7 ngày tới', 'Vi phạm 5S tháng này', 'Điểm & xếp loại tháng này',
   'Ngày nghỉ sắp tới', 'Tăng ca tháng này', 'Nghỉ phép tháng này', 'Tiêu chí 5S'];
-const MUC_QUAN_LY = ['Ai làm ca Sáng hôm nay', 'Ai làm ca Đêm hôm nay', 'Quân số hôm nay', 'Ai làm ca ngày mai',
+const MUC_QUAN_LY = ['Ai làm ca Sáng hôm nay', 'Ai làm ca Tối hôm nay', 'Quân số hôm nay', 'Ai làm ca ngày mai',
   'Ai chưa được phân ca', 'Ai chưa được chấm điểm hôm nay', 'Xếp loại tháng (A/B/C/D + DS hạng C/D)',
   'Vi phạm 5S hôm nay', 'Top vi phạm 5S tháng / máy tái phạm', 'Tăng ca hôm nay / top tháng',
   'Đơn xin nghỉ đang chờ duyệt', 'Liên kết Zalo (ai đã / chưa vào bot)'];
@@ -134,7 +134,7 @@ export async function traLoiCaNhan(sb, nv, so, laQL) {
 
 // ── TRẢ LỜI MENU QUẢN LÝ ───────────────────────────────────────
 // Danh sách người: nhóm theo kíp, trong kíp nhóm theo chức vụ, trưởng ca lên đầu
-function dsTheoKip(ds) {
+export function dsTheoKip(ds) {
   const theoKip = {};
   ds.forEach(x => { (theoKip[x.kip] = theoKip[x.kip] || []).push(x); });
   return Object.keys(theoKip).sort().map(k => {
@@ -145,7 +145,7 @@ function dsTheoKip(ds) {
       + cvs.map(cv => `${/trưởng/i.test(cv) ? '👔' : '•'} ${cv}${theoCV[cv].length > 2 ? ` (${theoCV[cv].length})` : ''}: ${theoCV[cv].join(', ')}`).join('\n');
   }).join('\n\n');
 }
-const tenKip = ds => ds.map(x => `${x.ten} (K${x.kip})`).join(', ');
+export const tenKip = ds => ds.map(x => `${x.ten} (K${x.kip})`).join(', ');
 
 export async function traLoiQuanLy(sb, so) {
   const x = taoXuong(sb), t = homNayVN(), nay = dKey(t), thang = thangHienTai();
@@ -156,7 +156,7 @@ export async function traLoiQuanLy(sb, so) {
       const r = await x.ca_trong_ngay(nay);
       const ds = r.theo_ca[ma] || [];
       const vang = [...(r.theo_ca.NP || []), ...(r.theo_ca.VM || [])];
-      s = (so === 1 ? '☀️ **Ca Sáng hôm nay**' : '🌙 **Ca Đêm hôm nay** (18h–6h)') + ` – ${thuNgay(nay)}\n`
+      s = (so === 1 ? '☀️ **Ca Sáng hôm nay**' : '🌙 **Ca Tối hôm nay** (18h–6h)') + ` – ${thuNgay(nay)}\n`
         + (ds.length ? dsTheoKip(ds) : 'Không có ai làm ca này hôm nay.')
         + `\n\n🏖️ Nghỉ phép / vắng: ${vang.length ? tenKip(vang) : 'không có'}`;
       break;
@@ -164,8 +164,8 @@ export async function traLoiQuanLy(sb, so) {
     case 3: {
       const r = await x.quan_so(nay);
       s = `👥 **Quân số hôm nay** – ${thuNgay(nay)}\n`
-        // menu quản lý gọi ca C là "Đêm" (mục 2) -> giữ cùng một tên
-        + r.kip.map(k => `• ${k.nhom}: **${k.di_lam}/${k.tong}**${k.ca ? ` (${ICON[k.ca] || ''} ${k.ca === 'C' ? 'Đêm' : NGAN[k.ca] || k.ca})` : ''}`).join('\n')
+        // menu quản lý gọi ca C là "Tối" (mục 2) -> giữ cùng một tên
+        + r.kip.map(k => `• ${k.nhom}: **${k.di_lam}/${k.tong}**${k.ca ? ` (${ICON[k.ca] || ''} ${k.ca === 'C' ? 'Tối' : NGAN[k.ca] || k.ca})` : ''}`).join('\n')
         + `\n**Tổng đi làm: ${r.tong_di_lam}/${r.tong_nv}**`
         + `\n\n🏖️ Nghỉ phép: ${r.nghi_phep.length ? tenKip(r.nghi_phep) : 'không có'}`
         + `\n🔴 Vắng mặt: ${r.vang_mat.length ? tenKip(r.vang_mat) : 'không có'}`
@@ -184,7 +184,7 @@ export async function traLoiQuanLy(sb, so) {
           .map(k => `**${NHOM[k]}** (${theoKip[k].length}): ${theoKip[k].join(', ')}`).join('\n');
       };
       const vang = [...(r.theo_ca.NP || []), ...(r.theo_ca.VM || [])];
-      s = `📅 **Ca ngày mai** – ${thuNgay(mai)}\n\n${dong('S', '☀️ **Sáng**')}\n\n${dong('C', '🌙 **Đêm**')}`
+      s = `📅 **Ca ngày mai** – ${thuNgay(mai)}\n\n${dong('S', '☀️ **Sáng**')}\n\n${dong('C', '🌙 **Tối**')}`
         + `\n\n🏖️ Nghỉ phép / vắng: ${vang.length ? tenKip(vang) : 'không có'}`;
       break;
     }

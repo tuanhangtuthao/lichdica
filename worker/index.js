@@ -26,6 +26,7 @@ import { menuCaNhan, menuQuanLy, traLoiCaNhan, traLoiQuanLy, SO_SANG_CA_NHAN } f
 import { hoiAI, cauBaoLoi } from './tro-ly-ai.js';
 import { guiTin, datWebhook } from './zalo.js';
 import { quetBao5S, baoBuKhiLienKet } from './bao-5s.js';
+import { guiBanTin } from './ban-tin.js';
 
 // Bỏ mọi khoảng trắng / ký tự vô hình. Dán chuỗi vào Terminal trên Windows
 // hay dính thêm dấu cách, \r, ký tự BOM ở cuối mà mắt không thấy được, làm
@@ -46,9 +47,15 @@ function lamSachEnv(env) {
 }
 
 export default {
-  // Cron 5 phút/lần (wrangler.jsonc "triggers"): báo 5S chưa đạt qua Zalo
+  // Hai lịch Cron (wrangler.jsonc "triggers"):
+  //   */5 * * * *  -> báo 5S chưa đạt qua Zalo
+  //   0 1 * * *    -> 8:00 giờ VN, bản tin nhân sự ca Sáng / Tối / Hành Chính
   async scheduled(controller, env, ctx) {
-    ctx.waitUntil(quetBao5S(lamSachEnv(env)).catch(e => console.error('[bao5s]', e)));
+    const e = lamSachEnv(env);
+    if (controller.cron === '0 1 * * *')
+      ctx.waitUntil(guiBanTin(e).catch(err => console.error('[bantin]', err)));
+    else
+      ctx.waitUntil(quetBao5S(e).catch(err => console.error('[bao5s]', err)));
   },
 
   async fetch(request, env, ctx) {

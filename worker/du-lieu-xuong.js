@@ -220,7 +220,7 @@ const DINH_NGHIA_XUONG = [
   { name: 'du_lieu_nhan_vien', description: 'Dữ liệu cá nhân của MỘT nhân viên bất kỳ: lich_ca (cần tu_ngay, den_ngay), ngay_nghi_toi, danh_gia / vi_pham_5s / tang_ca / nghi_phep (cần thang).',
     input_schema: obj({ msnv: { type: 'string' }, loai: { type: 'string', enum: Object.keys(LOAI_CA_NHAN) },
       tu_ngay: NGAY, den_ngay: NGAY, thang: THANG }, ['msnv', 'loai']) },
-  { name: 'ca_trong_ngay', description: 'Cả xưởng trong một ngày: ai làm Ca Sáng, ai Ca Chiều/Đêm (C, 18h-6h), ai Nghỉ, Hành Chính, Nghỉ Phép, Vắng Mặt, Chưa phân ca (UN).',
+  { name: 'ca_trong_ngay', description: 'Cả xưởng trong một ngày: ai làm Ca Sáng, ai Ca Chiều / Ca Tối / ca đêm (C, 18h-6h), ai Nghỉ, Hành Chính, Nghỉ Phép, Vắng Mặt, Chưa phân ca (UN).',
     input_schema: obj({ ngay: NGAY }, ['ngay']) },
   { name: 'quan_so', description: 'Quân số một ngày: mỗi kíp đi làm bao nhiêu / tổng, tổng đi làm, ai nghỉ phép, ai vắng mặt, ai chưa phân ca.',
     input_schema: obj({ ngay: NGAY }, ['ngay']) },

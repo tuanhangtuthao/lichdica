@@ -75,7 +75,7 @@ Mọi tin nhắn đều phải nhận đúng **một** câu trả lời. Các tr
 MENU QUẢN LÝ – nhắn SỐ để xem:
 
 1️⃣ Ai làm ca Sáng hôm nay
-2️⃣ Ai làm ca Đêm hôm nay
+2️⃣ Ai làm ca Tối hôm nay
 3️⃣ Quân số hôm nay
 4️⃣ Ai làm ca ngày mai
 5️⃣ Ai chưa được phân ca
@@ -94,9 +94,9 @@ MENU QUẢN LÝ – nhắn SỐ để xem:
 | Số | Nội dung |
 |---|---|
 | 1 | Ai làm ca Sáng hôm nay, nhóm theo kíp → bộ phận, kèm trưởng ca, cuối có nghỉ phép / vắng |
-| 2 | Như trên cho ca Đêm (mã C, 18h–6h) |
+| 2 | Như trên cho ca Tối (mã C, 18h–6h) |
 | 3 | Quân số: mỗi kíp đi làm x/y + HC/Ca Xoay, tổng đi làm, danh sách nghỉ phép / vắng mặt |
-| 4 | Ca ngày mai: ai Sáng / ai Đêm (gọn, theo kíp) |
+| 4 | Ca ngày mai: ai Sáng / ai Tối (gọn, theo kíp) |
 | 5 | Ai Ca Xoay chưa được phân ca hôm nay (mã UN) |
 | 6 | Ai đi làm hôm nay mà chưa có điểm `ratings_new` hôm nay, nhóm theo kíp |
 | 7 | Xếp loại tháng: số người mỗi hạng + danh sách hạng C/D (cùng công thức `xep_hang_danh_gia` ở tro-ly.js) |

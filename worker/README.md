@@ -22,6 +22,12 @@ Nhân viên nhắn số để tra cứu ngay, không qua AI. Quản lý (Trưở
 ## Báo 5S chưa đạt
 Cron 5 phút/lần: lượt 5S chưa đạt mới thì nhắn riêng người bị đánh giá, kèm ảnh. Người chưa liên kết thì bỏ qua và được báo bù khi liên kết. Đặc tả: [BAO-5S-ZALO.md](BAO-5S-ZALO.md).
 
+## Bản tin nhân sự 8:00 sáng
+Cron `0 1 * * *` (01:00 UTC = 8:00 giờ VN) gửi danh sách người đi làm hôm nay: **Ca Sáng, Ca Tối, Hành Chính**, và **Ca 1 / Ca 2 / Ca 3** (mã ca gán tay cho nhóm Ca Xoay, chỉ hiện khi có người). Không qua AI. Code: `worker/ban-tin.js`.
+- **Người nhận:** `BAN_TIN_MSNV` trong `wrangler.jsonc` (cách nhau bằng dấu phẩy, vd `"1050,1049"`), gửi tới tài khoản Zalo đang liên kết. Chưa liên kết thì bỏ qua và ghi log.
+- Ngày không ai đi làm (Chủ nhật, lễ) thì **không gửi**. Tin quá 1800 ký tự được chia nhỏ.
+- Đổi giờ: sửa cron trong `wrangler.jsonc` **và** chuỗi `'0 1 * * *'` trong `worker/index.js` (hai chỗ phải giống nhau). Cron tính theo UTC, trừ 7 giờ so với giờ VN.
+
 ## Bảo mật đã chọn
 
 - **Chỉ cần MSNV**, giống trang Tra Cứu. Lần đầu nhắn, bot hỏi MSNV rồi nhớ tài khoản Zalo đó. Ai gõ MSNV người khác thì xem được dữ liệu người đó.
