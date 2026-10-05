@@ -35,13 +35,13 @@ export const DFUL = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5',
 export function dKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
-function addD(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-function tuKey(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
-function round1(v) { return Math.round(parseFloat(v) * 10) / 10; }
+export function addD(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+export function tuKey(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
+export function round1(v) { return Math.round(parseFloat(v) * 10) / 10; }
 
 // Nhãn đầy đủ để Claude không hiểu nhầm: ở xưởng này N là NGHỈ (không phải
 // ca đêm) và C là ca chiều 18h-6h.
-const NHAN_CA = {
+export const NHAN_CA = {
   S: 'Ca Sáng (6h-18h)', C: 'Ca Chiều (18h-6h sáng hôm sau)', N: 'Nghỉ', L: 'Nghỉ Lễ',
   HC: 'Hành Chính (7h30-16h30)', NP: 'Nghỉ Phép', VM: 'Vắng Mặt',
   UN: 'Chưa có lịch (lịch tháng này chưa chốt)', C1: 'Ca 1 (6h-14h)', C2: 'Ca 2', C3: 'Ca 3',
@@ -49,7 +49,7 @@ const NHAN_CA = {
 export const NHOM = { 1: 'Kíp 1', 2: 'Kíp 2', 3: 'Kíp 3', 4: 'Hành Chính / Ca Xoay' };
 
 // Giống empShiftFor của web: lễ > lịch tay > ca cố định > kíp
-function caCua(e, d, hols, sched) {
+export function caCua(e, d, hols, sched) {
   const dk = dKey(d);
   if (hols.some(h => h.date === dk)) return 'L';
   const ov = sched.filter(s => s.start_date <= dk && dk <= s.end_date);
@@ -63,7 +63,7 @@ function caCua(e, d, hols, sched) {
   return 'UN';
 }
 
-function gioTangCa(o) {
+export function gioTangCa(o) {
   let h = null;
   if (o.note) { const m = o.note.match(/^([\d.]+)h/); if (m) h = parseFloat(m[1]); }
   if (!h && o.start_time && o.end_time) {
@@ -96,6 +96,26 @@ export async function layLienKet(sb, zaloId) {
   return (r.data || [])[0] || null;
 }
 
+// Bỏ dấu, thường hoá - dùng để so chức vụ và nhận lệnh
+export function boDau(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
+}
+
+// Quản lý = chức vụ Trưởng Ca / Tổ Trưởng / Trưởng Phòng (dữ liệu ghi cả
+// "Trưởng Ca" lẫn "Trưởng ca" nên phải so không phân biệt hoa thường).
+const CHUC_VU_QL = ['truong ca', 'to truong', 'truong phong'];
+export function laQuanLy(nv) {
+  return !!nv && CHUC_VU_QL.includes(boDau(nv.role));
+}
+
+// Nhớ người dùng đang ở menu nào. Chưa chạy sql/zalo-menu.sql thì cột
+// chưa có -> bỏ qua, không làm hỏng câu trả lời.
+export async function luuMenu(sb, zaloId, menu) {
+  const r = await sb.from('zalo_links').update({ menu }).eq('zalo_id', zaloId);
+  if (r.error) console.warn('[zalo] chưa lưu được menu (đã chạy sql/zalo-menu.sql chưa?):', r.error.message);
+}
+
 export async function luuLienKet(sb, zaloId, msnv, tenZalo) {
   const r = await sb.from('zalo_links').upsert({
     zalo_id: zaloId, msnv: String(msnv), ten_zalo: tenZalo || '',
@@ -104,12 +124,15 @@ export async function luuLienKet(sb, zaloId, msnv, tenZalo) {
   if (r.error) throw new Error('Lưu liên kết Zalo lỗi: ' + r.error.message);
 }
 
-// Chặn spam đốt tiền API: mỗi tài khoản Zalo tối đa GIOI_HAN câu / ngày.
-export const GIOI_HAN = 40;
-export async function duocHoiTiep(sb, lk) {
+// Chặn spam đốt tiền API: giới hạn số câu hỏi TỰ DO (đi qua AI) mỗi ngày
+// cho mỗi tài khoản Zalo. Trả lời theo số trong menu không qua AI nên không
+// tính vào đây.
+export const GIOI_HAN_NV = 10;   // nhân viên
+export const GIOI_HAN_QL = 40;   // trưởng ca / tổ trưởng / trưởng phòng
+export async function duocHoiTiep(sb, lk, gioiHan) {
   const nay = dKey(homNayVN());
   const so = lk.ngay_dem === nay ? (lk.so_cau || 0) : 0;
-  if (so >= GIOI_HAN) return false;
+  if (so >= gioiHan) return false;
   const r = await sb.from('zalo_links')
     .update({ so_cau: so + 1, ngay_dem: nay }).eq('zalo_id', lk.zalo_id);
   if (r.error) throw new Error('Đếm câu hỏi lỗi: ' + r.error.message);
@@ -267,7 +290,8 @@ export function taoCongCu(sb, e) {
       let tong = 0;
       const lan = (r.data || []).map(o => {
         const h = gioTangCa(o); if (h) tong += h;
-        return { ngay: o.date, ca: o.shift === 'C' ? 'Chiều' : o.shift === 'S' ? 'Sáng' : (o.shift || ''), so_gio: h };
+        return { ngay: o.date, ca: o.shift === 'C' ? 'Chiều' : o.shift === 'S' ? 'Sáng' : (o.shift || ''), so_gio: h,
+                 ca_ca: o.ot_type === 'full' };   // tăng ca cả ca thì không ghi số giờ
       });
       return { thang, tong_gio: round1(tong), so_lan: lan.length, lan };
     },
@@ -287,6 +311,7 @@ export function taoCongCu(sb, e) {
   };
 
   return {
+    dinhNghia: DINH_NGHIA_CONG_CU,
     async chay(ten, dauVao) {
       const f = CONG_CU[ten];
       if (!f) throw new Error('Không có công cụ ' + ten);

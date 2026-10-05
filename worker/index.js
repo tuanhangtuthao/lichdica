@@ -16,7 +16,12 @@
 //   ANTHROPIC_API_KEY  key Claude API
 // Hướng dẫn cài đặt: worker/README.md
 // ═══════════════════════════════════════════════════════════════
-import { taoSb, timNV, layLienKet, luuLienKet, duocHoiTiep, taoCongCu, NHOM, GIOI_HAN } from './du-lieu.js';
+import {
+  taoSb, timNV, layLienKet, luuLienKet, luuMenu, duocHoiTiep, taoCongCu, laQuanLy, boDau,
+  GIOI_HAN_NV, GIOI_HAN_QL,
+} from './du-lieu.js';
+import { taoCongCuQuanLy } from './du-lieu-xuong.js';
+import { menuCaNhan, menuQuanLy, traLoiCaNhan, traLoiQuanLy, SO_SANG_CA_NHAN } from './menu.js';
 import { hoiAI, cauBaoLoi } from './tro-ly-ai.js';
 import { guiTin, datWebhook } from './zalo.js';
 
@@ -103,14 +108,9 @@ export default {
   },
 };
 
-// Bỏ dấu để nhận "đổi MSNV", "doi msnv"...
-function boDau(s) {
-  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
-}
-
-const GOI_Y = '- Mai tôi làm ca gì?\n- Lịch tuần sau của tôi\n- Khi nào tôi được nghỉ?\n'
-  + '- Xếp loại tháng này của tôi\n- Tôi vi phạm 5S mấy lần?';
+// Lời chào -> gửi menu. Chỉ tính khi tin ngắn (≤ 3 từ): "chào, mai tôi làm
+// ca gì" là câu hỏi thật, phải đưa cho AI.
+const LOI_CHAO = /^(chao|xin chao|hi|hello|helo|alo|hey|menu|bat dau|start)\b/;
 
 async function xuLy(update, env) {
   // Zalo có thể gói trong { ok, result } hoặc gửi thẳng result
@@ -124,7 +124,7 @@ async function xuLy(update, env) {
   if (msg.chat.chat_type && msg.chat.chat_type !== 'PRIVATE')
     return gui('Mình chỉ trả lời tin nhắn riêng để giữ kín thông tin cá nhân. Bạn nhắn riêng cho mình nhé.');
   if (ev.event_name !== 'message.text.received' || !msg.text)
-    return gui('Mình chỉ đọc được tin nhắn chữ thôi bạn nhé.');
+    return gui('Mình chỉ đọc được tin nhắn chữ. Nhắn **0** để xem menu nhé.');
 
   // Lỗi gì cũng phải trả lời, đừng để người nhắn chờ suông
   try {
@@ -135,36 +135,72 @@ async function xuLy(update, env) {
   }
 }
 
+// Đặc tả: worker/MENU-ZALO.md
 async function xuLyTin(msg, zaloId, gui, env) {
   const text = msg.text.trim();
+  const tx = boDau(text);
   const sb = taoSb();
   const lk = await layLienKet(sb, zaloId);
 
-  // ── nhập / đổi MSNV ──
-  const doi = boDau(text).match(/^(?:doi )?msnv:? ?([a-z0-9]+)$/);
-  const chiLaSo = /^\d{3,6}$/.test(text);
-  if (doi || (!lk && chiLaSo)) {
+  // ── nhập / đổi MSNV -> gửi luôn menu "nhà" ──
+  const doi = tx.match(/^(?:doi )?msnv:? ?([a-z0-9]+)$/);
+  const laMa = /^\d{3,6}$/.test(text);
+  if (doi || (!lk && laMa)) {
     const ma = doi ? doi[1] : text;
     const nv = await timNV(sb, ma);
     if (!nv) return gui(`Không tìm thấy MSNV **${ma}**. Bạn kiểm tra lại giúp mình nhé.`);
+    const ql = laQuanLy(nv);
     await luuLienKet(sb, zaloId, nv.id, msg.from.display_name);
-    return gui(`Chào **${nv.name}** (${NHOM[nv.kip] || ''}) 👋\n`
-      + `Từ giờ bạn cứ hỏi thẳng, ví dụ:\n${GOI_Y}\n\nCần đổi người thì nhắn "đổi MSNV 1234".`);
+    await luuMenu(sb, zaloId, ql ? 'quan_ly' : 'ca_nhan');
+    return gui(ql ? menuQuanLy(nv) : menuCaNhan(nv, false));
   }
 
   if (!lk)
     return gui(`Chào ${msg.from.display_name || 'bạn'} 👋 Mình là Trợ Lý Phân Xưởng 1.\n`
       + 'Bạn nhắn **MSNV** của mình (ví dụ: 1049) để bắt đầu nhé.');
 
-  if (!(await duocHoiTiep(sb, lk)))
-    return gui(`Hôm nay bạn đã hỏi ${GIOI_HAN} câu rồi, mai hỏi tiếp nhé.`);
-
   const nv = await timNV(sb, lk.msnv);
   if (!nv) return gui(`MSNV ${lk.msnv} không còn trong danh sách. Nhắn "đổi MSNV <số>" để cập nhật.`);
+  const ql = laQuanLy(nv);
+  // Nhân viên luôn ở menu cá nhân. Quản lý: theo cột menu; chưa chạy
+  // sql/zalo-menu.sql (chưa có cột) thì coi như đang ở menu quản lý.
+  const menu = ql && lk.menu !== 'ca_nhan' ? 'quan_ly' : 'ca_nhan';
+
+  // ── chào / 0 -> về menu "nhà" (quản lý: menu quản lý) ──
+  if (text === '0' || (LOI_CHAO.test(tx) && tx.split(' ').length <= 3)) {
+    if (!ql) return gui(menuCaNhan(nv, false));
+    await luuMenu(sb, zaloId, 'quan_ly');
+    return gui(menuQuanLy(nv));
+  }
+
+  // ── số trong menu: KHÔNG qua AI, không tính vào giới hạn ──
+  if (/^\d{1,2}$/.test(text)) {
+    const so = Number(text);
+    if (menu === 'quan_ly') {
+      if (so === SO_SANG_CA_NHAN) {
+        await luuMenu(sb, zaloId, 'ca_nhan');
+        return gui(menuCaNhan(nv, true));
+      }
+      return gui(await traLoiQuanLy(sb, so));
+    }
+    return gui(await traLoiCaNhan(sb, nv, so, ql));
+  }
+
+  // Gõ một MSNV khác khi đã liên kết: chỉ cách đổi, không đốt lượt AI
+  if (laMa)
+    return gui(`Bạn đang dùng MSNV **${nv.id}** (${nv.name}). Muốn đổi người thì nhắn: đổi MSNV ${text}`);
+
+  // ── câu hỏi tự do -> AI ──
+  const gioiHan = ql ? GIOI_HAN_QL : GIOI_HAN_NV;
+  if (!(await duocHoiTiep(sb, lk, gioiHan)))
+    return gui(`Hôm nay bạn đã hỏi ${gioiHan} câu tự do rồi. Bạn vẫn dùng menu số được nhé — nhắn **0** để xem.`);
 
   let traLoi;
   try {
-    traLoi = await hoiAI({ env, cauHoi: text, nhanVien: nv, congCu: taoCongCu(sb, nv) });
+    traLoi = await hoiAI({
+      env, cauHoi: text, nhanVien: nv, laQL: ql,
+      congCu: ql ? taoCongCuQuanLy(sb, nv) : taoCongCu(sb, nv),
+    });
   } catch (e) {
     console.error('[claude]', e);
     traLoi = cauBaoLoi(e);

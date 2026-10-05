@@ -6,7 +6,7 @@
 //   · MSNV gắn sẵn trong công cụ, Claude không chọn được người khác
 // ═══════════════════════════════════════════════════════════════
 import Anthropic from '@anthropic-ai/sdk';
-import { DINH_NGHIA_CONG_CU, DFUL, NHOM, dKey, homNayVN } from './du-lieu.js';
+import { DFUL, NHOM, dKey, homNayVN } from './du-lieu.js';
 
 // Haiku 4.5: rẻ và nhanh, đủ cho tra cứu lịch ca / điểm. Muốn thông minh
 // hơn thì đổi sang 'claude-opus-5-5' (đắt hơn khoảng 4-5 lần).
@@ -19,6 +19,8 @@ const MAX_TOKENS = 1500;        // câu trả lời Zalo ngắn, tối đa 2000 
 // báo chậm, thay vì bị Cloudflare cắt ngang làm người hỏi chờ suông.
 const HAN_CHOT_MS = 24000;
 export const CAU_CHAM = 'Trợ lý đang chậm, bạn hỏi lại sau ít phút nhé.';
+// Không bao giờ im lặng: AI không ra được câu trả lời thì dùng câu này
+export const CAU_CHUA_HIEU = '🤔 Mình chưa hiểu câu này.\nBạn nhắn **0** để xem menu, hoặc hỏi lại ngắn gọn, vd: "mai tôi làm ca gì?"';
 
 function lichMuoiBonNgay() {
   const t = homNayVN(), dong = [];
@@ -30,7 +32,7 @@ function lichMuoiBonNgay() {
   return dong.join('\n');
 }
 
-function taoSystem(nv) {
+function taoSystem(nv, laQL) {
   const t = homNayVN();
   return `Bạn là Trợ Lý Phân Xưởng 1 của xưởng cơ khí BachTung, trả lời nhân viên qua Zalo.
 
@@ -41,20 +43,29 @@ Lịch ngày để quy đổi "mai", "thứ 5", "tuần sau":
 ${lichMuoiBonNgay()}
 
 Quy tắc:
-- Bạn chỉ tra được thông tin CỦA CHÍNH người đang nhắn: lịch ca, ngày nghỉ, tăng ca, nghỉ phép, đánh giá / xếp loại, vi phạm 5S, và tiêu chí 5S chung của xưởng.
+${laQL ? QUYEN_QUAN_LY : QUYEN_NHAN_VIEN}
 - Mọi con số, ca làm, ngày tháng phải lấy từ công cụ. Không có dữ liệu thì nói là chưa có, tuyệt đối không đoán.
-- Nếu hỏi về người khác, hoặc chuyện ngoài các mục trên (lương, nội quy, chuyện riêng...), nói lịch sự rằng bạn chỉ tra được các thông tin cá nhân kể trên.
+- Không hiểu câu hỏi thì nói thẳng là chưa hiểu và gợi ý nhắn **0** để xem menu.
 - Ở xưởng này "Nghỉ" là ngày nghỉ, "Ca Chiều" là ca 18h đến 6h sáng hôm sau. Dùng đúng nhãn ca mà công cụ trả về.
 - Trả lời tiếng Việt, xưng "mình", gọi "bạn", ngắn gọn thân thiện, dưới 1200 ký tự.
 - Định dạng cho Zalo: được dùng **in đậm** và gạch đầu dòng "- ". Không dùng bảng, không dùng tiêu đề #.
 - Ghi ngày dạng "Thứ 5 15/10".`;
 }
 
+const QUYEN_NHAN_VIEN = `- Bạn chỉ tra được thông tin CỦA CHÍNH người đang nhắn: lịch ca, ngày nghỉ, tăng ca, nghỉ phép, đánh giá / xếp loại, vi phạm 5S, và tiêu chí 5S chung của xưởng.
+- Nếu hỏi về người khác, hoặc chuyện ngoài các mục trên (lương, nội quy, chuyện riêng...), trả lời đúng ý: "Mình chỉ tra được lịch ca, điểm, 5S, tăng ca, nghỉ phép **của chính bạn**. Nhắn **0** để xem menu nhé."`;
+
+const QUYEN_QUAN_LY = `- Người đang nhắn là QUẢN LÝ, được xem dữ liệu của CẢ XƯỞNG: ai làm ca nào, quân số, điểm / xếp loại, vi phạm 5S, tăng ca, nghỉ phép của bất kỳ ai, đơn xin nghỉ chờ duyệt.
+- Hỏi về một người cụ thể theo tên thì dùng tim_nhan_vien để lấy MSNV trước, rồi dùng du_lieu_nhan_vien. Tên trùng nhiều người thì liệt kê để người hỏi chọn.
+- "Ca đêm" chính là Ca Chiều (mã C, 18h-6h). Hỏi về chính người đang nhắn thì dùng các công cụ cá nhân.
+- Chuyện ngoài các mục trên (lương, nội quy...) thì nói lịch sự là chưa tra được, gợi ý nhắn **0** để xem menu.`;
+
 function layChu(res) {
   return res.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
 }
 
-export async function hoiAI({ env, cauHoi, nhanVien, congCu }) {
+// congCu: { dinhNghia, chay } - bộ cá nhân (nhân viên) hoặc bộ quản lý
+export async function hoiAI({ env, cauHoi, nhanVien, congCu, laQL }) {
   // ANTHROPIC_BASE_URL: đang dùng key mua qua bên thứ 3 nên phải gọi qua máy
   // chủ của họ (họ phải hỗ trợ đúng định dạng Messages API của Anthropic).
   // LƯU Ý: khi đặt biến này, dữ liệu nhân sự trong câu hỏi đi qua máy chủ bên
@@ -64,7 +75,7 @@ export async function hoiAI({ env, cauHoi, nhanVien, congCu }) {
     ...(env.ANTHROPIC_BASE_URL ? { baseURL: env.ANTHROPIC_BASE_URL } : {}),
   });
   const model = env.CLAUDE_MODEL || MODEL;
-  const system = taoSystem(nhanVien);
+  const system = taoSystem(nhanVien, laQL);
   const messages = [{ role: 'user', content: cauHoi }];
 
   const batDau = Date.now();
@@ -73,13 +84,13 @@ export async function hoiAI({ env, cauHoi, nhanVien, congCu }) {
     if (conLai < 2000) return CAU_CHAM;
     // không tự thử lại: thử lại là vượt luôn hạn chót
     const res = await client.messages.create({
-      model, max_tokens: MAX_TOKENS, system, tools: DINH_NGHIA_CONG_CU, messages,
+      model, max_tokens: MAX_TOKENS, system, tools: congCu.dinhNghia, messages,
     }, { timeout: conLai, maxRetries: 0 });
 
     if (res.stop_reason === 'refusal')
-      return 'Câu này mình không trả lời được. Bạn hỏi về lịch ca, đánh giá hay 5S của bạn nhé.';
+      return 'Câu này mình không trả lời được. Nhắn **0** để xem menu nhé.';
     if (res.stop_reason !== 'tool_use')
-      return layChu(res) || 'Mình chưa hiểu câu hỏi. Bạn hỏi lại ngắn gọn hơn giúp mình nhé.';
+      return layChu(res) || CAU_CHUA_HIEU;
 
     messages.push({ role: 'assistant', content: res.content });
     const ketQua = [];

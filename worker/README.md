@@ -16,12 +16,15 @@ Zalo ──webhook──▶ Cloudflare Worker /api/zalo ──▶ Claude API (ch
 | `du-lieu.js` | Các công cụ tra cứu. Lịch ca lấy từ `../lich-ca.js`, tiêu chí 5S từ `../5s-tieu-chi.js`, nên luôn khớp với web |
 | `zalo.js` | Gọi Zalo Bot API |
 
+## Menu số
+Nhân viên nhắn số để tra cứu ngay, không qua AI. Quản lý (Trưởng Ca / Tổ Trưởng / Trưởng Phòng) có thêm menu quản lý xem toàn xưởng. Đặc tả đầy đủ: [MENU-ZALO.md](MENU-ZALO.md). Câu hỏi tự do vẫn qua AI: nhân viên 10 câu/ngày, quản lý 40 câu/ngày.
+
 ## Bảo mật đã chọn
 
 - **Chỉ cần MSNV**, giống trang Tra Cứu. Lần đầu nhắn, bot hỏi MSNV rồi nhớ tài khoản Zalo đó. Ai gõ MSNV người khác thì xem được dữ liệu người đó.
 - **Chỉ dữ liệu của chính người hỏi.** Không công cụ nào có tham số MSNV; MSNV được gắn cứng phía server. Hỏi về người khác thì bot không có cách nào tra.
 - **Không trả lời trong nhóm Zalo**, vì cả nhóm đọc được.
-- **Tối đa 40 câu / tài khoản / ngày** để chặn spam đốt tiền API. Đổi số ở `GIOI_HAN` trong `du-lieu.js`.
+- **Giới hạn câu hỏi tự do (qua AI) mỗi ngày:** nhân viên 10, quản lý 40, để chặn spam đốt tiền API. Nhắn số trong menu không bị tính. Đổi ở `GIOI_HAN_NV` / `GIOI_HAN_QL` trong `du-lieu.js`.
 
 ## Cài đặt (làm 1 lần)
 
