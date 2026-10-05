@@ -7,10 +7,10 @@
 // ═══════════════════════════════════════════════════════════════
 import {
   caCua, gioTangCa, round1, tuKey, dKey, DFUL, NHAN_CA, NHOM, timNV, taoCongCu, boDau,
-  DINH_NGHIA_CONG_CU,
+  DINH_NGHIA_CONG_CU, homNayVN, laQuanLy,
 } from './du-lieu.js';
 
-const { S_DEFS, tieuChiCua, dsNguoiChiu5S } = globalThis.TieuChi5S;
+const { S_DEFS, tieuChiCua, dsNguoiChiu5S, laLoiCua5S } = globalThis.TieuChi5S;
 const { getShift } = globalThis.LichCa;
 const DI_LAM = ma => !['N', 'L', 'NP', 'VM', 'UN'].includes(ma);
 
@@ -47,6 +47,27 @@ export function taoXuong(sb) {
     return _nen;
   }
   const tenNV = (emps, id) => (emps.find(e => String(e.id) === String(id)) || {}).name;
+
+  // Nạp dữ liệu cả tháng MỘT lần cho mọi người (Cloudflare gói miễn phí chỉ cho 50 lệnh gọi mạng)
+  async function nenThang(thang) {
+    kiemThang(thang);
+    const base = await nen();
+    const [y, m] = thang.split('-').map(Number);
+    const sau = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    const kq = await Promise.all([
+      sb.from('ratings_new').select('emp_id,date,score,note').like('date', thang + '-%'),
+      // s5_checks.date là cột kiểu date thật -> lọc khoảng ngày, không dùng like
+      sb.from('s5_checks').select('*').gte('date', thang + '-01').lt('date', sau),
+      sb.from('overtime').select('*').like('date', thang + '-%'),
+      sb.from('monthly_reviews').select('emp_id,grade').eq('month_key', thang).eq('approved', true),
+    ]);
+    const loi = kq.find(x => x.error);
+    if (loi) throw new Error(loi.error.message);
+    const [rt, s5, ot, rv] = kq.map(x => x.data || []);
+    return { ...base, thang, cuoi: new Date(y, m, 0).getDate(), rt, s5, ot, rv };
+  }
+  // Gom các dòng theo người: { emp_id -> Set của giá trị lay(dòng) }
+  const theoNguoi = (rows, khoa, lay) => rows.reduce((m, r) => ((m[String(r[khoa])] = m[String(r[khoa])] || new Set()).add(lay(r)), m), {});
 
   // Ca của từng nhân viên trong một ngày
   async function caNgay(dk) {
@@ -90,7 +111,9 @@ export function taoXuong(sb) {
       const r = await sb.from('ratings_new').select('emp_id').eq('date', dk);
       if (r.error) throw new Error(r.error.message);
       const daCham = new Set((r.data || []).map(x => String(x.emp_id)));
-      const thieu = ds.filter(x => DI_LAM(x.ma) && !daCham.has(x.id) && boDau(x.chuc_vu) !== 'truong phong');
+      // Trưởng Ca / Tổ Trưởng / Trưởng Phòng không nằm trong diện chấm điểm hằng ngày (0 lượt cả
+      // tháng 9 lẫn tháng 10) -> không tính là thiếu
+      const thieu = ds.filter(x => DI_LAM(x.ma) && !daCham.has(x.id) && !laQuanLy({ role: x.chuc_vu }));
       return { ngay: dk, so_da_cham: daCham.size, chua_cham: thieu.map(x => ({ ten: x.ten, kip: x.kip, chuc_vu: x.chuc_vu })) };
     },
 
@@ -197,6 +220,107 @@ export function taoXuong(sb) {
       return { tu_khoa: tuKhoa, ket_qua: ds };
     },
 
+    // ── TỔNG HỢP CẢ THÁNG: một lần gọi trả lời được câu hỏi nhiều người / nhiều ngày ──
+
+    // Ai thiếu điểm đánh giá ngày nào trong tháng. Chỉ tính ngày người đó ĐI LÀM theo lịch.
+    async thieu_diem_thang(thang) {
+      const c = await nenThang(thang), hom = dKey(homNayVN()), thangNay = hom.slice(0, 7);
+      if (thang > thangNay) return { thang, ket_qua: 'Tháng này chưa tới nên chưa có điểm.' };
+      // Tháng hiện tại chỉ tính tới hết hôm qua: điểm hôm nay còn đang được chấm trong ngày
+      const cuoiNgay = thang === thangNay ? Number(hom.slice(8, 10)) - 1 : c.cuoi;
+      if (cuoiNgay < 1) return { thang, ket_qua: 'Mới đầu tháng, chưa có ngày nào đã qua để tính.' };
+      const daCham = theoNguoi(c.rt, 'emp_id', r => r.date);
+      const can = c.emps.filter(e => !laQuanLy(e));
+      const nguoi = [], ngay = {}, khongCo = [];
+      let tongCan = 0, tongThieu = 0;
+      for (const e of can) {
+        const id = String(e.id), sch = c.schedTheoNV[e.id] || [], co = daCham[id] || new Set();
+        const thieu = []; let lam = 0;
+        for (let i = 1; i <= cuoiNgay; i++) {
+          const dk = `${thang}-${String(i).padStart(2, '0')}`;
+          if (!DI_LAM(caCua(e, tuKey(dk), c.hols, sch))) continue;
+          lam++; tongCan++;
+          ngay[dk] = ngay[dk] || { can_cham: 0, thieu: 0 }; ngay[dk].can_cham++;
+          if (!co.has(dk)) { thieu.push(dk.slice(8) + '/' + dk.slice(5, 7)); ngay[dk].thieu++; tongThieu++; }
+        }
+        if (lam && !co.size) khongCo.push({ ten: e.name, kip: e.kip, so_ngay_lam: lam });
+        if (thieu.length) nguoi.push({ ten: e.name, kip: e.kip, chuc_vu: e.role || '', so_ngay_lam: lam, so_ngay_thieu: thieu.length, ngay_thieu: thieu });
+      }
+      nguoi.sort((a, b) => b.so_ngay_thieu - a.so_ngay_thieu);
+      let homNayCho = null;
+      if (thang === thangNay)
+        homNayCho = can.filter(e => DI_LAM(caCua(e, tuKey(hom), c.hols, c.schedTheoNV[e.id] || [])) && !(daCham[String(e.id)] || new Set()).has(hom)).length;
+      return {
+        thang, tinh_den_ngay: `${thang}-${String(cuoiNgay).padStart(2, '0')}`,
+        luu_y: (thang === thangNay ? 'Chưa tính hôm nay vì điểm hôm nay còn đang được chấm trong ngày. ' : '')
+          + 'Trưởng Ca, Tổ Trưởng, Trưởng Phòng không nằm trong diện chấm điểm hằng ngày nên không tính.',
+        so_nguoi_can_cham: can.length, so_nguoi_thieu: nguoi.length,
+        tong_luot_can_cham: tongCan, tong_luot_thieu: tongThieu,
+        khong_co_diem_nao: khongCo,
+        theo_nguoi: nguoi.slice(0, 45),
+        theo_ngay: Object.entries(ngay).map(([d, v]) => ({ ngay: d, ...v })),
+        hom_nay_dang_cho: homNayCho,
+      };
+    },
+
+    // Bảng tổng hợp mỗi nhân viên trong tháng: ngày làm, nghỉ, tăng ca, 5S, điểm, hạng
+    async bang_tong_hop_thang(thang) {
+      const c = await nenThang(thang), hom = dKey(homNayVN()), thangNay = hom.slice(0, 7);
+      if (thang > thangNay) return { thang, ket_qua: 'Tháng này chưa tới.' };
+      const dau = thang + '-01', ck = `${thang}-${String(c.cuoi).padStart(2, '0')}`;
+      const cuoiLam = thang === thangNay ? Number(hom.slice(8, 10)) : c.cuoi;     // ngày làm tính tới hôm nay
+      const cuoiCham = thang === thangNay ? cuoiLam - 1 : c.cuoi;                  // điểm tính tới hôm qua
+      const diem = theoNguoi(c.rt, 'emp_id', r => r);
+      const hang = Object.fromEntries(c.rv.map(r => [String(r.emp_id), r.grade]));
+      const dong = c.emps.map(e => {
+        const id = String(e.id), sch = c.schedTheoNV[e.id] || [];
+        let lam = 0, thieu = 0, np = 0, vm = 0;
+        const co = new Set([...(diem[id] || [])].map(r => r.date));
+        for (let i = 1; i <= cuoiLam; i++) {
+          const dk = `${thang}-${String(i).padStart(2, '0')}`;
+          const ma = caCua(e, tuKey(dk), c.hols, sch);
+          if (ma === 'NP') np++; else if (ma === 'VM') vm++;
+          if (!DI_LAM(ma)) continue;
+          lam++;
+          if (i <= cuoiCham && !co.has(dk) && !laQuanLy(e)) thieu++;
+        }
+        let gio = 0, caCa = 0;
+        c.ot.filter(o => String(o.emp_id) === id).forEach(o => { const h = gioTangCa(o); if (h) gio += h; if (o.ot_type === 'full') caCa++; });
+        const sc = [...(diem[id] || [])].map(r => parseFloat(r.score));
+        return {
+          ten: e.name, kip: e.kip, chuc_vu: e.role || '',
+          ngay_lam: lam, nghi_phep: np, vang_mat: vm,
+          tang_ca_gio: round1(gio), tang_ca_ca_ca: caCa,
+          vi_pham_5s: c.s5.filter(chuaDat).filter(x => laLoiCua5S(x, id, e.name, boDau)).length,
+          diem_trung_binh: sc.length ? round1(sc.reduce((a, b) => a + b, 0) / sc.length) : null,
+          so_ngay_da_cham: sc.length, so_ngay_thieu_diem: laQuanLy(e) ? null : thieu,
+          xep_loai_da_duyet: hang[id] || null,
+        };
+      });
+      return {
+        thang, tinh_den: `${thang}-${String(cuoiLam).padStart(2, '0')}`,
+        luu_y: 'Trưởng Ca, Tổ Trưởng, Trưởng Phòng không được chấm điểm hằng ngày (diem_trung_binh = null là bình thường). '
+          + 'xep_loai_da_duyet = null nghĩa là quản lý chưa duyệt xếp loại tháng này.',
+        so_nguoi: dong.length, nhan_vien: dong,
+      };
+    },
+
+    // Các lượt chấm điểm thấp (kèm ghi chú) trong khoảng ngày
+    async diem_thap(tu, den, duoi = 9) {
+      kiemNgay(tu, 'tu_ngay'); kiemNgay(den, 'den_ngay');
+      const r = await sb.from('ratings_new').select('date,emp_name,emp_id,kip,score,note').gte('date', tu).lte('date', den).order('date');
+      if (r.error) throw new Error(r.error.message);
+      const ds = (r.data || []).filter(x => parseFloat(x.score) < duoi);
+      const dem = {};
+      ds.forEach(x => { dem[x.emp_name] = (dem[x.emp_name] || 0) + 1; });
+      return {
+        tu_ngay: tu, den_ngay: den, duoi_diem: duoi, tong_luot_cham: (r.data || []).length, so_luot_thap: ds.length,
+        luu_y: 'Đọc ghi_chu của từng lượt để biết lý do điểm thấp.',
+        theo_nguoi: Object.entries(dem).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([ten, lan]) => ({ ten, so_lan: lan })),
+        chi_tiet: ds.slice(0, 60).map(x => ({ ngay: x.date, ten: x.emp_name, kip: x.kip, diem: parseFloat(x.score), ghi_chu: x.note || '' })),
+      };
+    },
+
     // Dữ liệu cá nhân của BẤT KỲ ai - dùng lại đúng công cụ cá nhân
     async du_lieu_nhan_vien(msnv, ten, dauVao) {
       const e = await timNV(sb, msnv);
@@ -228,8 +352,14 @@ const DINH_NGHIA_XUONG = [
     input_schema: obj({ ngay: NGAY }, ['ngay']) },
   { name: 'quan_so', description: 'Quân số một ngày: mỗi kíp đi làm bao nhiêu / tổng, tổng đi làm, ai nghỉ phép, ai vắng mặt, ai chưa phân ca.',
     input_schema: obj({ ngay: NGAY }, ['ngay']) },
-  { name: 'chua_cham_diem', description: 'Ai đi làm trong ngày mà chưa được chấm điểm đánh giá.',
+  { name: 'chua_cham_diem', description: 'Ai đi làm trong MỘT ngày cụ thể mà chưa được chấm điểm. CHỈ dùng khi hỏi đúng một ngày; hỏi cả tháng hoặc nhiều ngày thì dùng thieu_diem_thang.',
     input_schema: obj({ ngay: NGAY }, ['ngay']) },
+  { name: 'thieu_diem_thang', description: 'Thống kê CẢ THÁNG ai thiếu điểm đánh giá, thiếu những ngày nào (chỉ tính ngày người đó đi làm theo lịch): số người thiếu, tổng lượt thiếu, người không có điểm nào, danh sách theo người và theo ngày. Dùng cho "tháng này ai chưa được chấm điểm", "ai bị bỏ sót nhiều nhất".',
+    input_schema: obj({ thang: THANG }, ['thang']) },
+  { name: 'bang_tong_hop_thang', description: 'Bảng tổng hợp CẢ THÁNG của từng nhân viên trong một lần gọi: ngày làm, nghỉ phép, vắng mặt, giờ tăng ca, số lần 5S chưa đạt, điểm trung bình, số ngày thiếu điểm, xếp loại đã duyệt. Dùng cho mọi câu so sánh hoặc xếp hạng nhiều người ("ai nghỉ nhiều nhất", "ai tăng ca nhiều", "kíp nào 5S kém", "so sánh các kíp").',
+    input_schema: obj({ thang: THANG }, ['thang']) },
+  { name: 'diem_thap_xuong', description: 'Các lượt chấm điểm thấp của cả xưởng trong khoảng ngày, kèm ghi chú của người chấm. Dùng cho "ai bị điểm thấp", "vì sao điểm thấp". Mặc định điểm dưới 9.',
+    input_schema: obj({ tu_ngay: NGAY, den_ngay: NGAY, duoi_diem: { type: 'number', description: 'Chỉ lấy điểm nhỏ hơn số này, mặc định 9' } }, ['tu_ngay', 'den_ngay']) },
   { name: 'xep_loai_thang', description: 'Điểm và xếp loại (A+, A, B, C, D) của cả xưởng trong tháng, số người mỗi hạng.',
     input_schema: obj({ thang: THANG }, ['thang']) },
   { name: 'vi_pham_5s_xuong', description: 'Các lượt kiểm tra 5S chưa đạt của cả xưởng trong khoảng ngày: ai, máy, mục, ghi chú.',
@@ -253,6 +383,9 @@ export function taoCongCuQuanLy(sb, nv) {
     ca_trong_ngay: a => x.ca_trong_ngay(a.ngay),
     quan_so: a => x.quan_so(a.ngay),
     chua_cham_diem: a => x.chua_cham_diem(a.ngay),
+    thieu_diem_thang: a => x.thieu_diem_thang(a.thang),
+    bang_tong_hop_thang: a => x.bang_tong_hop_thang(a.thang),
+    diem_thap_xuong: a => x.diem_thap(a.tu_ngay, a.den_ngay, a.duoi_diem == null ? 9 : Number(a.duoi_diem)),
     xep_loai_thang: a => x.xep_loai_thang(a.thang),
     vi_pham_5s_xuong: a => x.vi_pham_5s(a.tu_ngay, a.den_ngay),
     top_5s_thang: a => x.top_5s_thang(a.thang),

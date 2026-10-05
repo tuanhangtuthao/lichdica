@@ -13,7 +13,9 @@ import { DFUL, NHOM, dKey, homNayVN } from './du-lieu.js';
 // Secret CLAUDE_MODEL (tuỳ chọn) đè giá trị này nếu bên cung cấp key đặt tên model khác.
 const MODEL = 'claude-haiku-4-5';
 const VONG_TOI_DA = 4;          // 1 câu hỏi thường chỉ cần 1-2 vòng
-const MAX_TOKENS = 1500;        // câu trả lời Zalo ngắn, tối đa 2000 ký tự
+const VONG_TOI_DA_QL = 5;       // quản lý hỏi sâu hơn, được thêm một vòng
+const MAX_TOKENS = 1500;        // câu trả lời của nhân viên: ngắn
+const MAX_TOKENS_QL = 2800;     // quản lý: câu trả lời dài (index.js tự chia thành nhiều tin Zalo)
 // Cloudflare chỉ cho chạy tiếp tối đa 30 giây sau khi đã trả lời Zalo. Qua
 // máy chủ bên thứ 3, một câu đo được tới 23,6 giây. Quá mốc này thì dừng và
 // báo chậm, thay vì bị Cloudflare cắt ngang làm người hỏi chờ suông.
@@ -46,6 +48,7 @@ Quy tắc:
 ${laQL ? QUYEN_QUAN_LY : QUYEN_NHAN_VIEN}
 - Mọi con số, ca làm, ngày tháng phải lấy từ công cụ. Không có dữ liệu thì nói là chưa có, tuyệt đối không đoán.
 - Không hiểu câu hỏi thì nói thẳng là chưa hiểu và gợi ý nhắn **0** để xem menu.
+- Lời chào, cảm ơn, "ok" hay tin không có câu hỏi: đáp đúng 1 câu ngắn, KHÔNG gọi công cụ, không tự liệt kê lịch. Câu không hiểu cũng không gọi công cụ.
 - Ở xưởng này "Nghỉ" là ngày nghỉ, "Ca Chiều" là ca 18h đến 6h sáng hôm sau. Dùng đúng nhãn ca mà công cụ trả về.
 - Trả lời tiếng Việt, xưng "mình", gọi "bạn", ngắn gọn thân thiện, dưới 1200 ký tự.
 - Định dạng cho Zalo: được dùng **in đậm** và gạch đầu dòng "- ". Không dùng bảng, không dùng tiêu đề #.
@@ -56,6 +59,11 @@ const QUYEN_NHAN_VIEN = `- Bạn chỉ tra được thông tin CỦA CHÍNH ngư
 - Nếu hỏi về người khác, hoặc chuyện ngoài các mục trên (lương, nội quy, chuyện riêng...), trả lời đúng ý: "Mình chỉ tra được lịch ca, điểm, 5S, tăng ca, nghỉ phép **của chính bạn**. Nhắn **0** để xem menu nhé."`;
 
 const QUYEN_QUAN_LY = `- Người đang nhắn là QUẢN LÝ, được xem dữ liệu của CẢ XƯỞNG: ai làm ca nào, quân số, điểm / xếp loại, vi phạm 5S, tăng ca, nghỉ phép của bất kỳ ai, đơn xin nghỉ chờ duyệt.
+- CÂU HỎI VỀ CẢ THÁNG / NHIỀU NGÀY / NHIỀU NGƯỜI: dùng công cụ tổng hợp (thieu_diem_thang, bang_tong_hop_thang, diem_thap_xuong, xep_loai_thang, top_5s_thang, vi_pham_5s_xuong, tang_ca_xuong). TUYỆT ĐỐI không gọi lặp một công cụ theo từng ngày, vì chậm và dễ hết giờ.
+- Cần nhiều công cụ thì GỌI SONG SONG tất cả trong cùng một lượt, đừng gọi từng cái một.
+- Trả lời ĐÚNG ĐIỀU ĐƯỢC HỎI. Nếu công cụ không đủ để trả lời đúng, nói rõ phần nào chưa tra được; không được âm thầm trả lời một câu hỏi khác (ví dụ hỏi cả tháng mà chỉ trả hôm nay).
+- Trả lời SÂU: nêu số tổng trước, rồi danh sách (nhóm theo kíp), rồi 1-3 nhận xét đáng chú ý (người nổi bật, xu hướng, điều cần quản lý lưu ý). Tối đa khoảng 1200 ký tự (trả lời càng gọn càng nhanh); dài hơn thì chọn phần quan trọng nhất. Chỉ viết tiếng Việt, không xen chữ nước ngoài.
+- Trưởng Ca, Tổ Trưởng, Trưởng Phòng KHÔNG nằm trong diện chấm điểm hằng ngày, đừng coi họ là thiếu điểm.
 - Hỏi về một người cụ thể theo tên thì dùng tim_nhan_vien để lấy MSNV trước, rồi dùng du_lieu_nhan_vien. Tên trùng nhiều người thì liệt kê để người hỏi chọn.
 - "Ca tối" hay "ca đêm" chính là Ca Chiều (mã C, 18h-6h). Hỏi về chính người đang nhắn thì dùng các công cụ cá nhân.
 - Chuyện ngoài các mục trên (lương, nội quy...) thì nói lịch sự là chưa tra được, gợi ý nhắn **0** để xem menu.`;
@@ -79,13 +87,19 @@ export async function hoiAI({ env, cauHoi, nhanVien, congCu, laQL }) {
   const messages = [{ role: 'user', content: cauHoi }];
 
   const batDau = Date.now();
-  for (let vong = 0; vong < VONG_TOI_DA; vong++) {
+  // Máy chủ bên thứ 3 có thể trả header sớm rồi gửi nội dung rất chậm; khi đó
+  // `timeout` của SDK không cắt được (đo thấy 30-80 giây) và Cloudflare cắt
+  // ngang ở giây 30 -> người hỏi không nhận được gì. Bộ đếm này ngắt cứng.
+  const ngat = new AbortController();
+  const dongHo = setTimeout(() => ngat.abort(), HAN_CHOT_MS);
+  try {
+  for (let vong = 0; vong < (laQL ? VONG_TOI_DA_QL : VONG_TOI_DA); vong++) {
     const conLai = HAN_CHOT_MS - (Date.now() - batDau);
     if (conLai < 2000) return CAU_CHAM;
     // không tự thử lại: thử lại là vượt luôn hạn chót
     const res = await client.messages.create({
-      model, max_tokens: MAX_TOKENS, system, tools: congCu.dinhNghia, messages,
-    }, { timeout: conLai, maxRetries: 0 });
+      model, max_tokens: laQL ? MAX_TOKENS_QL : MAX_TOKENS, system, tools: congCu.dinhNghia, messages,
+    }, { timeout: conLai, maxRetries: 0, signal: ngat.signal });
 
     if (res.stop_reason === 'refusal')
       return 'Câu này mình không trả lời được. Nhắn **0** để xem menu nhé.';
@@ -107,11 +121,12 @@ export async function hoiAI({ env, cauHoi, nhanVien, congCu, laQL }) {
     messages.push({ role: 'user', content: ketQua });
   }
   return 'Câu này hơi phức tạp, bạn tách ra hỏi từng ý giúp mình nhé.';
+  } finally { clearTimeout(dongHo); }
 }
 
 // Đổi lỗi API thành câu dễ hiểu cho nhân viên; chi tiết thật thì ghi log
 export function cauBaoLoi(e) {
-  if (e instanceof Anthropic.APIConnectionTimeoutError)
+  if (e instanceof Anthropic.APIConnectionTimeoutError || e instanceof Anthropic.APIUserAbortError)
     return CAU_CHAM;
   if (e instanceof Anthropic.RateLimitError)
     return 'Trợ lý đang quá tải, bạn hỏi lại sau ít phút nhé.';

@@ -26,7 +26,7 @@ import { menuCaNhan, menuQuanLy, traLoiCaNhan, traLoiQuanLy, SO_SANG_CA_NHAN } f
 import { hoiAI, cauBaoLoi } from './tro-ly-ai.js';
 import { guiTin, datWebhook } from './zalo.js';
 import { quetBao5S, baoBuKhiLienKet } from './bao-5s.js';
-import { guiBanTin } from './ban-tin.js';
+import { guiBanTin, chiaTin } from './ban-tin.js';
 import { quetXepLoai, baoBuXepLoai, xuLyXacNhan } from './xep-loai.js';
 
 // Bỏ mọi khoảng trắng / ký tự vô hình. Dán chuỗi vào Terminal trên Windows
@@ -147,6 +147,8 @@ async function baoNguoiKhac(env, ds, text) {
 
 // Lời chào -> gửi menu. Chỉ tính khi tin ngắn (≤ 3 từ): "chào, mai tôi làm
 // ca gì" là câu hỏi thật, phải đưa cho AI.
+// Chỉ khớp CẢ câu (vd "ok", "cảm ơn bot") - câu dài hơn vẫn đi qua AI
+const LOI_CAM_ON = /^(cam on( ban| bot| nhieu| a| nha| nhe)*|thanks?( you| bot)?|tks|ok( roi| nha| a| bot)?|oke|okay|da|vang|da vang|uh|um|u|duoc roi|tot qua|hay qua)$/;
 const LOI_CHAO = /^(chao|xin chao|hi|hello|helo|alo|hey|menu|bat dau|start)\b/;
 
 async function xuLy(update, env) {
@@ -282,10 +284,20 @@ async function xuLyTin(msg, zaloId, gui, env) {
   if (laMa)
     return gui(`Bạn đang dùng MSNV **${nv.id}** (${nv.name}). Muốn đổi người thì nhắn: đổi MSNV ${text}`);
 
+  // Tin không có chữ/số (emoji, dấu câu) hoặc chỉ là lời cảm ơn / "ok": trả lời
+  // ngay, không gọi AI (AI mất 10-30 giây và tốn lượt hỏi trong ngày vô ích)
+  if (!/[\p{L}\p{N}]/u.test(text))
+    return gui('🙂 Mình chỉ đọc được chữ và số thôi. Nhắn **0** để xem menu, hoặc hỏi ngắn gọn, vd: "mai tôi làm ca gì?"');
+  if (LOI_CAM_ON.test(tx))
+    return gui('Không có gì bạn nhé 🙂 Cần tra gì thì nhắn **0** để xem menu.');
+
   // ── câu hỏi tự do -> AI ──
   const gioiHan = ql ? GIOI_HAN_QL : GIOI_HAN_NV;
   if (!(await duocHoiTiep(sb, lk, gioiHan)))
     return gui(`Hôm nay bạn đã hỏi ${gioiHan} câu tự do rồi. Bạn vẫn dùng menu số được nhé — nhắn **0** để xem.`);
+
+  // AI mất 5-20 giây: báo ngay để người hỏi không tưởng bot im lặng
+  await gui('⏳ Đang tra, bạn chờ chút nhé…').catch(() => {});
 
   let traLoi;
   try {
@@ -297,5 +309,6 @@ async function xuLyTin(msg, zaloId, gui, env) {
     console.error('[claude]', e);
     traLoi = cauBaoLoi(e);
   }
-  await gui(traLoi);
+  // Câu trả lời dài của quản lý được chia ở dòng trống, mỗi tin tối đa 1800 ký tự
+  for (const phan of chiaTin(traLoi)) await gui(phan);
 }
