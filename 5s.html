@@ -555,6 +555,7 @@ table.th-bang tr:hover{background:#f5f9ff}
     <div id="tabThang" style="display:none">
       <div class="th-bar">
         <input type="month" id="thThang" onchange="taiThang()">
+        <select id="thBoPhan" class="lon" onchange="veThang()" aria-label="Lọc bộ phận"></select>
         <select id="thNV" class="lon" onchange="veThang()"></select>
         <input type="text" id="thMay" class="lon" placeholder="Mã máy..." autocomplete="off" oninput="veThang()">
         <button class="th-xuat" id="thXuat" onclick="xuatExcelThang()">📊 Xuất Excel gửi nhân sự</button>
@@ -565,6 +566,7 @@ table.th-bang tr:hover{background:#f5f9ff}
 
     <div id="tabVipham">
     <div class="hs-filter">
+      <select id="hsBoPhan" onchange="renderHistory()" aria-label="Lọc bộ phận"></select>
       <select id="hsWorker" onchange="renderHistory()"></select>
       <input type="text" id="hsMachine" placeholder="Mã máy..." autocomplete="off" oninput="renderHistory()">
       <select id="hsRange" onchange="loadHistory()">
@@ -1470,7 +1472,8 @@ async function loadHistory(){
     HIST = data || [];
     // đổ danh sách người vào bộ lọc, chỉ những người thực sự có vi phạm
     const sel = document.getElementById('hsWorker'), keep = sel.value;
-    const names = [...new Set(HIST.map(r => r.worker_name).filter(Boolean))].sort();
+    // theo NGƯỜI CHỊU LỖI (thợ / kỹ thuật / cả hai), không chỉ thợ đứng máy
+    const names = [...new Set(HIST.flatMap(r => dsNguoiChiu5S(r).map(p => p.ten)).filter(Boolean))].sort();
     sel.innerHTML = '<option value="">Tất cả nhân viên</option>' +
       names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
     sel.value = keep;
@@ -1484,15 +1487,30 @@ async function loadHistory(){
 function renderHistory(){
   const who = document.getElementById('hsWorker').value;
   const mc  = document.getElementById('hsMachine').value.toLowerCase().trim();
+  const bp  = document.getElementById('hsBoPhan').value;
   const rows = HIST.filter(r =>
-    (!who || r.worker_name === who) &&
+    (!bp  || boPhanCua5S(r).includes(bp)) &&
+    (!who || nguoiTheoBP(r, bp).some(p => p.ten === who)) &&
     (!mc  || (r.machine_code||'').toLowerCase().includes(mc)));
   document.getElementById('hsList').innerHTML = rows.length
     ? rows.map(cardHTML).join('')
     : '<div class="hs-empty">Không có vi phạm nào khớp bộ lọc 🎉</div>';
 }
 
+// Ô lọc bộ phận: Kỹ thuật · QC · Đóng gói · Sản xuất (thứ tự theo NHOM_5S)
+function dienBoPhan(){
+  ['hsBoPhan','thBoPhan'].forEach(id => {
+    const sel = document.getElementById(id);
+    if(sel.options.length) return;
+    sel.innerHTML = '<option value="">Tất cả bộ phận</option>' +
+      Object.entries(NHOM_5S).map(([k,v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+  });
+}
+// Người chịu lỗi của một lượt, chỉ giữ người thuộc bộ phận đang lọc
+const nguoiTheoBP = (r, bp) => dsNguoiChiu5S(r).filter(p => !bp || boPhanNguoi5S(r, p) === bp);
+
 function openHistory(){
+  dienBoPhan();
   document.getElementById('ov').classList.add('show');
   document.getElementById('histSheet').classList.add('show');
   loadHistory();
@@ -1577,9 +1595,11 @@ async function taiThang(){
 function locThang(){
   const nv  = document.getElementById('thNV').value;
   const may = document.getElementById('thMay').value.toLowerCase().trim();
+  const bp  = document.getElementById('thBoPhan').value;
   return THANG.filter(r => {
     if(statusOf(r) === 'ok') return false;
-    if(nv && !dsNguoiChiu5S(r).some(p => p.ten === nv)) return false;
+    if(bp && !boPhanCua5S(r).includes(bp)) return false;
+    if(nv && !nguoiTheoBP(r, bp).some(p => p.ten === nv)) return false;
     if(may && !(r.machine_code||'').toLowerCase().includes(may)) return false;
     return true;
   });
@@ -1588,7 +1608,8 @@ function locThang(){
 function veThang(){
   const ds = locThang();
   const may  = new Set(ds.map(r => r.machine_code)).size;
-  const ngNV = new Set(ds.flatMap(r => dsNguoiChiu5S(r).map(p => p.ten)).filter(Boolean)).size;
+  const bpLoc = document.getElementById('thBoPhan').value;
+  const ngNV = new Set(ds.flatMap(r => nguoiTheoBP(r, bpLoc).map(p => p.ten)).filter(Boolean)).size;
   // mục nào hỏng nhiều nhất - cái này mới đáng xem để biết sửa quy trình
   const dem = {};
   ds.forEach(r => failsOf(r).forEach(s => dem[s.short] = (dem[s.short] || 0) + 1));
@@ -1702,7 +1723,8 @@ function xuatExcelThang(){
   const thang = document.getElementById('thThang').value;
   // Mỗi lượt chưa đạt tách thành 1 dòng cho MỖI người chịu lỗi: chọn "Cả hai"
   // thì thợ và kỹ thuật đều có dòng riêng, đều bị tính một lần.
-  const dong = ds.flatMap(r => dsNguoiChiu5S(r).map(p => ({r, p, msnv: p.msnv || idCuaTen(p.ten)})));
+  const bp = document.getElementById('thBoPhan').value;
+  const dong = ds.flatMap(r => nguoiTheoBP(r, bp).map(p => ({r, p, msnv: p.msnv || idCuaTen(p.ten)})));
 
   // ── Sheet 1: tổng hợp theo nhân viên ──
   const gom = {};
@@ -1744,7 +1766,7 @@ function xuatExcelThang(){
   XLSX.utils.book_append_sheet(wb, w2, 'Chi tiết');
 
   const [y,m] = thang.split('-');
-  XLSX.writeFile(wb, `5S chua dat thang ${m}-${y}.xlsx`);
+  XLSX.writeFile(wb, `5S chua dat thang ${m}-${y}${bp ? ' - ' + NHOM_5S[bp] : ''}.xlsx`);
   toast('✅ Đã xuất file Excel');
 }
 

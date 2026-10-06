@@ -102,6 +102,16 @@ function laLoiCua5S(r, msnv, ten, chuan){
   return dsNguoiChiu5S(r).some(p => p.msnv ? String(p.msnv) === String(msnv) : (!!t && chuan(p.ten) === t));
 }
 
+// BỘ PHẬN của một người chịu lỗi (dùng để lọc lịch sử): thợ đứng máy -> Sản
+// xuất, kỹ thuật -> Kỹ thuật, người phụ trách khu -> nhóm của khu (QC / KT /
+// DG / SX). Lượt "Cả hai" thuộc cả Kỹ thuật lẫn Sản xuất.
+function boPhanNguoi5S(r, p){
+  if(p && p.vai === 'Kỹ thuật') return 'KT';
+  if(laKhu(r)){ const k = KHU_VUC.find(x => x.id === r.cell_id); return k ? k.nhom : 'SX'; }
+  return 'SX';
+}
+function boPhanCua5S(r){ return [...new Set(dsNguoiChiu5S(r).map(p => boPhanNguoi5S(r, p)))]; }
+
 // Cho bot Zalo (worker/) dùng chung danh sách này.
 globalThis.TieuChi5S = { S_DEFS, N_TC, S_DEFS_KHU, KHU_VUC, NHOM_5S, CHIU_LOI, laKhu, tieuChiCua,
-                          chiuLoiCua, dsNguoiChiu5S, nguoiChiu5S, laLoiCua5S };
+                          chiuLoiCua, dsNguoiChiu5S, nguoiChiu5S, laLoiCua5S, boPhanNguoi5S, boPhanCua5S };
