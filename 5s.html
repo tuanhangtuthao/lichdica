@@ -533,7 +533,7 @@ table.th-bang tr:hover{background:#f5f9ff}
       <input id="ngTen" class="ctrl-date" placeholder="Họ tên" autocomplete="off">
       <input id="ngMa" class="ctrl-date" placeholder="MSNV (nếu có)" autocomplete="off" inputmode="numeric">
       <select id="ngNhom" class="ctrl-date">
-        <option value="KT">Kỹ thuật</option><option value="QC">QC</option><option value="DG">Đóng gói</option>
+        <!-- dựng từ NHOM_5S (5s-tieu-chi.js) lúc mở tấm -->
       </select>
       <button class="btn btn-ok" onclick="themNguoi()">Thêm</button>
     </div>
@@ -1037,10 +1037,15 @@ function themNhom5S(sel, nhom, selected){
 
 // Gợi ý cho ô gõ tay: người 5S, nhóm cần dùng xếp lên đầu
 function dienGoiY(idDs, nhomDau){
-  const thu = [nhomDau, ...['KT','QC','DG'].filter(n => n !== nhomDau)];
-  document.getElementById(idDs).innerHTML = thu.flatMap(nh =>
+  const thu = [nhomDau, ...Object.keys(NHOM_5S).filter(n => n !== nhomDau)];
+  let h = thu.flatMap(nh =>
     NGUOI5S.filter(n => n.nhom === nh).map(n =>
       `<option value="${esc(n.ten)}">${esc((NHOM_5S[nh] || nh) + (n.msnv ? ' · ' + n.msnv : ''))}</option>`)).join('');
+  // Khu Sản xuất: người phụ trách thường là thợ / tổ trưởng có sẵn trong danh sách
+  // nhân viên -> gợi ý cả nhân viên. Chọn nhân viên thì có MSNV, bot Zalo báo được.
+  if(nhomDau === 'SX')
+    h += EMPS.map(e => `<option value="${esc(e.name)}">${esc('Nhân viên · ' + e.id + (e.role ? ' · ' + e.role : ''))}</option>`).join('');
+  document.getElementById(idDs).innerHTML = h;
 }
 // Gõ tay hay chọn đều ra một tên, gọn khoảng trắng thừa
 const gonTen = t => String(t || '').trim().replace(/\s+/g, ' ');
@@ -1639,7 +1644,7 @@ function oChonNV(r){
   // Lượt khu vực: người phụ trách 5S (QC / Kỹ thuật / Đóng gói) xếp lên đầu, nhóm của khu trước
   const khu = KHU_VUC.find(k => k.id === r.cell_id);
   if(khu){
-    [khu.nhom, ...['KT','QC','DG'].filter(n => n !== khu.nhom)].forEach(nh => {
+    [khu.nhom, ...Object.keys(NHOM_5S).filter(n => n !== khu.nhom)].forEach(nh => {
       const ds = NGUOI5S.filter(n => n.nhom === nh);
       if(ds.length) op += `<optgroup label="${esc(NHOM_5S[nh] || nh)}">` +
         ds.map(n => `<option value="${esc(n.ten)}"${n.ten === hien ? ' selected' : ''}>${esc(n.ten)}</option>`).join('') + '</optgroup>';
@@ -1772,6 +1777,9 @@ function toast(msg, isErr, action){
 // ══════════════════════════════════════════════
 // Trang 5S đã qua màn khoá mật khẩu nên ai vào được đây là người được phép sửa.
 function moNguoi(){
+  const nh = document.getElementById('ngNhom');
+  if(!nh.options.length)
+    nh.innerHTML = Object.entries(NHOM_5S).map(([k,v]) => `<option value="${k}">${esc(v)}</option>`).join('');
   veNguoi();
   document.getElementById('ov').classList.add('show');
   document.getElementById('nguoiSheet').classList.add('show');
@@ -1787,10 +1795,10 @@ function dongNguoi(){
 function veNguoi(){
   const box = document.getElementById('ngDs');
   if(!NGUOI5S.length){
-    box.innerHTML = '<div class="wk-hint">Chưa có ai. Thêm kỹ thuật, QC, đóng gói ở ô bên dưới.</div>';
+    box.innerHTML = '<div class="wk-hint">Chưa có ai. Thêm kỹ thuật, QC, đóng gói, sản xuất ở ô bên dưới.</div>';
     return;
   }
-  box.innerHTML = ['KT','QC','DG'].map(nh => {
+  box.innerHTML = Object.keys(NHOM_5S).map(nh => {
     const ds = NGUOI5S.filter(n => n.nhom === nh);
     if(!ds.length) return '';
     return `<div class="ng-nhom">${esc((NHOM_5S[nh] || nh).toUpperCase())}</div>` + ds.map(n =>
@@ -1811,8 +1819,10 @@ async function themNguoi(){
     document.getElementById('ngTen').value = ''; document.getElementById('ngMa').value = '';
     toast('Đã thêm ' + ten);
   }catch(e){
-    toast(/s5_nguoi/.test(e.message || '') ? 'Chưa có bảng: cần chạy file sql/5s-ky-thuat-khu-vuc.sql trên Supabase'
-                                           : 'Lỗi thêm người: ' + e.message, true);
+    const m = e.message || '';
+    toast(/nhom_check/.test(m) ? 'Chưa mở nhóm này: cần chạy file sql/5s-khu-san-xuat.sql trên Supabase'
+        : /s5_nguoi/.test(m)   ? 'Chưa có bảng: cần chạy file sql/5s-ky-thuat-khu-vuc.sql trên Supabase'
+        :                        'Lỗi thêm người: ' + m, true);
   }
 }
 async function xoaNguoi(id){

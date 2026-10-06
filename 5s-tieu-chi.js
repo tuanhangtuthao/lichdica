@@ -42,8 +42,11 @@ const KHU_VUC = [
   {id:'kv_qc', ten:'QC',       nhom:'QC'},
   {id:'kv_kt', ten:'Kỹ thuật', nhom:'KT'},
   {id:'kv_dg', ten:'Đóng gói', nhom:'DG'},
+  {id:'kv_sx', ten:'Sản xuất', nhom:'SX'},
 ];
-const NHOM_5S = {KT:'Kỹ thuật', QC:'QC', DG:'Đóng gói'};
+// Nhóm người phụ trách. THÊM KHU MỚI: thêm 1 dòng ở KHU_VUC, 1 nhóm ở đây, rồi
+// mở nhóm mới trong ràng buộc bảng s5_nguoi (xem sql/5s-khu-san-xuat.sql).
+const NHOM_5S = {KT:'Kỹ thuật', QC:'QC', DG:'Đóng gói', SX:'Sản xuất'};
 
 // Tiêu chí cho khu vực. 5 mục máy ở trên ("Thân máy", "Bộ cấp phôi"...) không
 // áp dụng cho bàn QC hay khu đóng gói. ĐÂY LÀ BẢN MẪU - sửa chữ thoải mái,
