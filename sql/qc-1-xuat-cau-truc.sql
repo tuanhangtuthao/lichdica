@@ -104,7 +104,7 @@ select
   || coalesce((select string_agg(format(E'do $$ begin %s exception when duplicate_object or invalid_table_definition then null; end $$;', sql), E'\n' order by relname, conname)
                from rang_buoc where contype = 'f'), '') || E'\n\n'
   || E'-- 4. Chỉ mục\n'
-  || coalesce((select string_agg(replace(sql, 'CREATE INDEX ', 'CREATE INDEX IF NOT EXISTS '), E'\n' order by indexname) from chi_muc), '') || E'\n\n'
+  || coalesce((select string_agg(replace(replace(sql, 'CREATE INDEX ', 'CREATE INDEX IF NOT EXISTS '), 'CREATE UNIQUE INDEX ', 'CREATE UNIQUE INDEX IF NOT EXISTS '), E'\n' order by indexname) from chi_muc), '') || E'\n\n'
   || E'-- 5. Bật RLS + quyền truy cập\n'
   || coalesce((select string_agg(sql, E'\n') from bat_rls), '') || E'\n'
   || coalesce((select string_agg(sql, E'\n') from quyen), '') || E'\n\n'
