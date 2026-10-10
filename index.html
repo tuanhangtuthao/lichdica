@@ -2,6 +2,8 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<!-- Chọn xưởng + database theo đường dẫn (SX / QC). Nạp đầu tiên. Xem cau-hinh.js -->
+<script src="cau-hinh.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://xtutpuwesganunktrxcv.supabase.co" crossorigin>
@@ -1077,8 +1079,8 @@ tr.kh td{background:#405866!important}
 <script>
 // ══════════════════════════════════════════
 // ⚙️  DÁN THÔNG TIN SUPABASE CỦA BẠN VÀO ĐÂY
-const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const SB_URL = CAU_HINH.SB_URL;
+const SB_KEY = CAU_HINH.SB_KEY;
 // ══════════════════════════════════════════
 const SB_OK = SB_URL.startsWith('https://') && !SB_URL.includes('PASTE');
 const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;

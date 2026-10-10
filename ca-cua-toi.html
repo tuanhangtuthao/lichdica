@@ -2,6 +2,8 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<!-- Chọn xưởng + database theo đường dẫn (SX / QC). Nạp đầu tiên. Xem cau-hinh.js -->
+<script src="cau-hinh.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1F4E79">
 <title>Ca Của Tôi - Phân Xưởng 1</title>
@@ -186,8 +188,8 @@ button,input{font-family:inherit}
 <!-- Nội dung kiểm 5S (S_DEFS) dùng chung với trang 5S và Đánh Giá -->
 <script src="5s-tieu-chi.js"></script>
 <script>
-const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const SB_URL = CAU_HINH.SB_URL;
+const SB_KEY = CAU_HINH.SB_KEY;
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 const THU   = ['CN','T2','T3','T4','T5','T6','T7'];

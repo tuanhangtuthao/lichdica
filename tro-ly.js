@@ -29,8 +29,9 @@ if (typeof supabase === 'undefined') { console.warn('[Trợ Lý] thiếu supabas
 if (typeof getShift === 'undefined')  { console.warn('[Trợ Lý] thiếu lich-ca.js'); return; }
 if (typeof S_DEFS === 'undefined')    { console.warn('[Trợ Lý] thiếu 5s-tieu-chi.js'); return; }
 
-const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+// Lấy theo xưởng (cau-hinh.js); trang chưa nạp cau-hinh.js thì dùng SX như cũ
+const SB_URL = (window.CAU_HINH && window.CAU_HINH.SB_URL) || 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = (window.CAU_HINH && window.CAU_HINH.SB_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 // ═══════════════════════════════════════════════════════════════
