@@ -24,6 +24,8 @@
     },
     QC: {
       ma: 'QC', ten: 'QC', tien_to: '/qc',
+      // Trang xưởng này không dùng: ẩn mọi đường link tới (thêm chặn trong _redirects)
+      an_trang: ['nhansu-ca'],
       SB_URL: 'https://lvqloajqzjlqofbxgimm.supabase.co',
       SB_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2cWxvYWpxempscW9mYnhnaW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4OTY5NzYsImV4cCI6MjEwMzQ3Mjk3Nn0.EllSuxT94UXBHUnZJY7cmiqF8HjwQwFLjV5UxELjovo',
     },
@@ -47,6 +49,17 @@
     P.getItem    = function (k)    { return get.call(this, tt + k); };
     P.setItem    = function (k, v) { return set.call(this, tt + k, v); };
     P.removeItem = function (k)    { return rem.call(this, tt + k); };
+  }
+
+  // ── Ẩn trang xưởng không dùng ──
+  // Mọi link trang đều dạng <a href="ten-trang.html"> (menu, thanh dưới, ô
+  // tính năng) nên một dòng CSS là ẩn hết, kể cả menu vẽ thêm về sau.
+  if (ch.an_trang && ch.an_trang.length) {
+    const st = document.createElement('style');
+    st.textContent = ch.an_trang.map(function (t) {
+      return 'a[href="' + t + '.html"],a[href^="' + t + '.html?"],a[href^="' + t + '.html#"]';
+    }).join(',') + '{display:none!important}';
+    document.head.appendChild(st);
   }
 
   // ── Tên xưởng trên giao diện ──

@@ -16,12 +16,14 @@
 /qc/dashboard             /qc/   302
 /qc/zalobot-monitor.html  /qc/   302
 /qc/zalobot-monitor       /qc/   302
+# QC không dùng trang Nhân sự ca (cau-hinh.js an_trang)
+/qc/nhansu-ca.html        /qc/   302
+/qc/nhansu-ca             /qc/   302
 /qc/5s.html                        /qc/5s 301
 /qc/ca-cua-toi.html                /qc/ca-cua-toi 301
 /qc/demo-cap-nhat.html             /qc/demo-cap-nhat 301
 /qc/huong-dan.html                 /qc/huong-dan 301
 /qc/nav-demo.html                  /qc/nav-demo 301
-/qc/nhansu-ca.html                 /qc/nhansu-ca 301
 /qc/ot-demo.html                   /qc/ot-demo 301
 /qc/rating-print-kip1.html         /qc/rating-print-kip1 301
 /qc/rating-print-kip2.html         /qc/rating-print-kip2 301
