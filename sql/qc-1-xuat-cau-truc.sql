@@ -1,15 +1,31 @@
 /* QC BƯỚC 1 - XUẤT CẤU TRÚC DATABASE SX ĐỂ DỰNG LẠI CHO QC
-   Chạy trên project Supabase của SX, SQL Editor, New query, dán, Run.
+   Chạy trên project Supabase của SX: SQL Editor, New query, dán, Run.
    Kết quả là 1 ô chữ dài, bấm vào ô rồi Copy, sang project QC dán rồi Run.
-   Chỉ đọc, không sửa gì ở database SX.
-   Câu lệnh cố ý không chứa các ký tự dễ làm SQL Editor hiểu nhầm. Dấu chấm
-   phẩy trong lệnh xuất ra được ghi tạm là ký tự § rồi đổi lại ở cuối, tiêu
-   đề chú thích ghép bằng chr(47) chr(42). */
+   Chỉ đọc. Hàm pg_temp là hàm tạm, tự mất khi chạy xong.
+
+   CHỈ chép các bảng của web Lịch ca + bot Zalo (danh sách BANG_WEB bên dưới).
+   Database SX còn chứa bảng của ứng dụng khác (may, lot, phien_ke_hoach,
+   dong_bo_erp, app_secrets, nguoi_dung...) - KHÔNG chép sang QC.
+   Thêm bảng mới cho web thì nhớ thêm tên vào BANG_WEB.
+
+   Đặt trong hàm tạm vì chạy thẳng cả câu lệnh lớn ở cấp ngoài thì SQL Editor
+   của Supabase báo lỗi relation public does not exist, còn trong hàm thì chạy
+   được (đã kiểm bằng câu lệnh chẩn đoán trên database SX). */
+create or replace function pg_temp.xuat_cau_truc_qc() returns text language sql as $f$
 with
+bang_web as (
+  select unnest(array[
+    'employees','emp_schedule','ratings_new','monthly_reviews','rating_config','holidays',
+    'overtime','leave_requests','shift_roster','factory_layout',
+    's5_checks','s5_nguoi','huong_dan_videos',
+    'zalo_links','zalo_bao_5s','zalo_xep_loai','zalo_thong_bao'
+  ]) as ten
+),
+ham_web as (select unnest(array['check_app_password']) as ten),
 bang as (
   select c.oid, c.relname
   from pg_class c join pg_namespace n on n.oid = c.relnamespace
-  where n.nspname = 'public' and c.relkind = 'r'
+  where n.nspname = 'public' and c.relkind = 'r' and c.relname in (select ten from bang_web)
 ),
 cot as (
   select b.relname, a.attnum, pg_get_expr(ad.adbin, ad.adrelid) as mac_dinh,
@@ -19,7 +35,7 @@ cot as (
   left join pg_attrdef ad on ad.adrelid = b.oid and ad.adnum = a.attnum
 ),
 tao_bang as (
-  select relname, format(E'create table if not exists public.%I (\n  %s\n)§', relname,
+  select relname, format(E'create table if not exists public.%I (\n  %s\n);', relname,
     string_agg(
       quote_ident(attname) || ' ' ||
       case when mac_dinh like 'nextval(%' then
@@ -35,80 +51,77 @@ tao_bang as (
   from cot group by relname
 ),
 rang_buoc as (
-  /* xoá trước rồi tạo lại (cascade: khoá ngoại phụ thuộc bị xoá theo, được tạo lại ở phần khoá ngoại)
-     -> chạy lại nhiều lần không lỗi, không cần khối DO */
+  /* xoá rồi tạo lại (cascade: khoá ngoại phụ thuộc bị xoá theo, tạo lại ở phần khoá ngoại)
+     -> chạy lại nhiều lần không lỗi. Khoá ngoại trỏ ra bảng ngoài danh sách thì bỏ. */
   select con.contype, b.relname, con.conname,
-         format('alter table public.%I drop constraint if exists %I cascade§ alter table public.%I add constraint %I %s§',
+         format('alter table public.%I drop constraint if exists %I cascade; alter table public.%I add constraint %I %s;',
                 b.relname, con.conname, b.relname, con.conname, pg_get_constraintdef(con.oid)) as sql
   from pg_constraint con join bang b on b.oid = con.conrelid
   where con.contype in ('p', 'u', 'c', 'f')
+    and (con.contype <> 'f' or con.confrelid in (select oid from bang))
 ),
 chi_muc as (
   select i.indexname,
          replace(replace(i.indexdef, 'CREATE INDEX ', 'CREATE INDEX IF NOT EXISTS '),
-                 'CREATE UNIQUE INDEX ', 'CREATE UNIQUE INDEX IF NOT EXISTS ') || '§' as sql
+                 'CREATE UNIQUE INDEX ', 'CREATE UNIQUE INDEX IF NOT EXISTS ') || ';' as sql
   from pg_indexes i
-  where i.schemaname = 'public'
+  where i.schemaname = 'public' and i.tablename in (select relname from bang)
     and i.indexname not in (select conname from pg_constraint)
 ),
+ham as (
+  select pg_get_functiondef(p.oid) || ';' as sql
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.prokind = 'f' and p.proname in (select ten from ham_web)
+),
 bat_rls as (
-  select format('alter table public.%I enable row level security§', relname) as sql
-  from pg_class c join pg_namespace n on n.oid = c.relnamespace
-  where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
+  select format('alter table public.%I enable row level security;', b.relname) as sql
+  from bang b join pg_class c on c.oid = b.oid where c.relrowsecurity
 ),
 quyen as (
-  select format('drop policy if exists %I on public.%I§', p.policyname, p.tablename) || E'\n' ||
-         format('create policy %I on public.%I as %s for %s to %s%s%s§',
+  select format('drop policy if exists %I on public.%I;', p.policyname, p.tablename) || E'\n' ||
+         format('create policy %I on public.%I as %s for %s to %s%s%s;',
            p.policyname, p.tablename, lower(p.permissive), p.cmd,
            array_to_string(p.roles, ', '),
            case when p.qual is not null then ' using (' || p.qual || ')' else '' end,
            case when p.with_check is not null then ' with check (' || p.with_check || ')' else '' end) as sql
   from pg_policies p
-  where p.schemaname = 'public'
-),
-ham as (
-  select pg_get_functiondef(p.oid) || '§' as sql
-  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-  where n.nspname = 'public' and p.prokind = 'f'
-    and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
+  where p.schemaname = 'public' and p.tablename in (select relname from bang)
 ),
 du_lieu as (
   /* 2 bảng cấu hình dùng chung: thang xếp loại và ngày lễ */
-  select format('insert into public.rating_config select * from json_populate_record(null::public.rating_config, %L) on conflict do nothing§',
+  select format('insert into public.rating_config select * from json_populate_record(null::public.rating_config, %L) on conflict do nothing;',
                 row_to_json(x)::text) as sql
   from public.rating_config x
   union all
-  select format('insert into public.holidays select * from json_populate_record(null::public.holidays, %L) on conflict do nothing§',
+  select format('insert into public.holidays select * from json_populate_record(null::public.holidays, %L) on conflict do nothing;',
                 row_to_json(x)::text)
   from public.holidays x
 ),
 dat_lai_dem as (
-  /* chép kèm id thì đẩy bộ đếm tự tăng lên, không lần thêm sau bị trùng id */
-  select format('select setval(pg_get_serial_sequence(%L, %L), coalesce((select max(%I) from public.%I), 0) + 1, false)§',
+  select format('select setval(pg_get_serial_sequence(%L, %L), coalesce((select max(%I) from public.%I), 0) + 1, false);',
                 'public.' || quote_ident(relname), attname, attname, relname) as sql
   from cot
   where mac_dinh like 'nextval(%' and relname in ('rating_config', 'holidays')
-),
-tat_ca as (
-  select
-    E'' || chr(47) || chr(42) || ' DỰNG DATABASE QC - tạo từ database SX lúc ' || to_char(now(), 'DD/MM/YYYY HH24:MI') || E' ' || chr(42) || chr(47) || E'\n\n'
-    || E'' || chr(47) || chr(42) || ' 1. Bảng ' || chr(42) || chr(47) || E'\n' || (select string_agg(sql, E'\n\n' order by relname) from tao_bang) || E'\n\n'
-    || E'' || chr(47) || chr(42) || ' 2. Khoá chính, không trùng, kiểm tra ' || chr(42) || chr(47) || E'\n'
-    || coalesce((select string_agg(sql, E'\n' order by relname, conname) from rang_buoc where contype in ('p', 'u', 'c')), '') || E'\n\n'
-    || E'' || chr(47) || chr(42) || ' 3. Khoá ngoại ' || chr(42) || chr(47) || E'\n'
-    || coalesce((select string_agg(sql, E'\n' order by relname, conname) from rang_buoc where contype = 'f'), '') || E'\n\n'
-    || E'' || chr(47) || chr(42) || ' 4. Chỉ mục ' || chr(42) || chr(47) || E'\n'
-    || coalesce((select string_agg(sql, E'\n' order by indexname) from chi_muc), '') || E'\n\n'
-    || E'' || chr(47) || chr(42) || ' 5. Bật RLS + quyền truy cập ' || chr(42) || chr(47) || E'\n'
-    || coalesce((select string_agg(sql, E'\n') from bat_rls), '') || E'\n'
-    || coalesce((select string_agg(sql, E'\n') from quyen), '') || E'\n\n'
-    || E'' || chr(47) || chr(42) || ' 6. Hàm (vd check_app_password) ' || chr(42) || chr(47) || E'\n'
-    || coalesce((select string_agg(sql, E'\n\n') from ham), '') || E'\n\n'
-    || E'' || chr(47) || chr(42) || ' 7. Dữ liệu cấu hình dùng chung ' || chr(42) || chr(47) || E'\n'
-    || coalesce((select string_agg(sql, E'\n') from du_lieu), '') || E'\n'
-    || coalesce((select string_agg(sql, E'\n') from dat_lai_dem), '') || E'\n\n'
-    || E'' || chr(47) || chr(42) || ' 8. Kho ảnh 5S ' || chr(42) || chr(47) || E'\n'
-    || 'insert into storage.buckets (id, name, public) values (' || quote_literal('s5-photos') || ', '
-    || quote_literal('s5-photos') || ', true) on conflict (id) do nothing§' || E'\n' as t
 )
-select replace(t, '§', chr(59)) as lenh_tao_database_qc from tat_ca;
+select
+  '/* DỰNG DATABASE QC - tạo từ database SX lúc ' || to_char(now(), 'DD/MM/YYYY HH24:MI')
+  || ' - ' || (select count(*) from bang) || E' bảng */\n\n'
+  || E'/* 1. Bảng */\n' || (select string_agg(sql, E'\n\n' order by relname) from tao_bang) || E'\n\n'
+  || E'/* 2. Khoá chính, không trùng, kiểm tra */\n'
+  || coalesce((select string_agg(sql, E'\n' order by relname, conname) from rang_buoc where contype in ('p', 'u', 'c')), '') || E'\n\n'
+  || E'/* 3. Khoá ngoại */\n'
+  || coalesce((select string_agg(sql, E'\n' order by relname, conname) from rang_buoc where contype = 'f'), '') || E'\n\n'
+  || E'/* 4. Chỉ mục */\n'
+  || coalesce((select string_agg(sql, E'\n' order by indexname) from chi_muc), '') || E'\n\n'
+  || E'/* 5. Hàm mật khẩu quản lý (tạo trước quyền truy cập) */\n'
+  || coalesce((select string_agg(sql, E'\n\n') from ham), '') || E'\n\n'
+  || E'/* 6. Bật RLS + quyền truy cập */\n'
+  || coalesce((select string_agg(sql, E'\n') from bat_rls), '') || E'\n'
+  || coalesce((select string_agg(sql, E'\n') from quyen), '') || E'\n\n'
+  || E'/* 7. Dữ liệu cấu hình dùng chung */\n'
+  || coalesce((select string_agg(sql, E'\n') from du_lieu), '') || E'\n'
+  || coalesce((select string_agg(sql, E'\n') from dat_lai_dem), '') || E'\n\n'
+  || E'/* 8. Kho ảnh 5S */\n'
+  || E'insert into storage.buckets (id, name, public) values (''s5-photos'', ''s5-photos'', true) on conflict (id) do nothing;\n'
+$f$;
+select pg_temp.xuat_cau_truc_qc() as lenh_tao_database_qc;
