@@ -19,7 +19,9 @@
 # QC không dùng trang Nhân sự ca (cau-hinh.js an_trang)
 /qc/nhansu-ca.html        /qc/   302
 /qc/nhansu-ca             /qc/   302
-/qc/5s.html                        /qc/5s 301
+# 5S dùng chung một trang cho cả nhà máy, nằm bên SX: nút 5S ở QC mở trang 5S của SX
+/qc/5s.html               /5s    302
+/qc/5s                    /5s    302
 /qc/ca-cua-toi.html                /qc/ca-cua-toi 301
 /qc/demo-cap-nhat.html             /qc/demo-cap-nhat 301
 /qc/huong-dan.html                 /qc/huong-dan 301
