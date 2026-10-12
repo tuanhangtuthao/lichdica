@@ -3,7 +3,9 @@
    Kết quả là 1 ô chữ dài, bấm vào ô rồi Copy, sang project QC dán rồi Run.
    Chỉ đọc. Hàm pg_temp là hàm tạm, tự mất khi chạy xong.
 
-   CHỈ chép các bảng của web Lịch ca + bot Zalo (danh sách BANG_WEB bên dưới).
+   CHỈ chép các bảng của web Lịch ca + bot Zalo (danh sách BANG_WEB bên dưới),
+   cộng bảng app_secrets nhưng CHỈ dòng settings_pass (mật khẩu quản lý mà
+   check_app_password đọc) - không chép khoá bí mật nào khác.
    Database SX còn chứa bảng của ứng dụng khác (may, lot, phien_ke_hoach,
    dong_bo_erp, app_secrets, nguoi_dung...) - KHÔNG chép sang QC.
    Thêm bảng mới cho web thì nhớ thêm tên vào BANG_WEB.
@@ -18,7 +20,8 @@ bang_web as (
     'employees','emp_schedule','ratings_new','monthly_reviews','rating_config','holidays',
     'overtime','leave_requests','shift_roster','factory_layout',
     's5_checks','s5_nguoi','huong_dan_videos',
-    'zalo_links','zalo_bao_5s','zalo_xep_loai','zalo_thong_bao'
+    'zalo_links','zalo_bao_5s','zalo_xep_loai','zalo_thong_bao',
+    'app_secrets'   /* check_app_password đọc mật khẩu ở đây - chỉ chép cấu trúc + dòng settings_pass */
   ]) as ten
 ),
 ham_web as (select unnest(array['check_app_password']) as ten),
@@ -96,6 +99,11 @@ du_lieu as (
   select format('insert into public.holidays select * from json_populate_record(null::public.holidays, %L) on conflict do nothing;',
                 row_to_json(x)::text)
   from public.holidays x
+  union all
+  /* CHỈ mật khẩu quản lý - không chép các khoá bí mật khác của SX */
+  select format('insert into public.app_secrets select * from json_populate_record(null::public.app_secrets, %L) on conflict do nothing;',
+                row_to_json(x)::text)
+  from public.app_secrets x where x.key = 'settings_pass'
 ),
 dat_lai_dem as (
   select format('select setval(pg_get_serial_sequence(%L, %L), coalesce((select max(%I) from public.%I), 0) + 1, false);',
