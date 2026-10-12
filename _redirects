@@ -4,9 +4,31 @@
 # Dòng cuối: 200 = trả file gốc nhưng thanh địa chỉ vẫn giữ /qc/... .
 # Các dòng 301 ở trên là bắt buộc: Cloudflare tự đổi /5s.html thành /5s
 # (bỏ đuôi .html) và khi đổi thì làm MẤT tiền tố /qc -> người dùng QC bị
-# đẩy sang trang Sản xuất. Nên tự đổi trước, giữ nguyên /qc.
+# đẩy sang trang Sản xuất. Nên tự bỏ đuôi trước, giữ nguyên /qc.
+# Cloudflare không nhận kiểu /qc/:trang.html nên phải ghi từng trang:
+# THÊM TRANG .html MỚI THÌ THÊM 1 DÒNG Ở ĐÂY.
 /qc              /qc/        301
 /qc/index.html   /qc/        301
 /qc/index        /qc/        301
-/qc/:trang.html  /qc/:trang  301
+# Hai trang này còn ghi cứng database SX (chưa đọc cau-hinh.js) -> chặn ở QC,
+# không thì QC mở /qc/dashboard sẽ thấy dữ liệu SX. Sửa xong trang thì xoá chặn.
+/qc/dashboard.html        /qc/   302
+/qc/dashboard             /qc/   302
+/qc/zalobot-monitor.html  /qc/   302
+/qc/zalobot-monitor       /qc/   302
+/qc/5s.html                        /qc/5s 301
+/qc/ca-cua-toi.html                /qc/ca-cua-toi 301
+/qc/demo-cap-nhat.html             /qc/demo-cap-nhat 301
+/qc/huong-dan.html                 /qc/huong-dan 301
+/qc/nav-demo.html                  /qc/nav-demo 301
+/qc/nhansu-ca.html                 /qc/nhansu-ca 301
+/qc/ot-demo.html                   /qc/ot-demo 301
+/qc/rating-print-kip1.html         /qc/rating-print-kip1 301
+/qc/rating-print-kip2.html         /qc/rating-print-kip2 301
+/qc/rating-print-kip3.html         /qc/rating-print-kip3 301
+/qc/rating-print-kip4.html         /qc/rating-print-kip4 301
+/qc/rating-print.html              /qc/rating-print 301
+/qc/rating.html                    /qc/rating 301
+/qc/tra-cuu.html                   /qc/tra-cuu 301
+/qc/xin-nghi.html                  /qc/xin-nghi 301
 /qc/*            /:splat     200
