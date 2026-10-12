@@ -15,12 +15,41 @@ import '../5s-tieu-chi.js';
 const { getShift } = globalThis.LichCa;
 const { S_DEFS, tieuChiCua, laLoiCua5S } = globalThis.TieuChi5S;
 
-// Khoá anon này vốn đã nằm công khai trong mọi trang web, không phải bí mật.
-const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+// ── HAI XƯỞNG, HAI DATABASE (cùng cau-hinh.js của web) ──────────
+// Một bot cho cả nhà máy. Mỗi người thuộc một xưởng; liên kết Zalo của người
+// đó nằm trong database của xưởng đó, và mọi câu trả lời lấy từ đúng database
+// đó -> nhân viên QC không thấy dữ liệu SX và ngược lại.
+// Khoá anon vốn đã nằm công khai trong mọi trang web, không phải bí mật.
+const XUONG = {
+  SX: { ten: 'Phân Xưởng 1', url: 'https://xtutpuwesganunktrxcv.supabase.co',
+        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4' },
+  QC: { ten: 'QC', url: 'https://lvqloajqzjlqofbxgimm.supabase.co',
+        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2cWxvYWpxempscW9mYnhnaW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4OTY5NzYsImV4cCI6MjEwMzQ3Mjk3Nn0.EllSuxT94UXBHUnZJY7cmiqF8HjwQwFLjV5UxELjovo' },
+};
+export const CAC_XUONG = Object.keys(XUONG);
+export const tenXuong = ma => (XUONG[ma] || XUONG.SX).ten;
 
-export function taoSb() {
-  return createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+// 5S chấm chung cả nhà máy, dữ liệu nằm ở database SX (nút 5S bên web QC mở
+// trang 5S của SX). Xưởng QC đọc 5S từ đó nhưng CHỈ các lượt chấm khu QC.
+const KHU_5S = { QC: 'kv_qc' };
+
+// taoSb()      -> SX (mặc định, như trước)
+// taoSb('QC')  -> database QC; riêng s5_checks / zalo_bao_5s chuyển sang SX
+// sb.xuong cho biết đang ở xưởng nào.
+export function taoSb(xuong = 'SX') {
+  const ma = XUONG[xuong] ? xuong : 'SX';
+  const tao = m => createClient(XUONG[m].url, XUONG[m].key, { auth: { persistSession: false } });
+  const sb = tao(ma);
+  sb.xuong = ma;
+  if (ma === 'SX') return sb;
+  const sx = tao('SX'), goc = sb.from.bind(sb), khu = KHU_5S[ma];
+  sb.from = bang => {
+    if (bang === 'zalo_bao_5s') return sx.from(bang);
+    if (bang !== 's5_checks') return goc(bang);
+    const q = sx.from(bang);
+    return { select: (...a) => (khu ? q.select(...a).eq('cell_id', khu) : q.select(...a)) };
+  };
+  return sb;
 }
 
 // ── NGÀY GIỜ ───────────────────────────────────────────────────
@@ -159,6 +188,13 @@ export async function dsLienKet(sb) {
   const r = await sb.from('zalo_links').select('zalo_id,msnv,ten_zalo,updated_at').not('msnv', 'is', null);
   if (r.error) throw new Error(r.error.message);
   return r.data || [];
+}
+
+// Chuyển xưởng (vd từ SX sang QC): xoá liên kết cũ của tài khoản Zalo này ở
+// database xưởng cũ, để một tài khoản chỉ thuộc đúng một xưởng.
+export async function xoaLienKetZalo(sb, zaloId) {
+  const r = await sb.from('zalo_links').delete().eq('zalo_id', zaloId);
+  if (r.error) throw new Error('Xoá liên kết xưởng cũ lỗi: ' + r.error.message);
 }
 
 export async function luuLienKet(sb, zaloId, msnv, tenZalo) {

@@ -6,7 +6,7 @@
 //   · MSNV gắn sẵn trong công cụ, Claude không chọn được người khác
 // ═══════════════════════════════════════════════════════════════
 import Anthropic from '@anthropic-ai/sdk';
-import { DFUL, NHOM, dKey, homNayVN } from './du-lieu.js';
+import { DFUL, NHOM, dKey, homNayVN, tenXuong } from './du-lieu.js';
 
 // Haiku 4.5: rẻ và nhanh, đủ cho tra cứu lịch ca / điểm. Muốn thông minh
 // hơn thì đổi sang 'claude-opus-5-5' (đắt hơn khoảng 4-5 lần).
@@ -34,9 +34,9 @@ function lichMuoiBonNgay() {
   return dong.join('\n');
 }
 
-function taoSystem(nv, laQL) {
+function taoSystem(nv, laQL, xuong = 'SX') {
   const t = homNayVN();
-  return `Bạn là Trợ Lý Phân Xưởng 1 của xưởng cơ khí BachTung, trả lời nhân viên qua Zalo.
+  return `Bạn là Trợ Lý ${xuong === 'SX' ? 'Phân Xưởng 1' : 'bộ phận ' + tenXuong(xuong)} của xưởng cơ khí BachTung, trả lời nhân viên qua Zalo.
 
 Người đang nhắn: ${nv.name} - MSNV ${nv.id} - ${NHOM[nv.kip] || ''}${nv.role ? ' - ' + nv.role : ''}.
 Hôm nay: ${DFUL[t.getDay()]} ${dKey(t)} (giờ Việt Nam). Tuần tính từ Thứ 2 đến Chủ nhật.
@@ -73,7 +73,7 @@ function layChu(res) {
 }
 
 // congCu: { dinhNghia, chay } - bộ cá nhân (nhân viên) hoặc bộ quản lý
-export async function hoiAI({ env, cauHoi, nhanVien, congCu, laQL }) {
+export async function hoiAI({ env, cauHoi, nhanVien, congCu, laQL, xuong }) {
   // ANTHROPIC_BASE_URL: đang dùng key mua qua bên thứ 3 nên phải gọi qua máy
   // chủ của họ (họ phải hỗ trợ đúng định dạng Messages API của Anthropic).
   // LƯU Ý: khi đặt biến này, dữ liệu nhân sự trong câu hỏi đi qua máy chủ bên
@@ -83,7 +83,7 @@ export async function hoiAI({ env, cauHoi, nhanVien, congCu, laQL }) {
     ...(env.ANTHROPIC_BASE_URL ? { baseURL: env.ANTHROPIC_BASE_URL } : {}),
   });
   const model = env.CLAUDE_MODEL || MODEL;
-  const system = taoSystem(nhanVien, laQL);
+  const system = taoSystem(nhanVien, laQL, xuong);
   const messages = [{ role: 'user', content: cauHoi }];
 
   const batDau = Date.now();

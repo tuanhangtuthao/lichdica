@@ -10,7 +10,7 @@
 // được "giữ chỗ" trước khi gửi (insert ... on conflict do nothing) nên hai
 // lần quét chồng nhau cũng không báo trùng; gửi hỏng thì nhả ra để lần sau.
 // ═══════════════════════════════════════════════════════════════
-import { taoSb, homNayVN, dKey, DFUL, boDau } from './du-lieu.js';
+import { taoSb, homNayVN, dKey, DFUL, boDau, CAC_XUONG } from './du-lieu.js';
 import { guiTin, guiAnh } from './zalo.js';
 import { SO_SANG_CA_NHAN } from './menu.js';
 
@@ -81,14 +81,20 @@ export async function quetBao5S(env) {
   const can = loi.filter(x => !da.has(x.id));
   if (!can.length) return { bao: 0 };
 
-  // Ai là ai: theo worker_id; bản ghi cũ chưa có MSNV thì dò theo tên
-  const [er, lr] = await Promise.all([
-    sb.from('employees').select('id,name'),
-    sb.from('zalo_links').select('zalo_id,msnv').not('msnv', 'is', null),
-  ]);
-  if (er.error || lr.error) throw new Error((er.error || lr.error).message);
-  const theoTen = Object.fromEntries((er.data || []).map(e => [boDau(e.name), String(e.id)]));
-  const zaloCua = Object.fromEntries((lr.data || []).map(l => [String(l.msnv), l.zalo_id]));
+  // Ai là ai: theo worker_id; bản ghi cũ chưa có MSNV thì dò theo tên.
+  // 5S chung cả nhà máy -> người chịu lỗi có thể ở xưởng khác (vd nhân viên QC
+  // ở khu QC): gộp nhân viên + liên kết Zalo của mọi xưởng (MSNV không trùng nhau).
+  const doc = await Promise.all(CAC_XUONG.map(x => {
+    const s = x === 'SX' ? sb : taoSb(x);
+    return Promise.all([
+      s.from('employees').select('id,name'),
+      s.from('zalo_links').select('zalo_id,msnv').not('msnv', 'is', null),
+    ]);
+  }));
+  const loiDoc = doc.flat().find(x => x.error);
+  if (loiDoc) throw new Error(loiDoc.error.message);
+  const theoTen = Object.fromEntries(doc.flatMap(([er]) => er.data || []).map(e => [boDau(e.name), String(e.id)]));
+  const zaloCua = Object.fromEntries(doc.flatMap(([, lr]) => lr.data || []).map(l => [String(l.msnv), l.zalo_id]));
 
   let bao = 0, boQua = 0;
   for (const x of can) {

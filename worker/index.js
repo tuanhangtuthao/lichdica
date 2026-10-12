@@ -19,7 +19,7 @@
 import {
   taoSb, timNV, layLienKet, luuMenu, duocHoiTiep, taoCongCu, laQuanLy, boDau,
   ghiChoXacNhan, huyChoXacNhan, xacNhanLienKet, goLienKet, NHOM,
-  GIOI_HAN_NV, GIOI_HAN_QL,
+  GIOI_HAN_NV, GIOI_HAN_QL, CAC_XUONG, tenXuong, xoaLienKetZalo,
 } from './du-lieu.js';
 import { taoCongCuQuanLy } from './du-lieu-xuong.js';
 import { menuCaNhan, menuQuanLy, traLoiCaNhan, traLoiQuanLy, SO_SANG_CA_NHAN } from './menu.js';
@@ -53,11 +53,18 @@ export default {
   //   0 1 * * *    -> 8:00 giờ VN, bản tin nhân sự ca Sáng / Tối / Hành Chính
   async scheduled(controller, env, ctx) {
     const e = lamSachEnv(env);
+    // Bản tin và xếp loại chạy cho từng xưởng, mỗi xưởng database riêng.
+    // Xưởng khác SX: người nhận đặt bằng biến riêng <TÊN>_<XƯỞNG> (vd
+    // BAN_TIN_MSNV_QC, XAC_NHAN_BAO_MSNV_QC); chưa đặt thì không gửi cho ai.
+    const envXuong = x => x === 'SX' ? e : { ...e,
+      BAN_TIN_MSNV: e['BAN_TIN_MSNV_' + x] || '', XAC_NHAN_BAO_MSNV: e['XAC_NHAN_BAO_MSNV_' + x] || '' };
     if (controller.cron === '0 1 * * *')
-      ctx.waitUntil(guiBanTin(e).catch(err => console.error('[bantin]', err)));
+      for (const x of CAC_XUONG)
+        ctx.waitUntil(guiBanTin(envXuong(x), taoSb(x)).catch(err => console.error('[bantin]', x, err)));
     else {
       ctx.waitUntil(quetBao5S(e).catch(err => console.error('[bao5s]', err)));
-      ctx.waitUntil(quetXepLoai(e).catch(err => console.error('[xeploai]', err)));
+      for (const x of CAC_XUONG)
+        ctx.waitUntil(quetXepLoai(envXuong(x), taoSb(x)).catch(err => console.error('[xeploai]', x, err)));
     }
   },
 
@@ -130,8 +137,8 @@ export default {
 };
 
 // ── Liên kết an toàn: xác nhận tên, 1 MSNV = 1 tài khoản Zalo ──
-function hoiXacNhan(nv) {
-  return `Bạn là **${nv.name}**${nv.role ? ' – ' + nv.role : ''} (${NHOM[nv.kip] || ''})?\n`
+function hoiXacNhan(nv, xuong = 'SX') {
+  return `Bạn là **${nv.name}**${nv.role ? ' – ' + nv.role : ''} (${xuong === 'SX' ? '' : tenXuong(xuong) + ' · '}${NHOM[nv.kip] || ''})?\n`
     + '1️⃣ Đúng\n2️⃣ Không phải, nhập lại';
 }
 const BAO_BI_THAY = ms => `⚠️ MSNV ${ms} vừa được liên kết với một tài khoản Zalo khác.\n`
@@ -178,12 +185,20 @@ async function xuLy(update, env) {
 async function xuLyTin(msg, zaloId, gui, env) {
   const text = msg.text.trim();
   const tx = boDau(text);
-  const sb = taoSb();
-  const lk = await layLienKet(sb, zaloId);
+  // Tài khoản Zalo này thuộc xưởng nào: xem liên kết trong database của từng
+  // xưởng. Đang chờ xác nhận MSNV ở xưởng nào thì xử lý ở xưởng đó trước;
+  // chưa có ở đâu thì như cũ (SX). Từ đây mọi dữ liệu lấy từ database đó.
+  const theoXuong = await Promise.all(CAC_XUONG.map(async x => {
+    const s = taoSb(x);
+    return { sb: s, lk: await layLienKet(s, zaloId) };
+  }));
+  const choXN = theoXuong.find(d => d.lk && d.lk.msnv_cho);
+  const daCo = theoXuong.find(d => d.lk && d.lk.msnv);
+  let { sb, lk } = choXN || daCo || theoXuong[0];
 
   const doi = tx.match(/^(?:doi )?msnv:? ?([a-z0-9]+)$/);
   const laMa = /^\d{3,6}$/.test(text);
-  const daLK = !!(lk && lk.msnv);
+  const daLK = !!daCo;
 
   // ── đang chờ xác nhận "Bạn là <tên>?" ──
   if (lk && lk.msnv_cho) {
@@ -195,6 +210,8 @@ async function xuLyTin(msg, zaloId, gui, env) {
       }
       const qlMoi = laQuanLy(nvMoi);
       const biThay = await xacNhanLienKet(sb, zaloId, nvMoi.id, msg.from.display_name, qlMoi ? 'quan_ly' : 'ca_nhan');
+      // vừa chuyển sang xưởng khác -> bỏ liên kết ở xưởng cũ (1 tài khoản = 1 xưởng)
+      if (daCo && daCo.sb.xuong !== sb.xuong) await xoaLienKetZalo(daCo.sb, zaloId);
       await baoNguoiKhac(env, biThay, BAO_BI_THAY(nvMoi.id));
       await gui(qlMoi ? menuQuanLy(nvMoi) : menuCaNhan(nvMoi, false));
       // Báo bù các lượt 5S chưa đạt tháng này chưa từng báo cho người này.
@@ -202,18 +219,18 @@ async function xuLyTin(msg, zaloId, gui, env) {
       try { await baoBuKhiLienKet(env, nvMoi, zaloId, qlMoi); }
       catch (e) { console.error('[bao5s] báo bù lỗi:', e); }
       // Xếp loại tháng đã duyệt mà người này chưa nhận -> gửi bù kèm yêu cầu xác nhận
-      try { await baoBuXepLoai(env, nvMoi, zaloId); }
+      try { await baoBuXepLoai(env, nvMoi, zaloId, sb); }
       catch (e) { console.error('[xeploai] báo bù lỗi:', e); }
       return;
     }
     if (text === '2') {
       await huyChoXacNhan(sb, zaloId);
-      return gui(daLK ? `Đã huỷ. Bạn vẫn dùng MSNV **${lk.msnv}** như cũ. Nhắn **0** để xem menu.`
+      return gui(daLK ? `Đã huỷ. Bạn vẫn dùng MSNV **${daCo.lk.msnv}** như cũ. Nhắn **0** để xem menu.`
                       : 'Bạn nhắn lại MSNV giúp mình nhé (ví dụ: 1049).');
     }
     if (!doi && !laMa) {
       const nvCho = await timNV(sb, lk.msnv_cho);
-      return gui('Bạn xác nhận giúp mình trước nhé:\n' + (nvCho ? hoiXacNhan(nvCho) : 'Nhắn **2** để nhập lại MSNV.'));
+      return gui('Bạn xác nhận giúp mình trước nhé:\n' + (nvCho ? hoiXacNhan(nvCho, sb.xuong) : 'Nhắn **2** để nhập lại MSNV.'));
     }
     // gõ MSNV khác -> xuống dưới, đặt chờ xác nhận MSNV mới
   }
@@ -221,18 +238,26 @@ async function xuLyTin(msg, zaloId, gui, env) {
   // ── nhập / đổi MSNV -> hỏi xác nhận tên, CHƯA liên kết ──
   if (doi || (!daLK && laMa)) {
     const ma = doi ? doi[1] : text;
-    const nv = await timNV(sb, ma);
+    // MSNV thuộc xưởng nào thì liên kết ở xưởng đó (tìm SX trước, rồi QC)
+    let nv = null, sbNV = null;
+    for (const d of theoXuong) {
+      nv = await timNV(d.sb, ma);
+      if (nv) { sbNV = d.sb; break; }
+    }
     if (!nv) return gui(`Không tìm thấy MSNV **${ma}**. Bạn kiểm tra lại giúp mình nhé.`);
-    if (daLK && String(nv.id) === String(lk.msnv))
+    if (daCo && daCo.sb.xuong === sbNV.xuong && String(nv.id) === String(daCo.lk.msnv))
       return gui(`Bạn đang dùng MSNV **${nv.id}** (${nv.name}) rồi. Nhắn **0** để xem menu.`);
-    await ghiChoXacNhan(sb, zaloId, nv.id, msg.from.display_name);
-    return gui(hoiXacNhan(nv));
+    // đang chờ xác nhận một MSNV ở xưởng khác thì bỏ, chỉ giữ MSNV mới
+    if (choXN && choXN.sb.xuong !== sbNV.xuong) await huyChoXacNhan(choXN.sb, zaloId);
+    await ghiChoXacNhan(sbNV, zaloId, nv.id, msg.from.display_name);
+    return gui(hoiXacNhan(nv, sbNV.xuong));
   }
 
   if (!daLK)
     return gui(`Chào ${msg.from.display_name || 'bạn'} 👋 Mình là Trợ Lý Phân Xưởng 1.\n`
       + 'Bạn nhắn **MSNV** của mình (ví dụ: 1049) để bắt đầu nhé.');
 
+  ({ sb, lk } = daCo);
   const nv = await timNV(sb, lk.msnv);
   if (!nv) return gui(`MSNV ${lk.msnv} không còn trong danh sách. Nhắn "đổi MSNV <số>" để cập nhật.`);
   const ql = laQuanLy(nv);
@@ -302,7 +327,7 @@ async function xuLyTin(msg, zaloId, gui, env) {
   let traLoi;
   try {
     traLoi = await hoiAI({
-      env, cauHoi: text, nhanVien: nv, laQL: ql,
+      env, cauHoi: text, nhanVien: nv, laQL: ql, xuong: sb.xuong,
       congCu: ql ? taoCongCuQuanLy(sb, nv) : taoCongCu(sb, nv),
     });
   } catch (e) {

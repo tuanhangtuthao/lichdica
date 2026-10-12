@@ -190,8 +190,8 @@ async function layReviews(sb, tu, ids) {
 }
 
 // ── CRON 5 PHÚT ───────────────────────────────────────────────
-export async function quetXepLoai(env) {
-  const sb = taoSb(), hom = homNay(), tu = env.XL_TU_THANG || BAT_DAU_THANG;
+export async function quetXepLoai(env, sb = taoSb()) {
+  const hom = homNay(), tu = env.XL_TU_THANG || BAT_DAU_THANG;
   const loc = String(env.XL_LOC_MSNV || '').split(',').map(s => s.trim()).filter(Boolean);   // chỉ để chạy thử
   const kq = { moi: 0, dieuChinh: 0, nhac: 0, quaHan: 0, loi: 0 };
   let ngan = NGAN_SACH;
@@ -296,8 +296,8 @@ async function baoQuaHan(sb, env, recs, nvTheoId, hom) {
 }
 
 // ── BÁO BÙ KHI NHÂN VIÊN VỪA LIÊN KẾT ─────────────────────────
-export async function baoBuXepLoai(env, nv, zaloId) {
-  const sb = taoSb(), hom = homNay(), tu = env.XL_TU_THANG || BAT_DAU_THANG;
+export async function baoBuXepLoai(env, nv, zaloId, sb = taoSb()) {
+  const hom = homNay(), tu = env.XL_TU_THANG || BAT_DAU_THANG;
   const id = String(nv.id);
   const reviews = await layReviews(sb, tu, [id]);
   if (!reviews.length) return 0;

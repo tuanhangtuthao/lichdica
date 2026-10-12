@@ -52,8 +52,7 @@ export async function noiDungBanTin(sb, ngay) {
   return `🌅 **NHÂN SỰ CA** – ${thuNgay(ngay)}\n\n` + phan.join('\n\n');
 }
 
-export async function guiBanTin(env) {
-  const sb = taoSb();
+export async function guiBanTin(env, sb = taoSb()) {
   // BAN_TIN_NGAY chỉ dùng khi chạy thử ở máy (ép một ngày cụ thể)
   const ngay = env.BAN_TIN_NGAY || dKey(homNayVN());
   const dsMs = String(env.BAN_TIN_MSNV || '').split(',').map(s => s.trim()).filter(Boolean);
