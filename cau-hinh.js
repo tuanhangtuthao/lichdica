@@ -12,7 +12,7 @@
 // Trang chỉ cần đọc CAU_HINH.SB_URL / CAU_HINH.SB_KEY thay vì ghi cứng.
 //
 // THÊM XƯỞNG MỚI: thêm 1 mục vào XUONG bên dưới (tiền tố đường dẫn + database),
-// và cho worker/index.js chuyển tiền tố đó về cùng bộ file web.
+// và thêm dòng chuyển tiền tố đó về cùng bộ file web trong file _redirects.
 (function () {
   'use strict';
 
@@ -22,11 +22,10 @@
       SB_URL: 'https://xtutpuwesganunktrxcv.supabase.co',
       SB_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4',
     },
-    // Điền SB_URL / SB_KEY khi đã tạo project Supabase cho QC.
     QC: {
       ma: 'QC', ten: 'QC', tien_to: '/qc',
-      SB_URL: '',
-      SB_KEY: '',
+      SB_URL: 'https://lvqloajqzjlqofbxgimm.supabase.co',
+      SB_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2cWxvYWpxempscW9mYnhnaW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4OTY5NzYsImV4cCI6MjEwMzQ3Mjk3Nn0.EllSuxT94UXBHUnZJY7cmiqF8HjwQwFLjV5UxELjovo',
     },
   };
 
@@ -48,6 +47,31 @@
     P.getItem    = function (k)    { return get.call(this, tt + k); };
     P.setItem    = function (k, v) { return set.call(this, tt + k, v); };
     P.removeItem = function (k)    { return rem.call(this, tt + k); };
+  }
+
+  // ── Tên xưởng trên giao diện ──
+  // Các trang ghi cứng "Phân Xưởng 1" (tiêu đề, đầu trang, trợ lý...). Ở xưởng
+  // khác thì đổi chữ đó thành tên xưởng, kể cả phần trang vẽ thêm về sau.
+  if (ma !== 'SX') {
+    const GOC = /Phân Xưởng 1/g;
+    const doiChu = function (goc) {
+      const w = document.createTreeWalker(goc, NodeFilter.SHOW_TEXT);
+      for (let n = w.nextNode(); n; n = w.nextNode())
+        if (n.nodeValue.indexOf('Phân Xưởng 1') >= 0) n.nodeValue = n.nodeValue.replace(GOC, ch.ten);
+      if (goc.querySelectorAll) goc.querySelectorAll('[aria-label*="Phân Xưởng 1"]').forEach(function (e) {
+        e.setAttribute('aria-label', e.getAttribute('aria-label').replace(GOC, ch.ten));
+      });
+    };
+    document.addEventListener('DOMContentLoaded', function () {
+      document.title = document.title.replace(GOC, ch.ten);
+      doiChu(document.body);
+      new MutationObserver(function (ds) {
+        ds.forEach(function (d) { d.addedNodes.forEach(function (n) {
+          if (n.nodeType === 1) doiChu(n);
+          else if (n.nodeType === 3 && n.nodeValue.indexOf('Phân Xưởng 1') >= 0) n.nodeValue = n.nodeValue.replace(GOC, ch.ten);
+        }); });
+      }).observe(document.body, { childList: true, subtree: true });
+    });
   }
 
   // Xưởng chưa có database (chưa cấu hình) thì báo rõ thay vì trang trắng

@@ -1,0 +1,12 @@
+# Xưởng QC dùng chung bộ file web với Sản xuất, chỉ khác database
+# (cau-hinh.js chọn database theo đường dẫn /qc/).
+#
+# Dòng cuối: 200 = trả file gốc nhưng thanh địa chỉ vẫn giữ /qc/... .
+# Các dòng 301 ở trên là bắt buộc: Cloudflare tự đổi /5s.html thành /5s
+# (bỏ đuôi .html) và khi đổi thì làm MẤT tiền tố /qc -> người dùng QC bị
+# đẩy sang trang Sản xuất. Nên tự đổi trước, giữ nguyên /qc.
+/qc              /qc/        301
+/qc/index.html   /qc/        301
+/qc/index        /qc/        301
+/qc/:trang.html  /qc/:trang  301
+/qc/*            /:splat     200
