@@ -636,6 +636,7 @@ let FACTORY_DATA = [];   // sơ đồ, dùng chung bảng factory_layout với t
 let CHECKS  = {};
 let ROSTER  = {};        // mã máy -> tên thợ, lấy từ shift_roster
 let EMPS    = [];        // danh sách nhân viên, để chọn lại khi lịch sai
+let NV_QC   = [];        // nhân viên xưởng QC (database riêng của QC), gợi ý cho khu QC
 let NGUOI5S = [];        // kỹ thuật / QC / đóng gói - bảng s5_nguoi, chỉ dùng cho 5S
 let HIST    = [];        // lịch sử vi phạm đã tải
 let curDate='', curShift='S', curKip=1, cur=null;
@@ -665,6 +666,19 @@ async function loadNguoi5S(){
     if(error) throw error;
     NGUOI5S = data || [];
   }catch(e){ NGUOI5S = []; console.warn('Chưa có bảng s5_nguoi (chưa chạy SQL?):', e.message); }
+}
+
+// 5S dùng chung cả nhà máy (nút 5S bên QC mở trang này), còn danh sách nhân
+// viên QC nằm ở database QC -> đọc thẳng từ đó, chỉ đọc tên / MSNV / vị trí.
+async function loadNhanVienQC(){
+  const q = CAU_HINH.cac_xuong && CAU_HINH.cac_xuong.QC;
+  if(!q || !q.SB_URL || !q.SB_KEY || CAU_HINH.ma === 'QC') return;
+  try{
+    const r = await fetch(q.SB_URL + '/rest/v1/employees?select=id,name,role,kip&order=kip.asc,sort_order.asc',
+      {headers: {apikey: q.SB_KEY, Authorization: 'Bearer ' + q.SB_KEY}});
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    NV_QC = await r.json();
+  }catch(e){ NV_QC = []; console.warn('Không tải được nhân viên QC:', e.message); }
 }
 
 async function loadEmployees(){
@@ -881,6 +895,8 @@ function idCuaTen(ten){
   if(!k) return '';
   const e = EMPS.find(x => String(x.name || '').trim().toLowerCase() === k);
   if(e) return e.id;
+  const q = NV_QC.find(x => String(x.name || '').trim().toLowerCase() === k);
+  if(q) return q.id;
   const n = NGUOI5S.find(x => String(x.ten || '').trim().toLowerCase() === k);
   return n ? (n.msnv || '') : '';
 }
@@ -1047,6 +1063,9 @@ function dienGoiY(idDs, nhomDau){
       `<option value="${esc(n.ten)}">${esc((NHOM_5S[nh] || nh) + (n.msnv ? ' · ' + n.msnv : ''))}</option>`)).join('');
   // Khu Sản xuất: người phụ trách thường là thợ / tổ trưởng có sẵn trong danh sách
   // nhân viên -> gợi ý cả nhân viên. Chọn nhân viên thì có MSNV, bot Zalo báo được.
+  // Khu QC: nhân viên QC (database QC) lên đầu, chọn thì có MSNV
+  if(nhomDau === 'QC')
+    h = NV_QC.map(e => `<option value="${esc(e.name)}">${esc('Nhân viên QC · ' + e.id + (e.role ? ' · ' + e.role : ''))}</option>`).join('') + h;
   if(nhomDau === 'SX')
     h += EMPS.map(e => `<option value="${esc(e.name)}">${esc('Nhân viên · ' + e.id + (e.role ? ' · ' + e.role : ''))}</option>`).join('');
   document.getElementById(idDs).innerHTML = h;
@@ -1086,6 +1105,7 @@ async function themNeuChuaCo(ten, nhom){
   if(!ten || !nhom) return false;
   if(NGUOI5S.some(n => chuanTen(n.ten) === chuanTen(ten))) return false;
   if(EMPS.some(e => chuanTen(e.name) === chuanTen(ten))) return false;
+  if(NV_QC.some(e => chuanTen(e.name) === chuanTen(ten))) return false;
   try{
     const {error} = await sb.from('s5_nguoi').insert({ten, msnv: '', nhom});
     if(error) throw error;
@@ -1666,6 +1686,9 @@ function oChonNV(r){
   let op = '<option value="">— Chưa rõ —</option>';
   // Lượt khu vực: người phụ trách 5S (QC / Kỹ thuật / Đóng gói) xếp lên đầu, nhóm của khu trước
   const khu = KHU_VUC.find(k => k.id === r.cell_id);
+  if(khu && khu.nhom === 'QC' && NV_QC.length)
+    op += '<optgroup label="Nhân viên QC">' +
+      NV_QC.map(e => `<option value="${esc(e.name)}"${e.name === hien ? ' selected' : ''}>${esc(e.name)}</option>`).join('') + '</optgroup>';
   if(khu){
     [khu.nhom, ...Object.keys(NHOM_5S).filter(n => n !== khu.nhom)].forEach(nh => {
       const ds = NGUOI5S.filter(n => n.nhom === nh);
@@ -1681,7 +1704,8 @@ function oChonNV(r){
       '</optgroup>';
   });
   // tên không còn trong danh sách NV vẫn giữ, không làm mất dữ liệu cũ
-  if(hien && !EMPS.some(e => e.name === hien) && !NGUOI5S.some(n => n.ten === hien))
+  if(hien && !EMPS.some(e => e.name === hien) && !NGUOI5S.some(n => n.ten === hien)
+      && !(khu && khu.nhom === 'QC' && NV_QC.some(e => e.name === hien)))
     op += `<option value="${esc(hien)}" selected>${esc(hien)} (ngoài danh sách)</option>`;
   return `<select class="th-nv" onchange="doiNVThang(${r.id}, this.value)">${op}</select>`;
 }
@@ -1957,7 +1981,7 @@ async function thuMoKhoa(){
       if(saved) document.getElementById('inspector').value = saved;
     }catch(e){}
 
-    await Promise.all([loadLayout(), loadEmployees(), loadNguoi5S()]);
+    await Promise.all([loadLayout(), loadEmployees(), loadNguoi5S(), loadNhanVienQC()]);
     await reload();
   }catch(e){
     console.error('Init error:', e);

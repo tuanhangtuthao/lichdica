@@ -35,6 +35,9 @@
   const ma = (duong === '/qc' || duong.startsWith('/qc/')) ? 'QC' : 'SX';
   const ch = Object.assign({}, XUONG[ma]);
   ch.SB_OK = /^https:\/\//.test(ch.SB_URL) && !!ch.SB_KEY;
+  // Danh sách mọi xưởng (khoá anon vốn công khai): trang dùng chung cả nhà máy
+  // như 5S cần đọc thêm danh sách nhân viên của xưởng khác.
+  ch.cac_xuong = XUONG;
   window.CAU_HINH = ch;
 
   // ── Tách dữ liệu nhớ trên trình duyệt giữa các xưởng ──
