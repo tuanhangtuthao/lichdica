@@ -19,9 +19,10 @@
 import {
   taoSb, timNV, layLienKet, luuMenu, duocHoiTiep, taoCongCu, laQuanLy, boDau,
   ghiChoXacNhan, huyChoXacNhan, xacNhanLienKet, goLienKet, NHOM,
-  GIOI_HAN_NV, GIOI_HAN_QL, CAC_XUONG, tenXuong, xoaLienKetZalo,
+  GIOI_HAN_NV, GIOI_HAN_QL, CAC_XUONG, tenXuong, xoaLienKetZalo, homNayVN, dKey, addD,
 } from './du-lieu.js';
 import { taoCongCuQuanLy } from './du-lieu-xuong.js';
+import { noiDungBanTin } from './ban-tin.js';
 import { menuCaNhan, menuQuanLy, traLoiCaNhan, traLoiQuanLy, SO_SANG_CA_NHAN } from './menu.js';
 import { hoiAI, cauBaoLoi } from './tro-ly-ai.js';
 import { guiTin, datWebhook } from './zalo.js';
@@ -261,6 +262,26 @@ async function xuLyTin(msg, zaloId, gui, env) {
   const nv = await timNV(sb, lk.msnv);
   if (!nv) return gui(`MSNV ${lk.msnv} không còn trong danh sách. Nhắn "đổi MSNV <số>" để cập nhật.`);
   const ql = laQuanLy(nv);
+
+  // ── quản lý tra nhanh nhân sự ca QC: "qc", "qc mai", "qc 15/10" ──
+  // Cùng nội dung bản tin 8:00 của QC, tra ngày nào cũng được, không qua AI.
+  const lenhQC = tx.match(/^qc(?: (hom nay|ngay mai|mai|(\d{1,2})[/.-](\d{1,2})(?:[/.-](\d{2}|\d{4}))?))?$/);
+  if (lenhQC) {
+    if (!ql) return gui('Lệnh này chỉ dành cho quản lý. Nhắn **0** để xem menu nhé.');
+    const homNay = homNayVN();
+    let ngay = homNay;
+    if (lenhQC[1] === 'mai' || lenhQC[1] === 'ngay mai') ngay = addD(homNay, 1);
+    else if (lenhQC[2]) {
+      const n = Number(lenhQC[4] || homNay.getFullYear());
+      ngay = new Date(n < 100 ? 2000 + n : n, Number(lenhQC[3]) - 1, Number(lenhQC[2]));
+      if (ngay.getDate() !== Number(lenhQC[2]) || ngay.getMonth() !== Number(lenhQC[3]) - 1)
+        return gui(`Ngày **${lenhQC[2]}/${lenhQC[3]}** không có thật. Nhắn ví dụ: qc 15/10`);
+    }
+    const noiDung = await noiDungBanTin(taoSb('QC'), dKey(ngay));
+    if (!noiDung) return gui(`Ngày ${dKey(ngay).slice(8, 10)}/${dKey(ngay).slice(5, 7)} QC không có ai đi làm.`);
+    for (const phan of chiaTin(noiDung)) await gui(phan);
+    return;
+  }
 
   // ── quản lý gỡ liên kết sai: "gỡ 1050" ──
   const go = tx.match(/^go (\d{3,6})$/);
