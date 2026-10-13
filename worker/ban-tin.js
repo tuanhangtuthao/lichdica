@@ -9,7 +9,7 @@
 // mỗi MSNV gửi tới tài khoản Zalo đang liên kết. Chưa liên kết thì bỏ qua.
 // Ngày không ai đi làm (Chủ nhật, lễ) thì không gửi.
 // ═══════════════════════════════════════════════════════════════
-import { taoSb, homNayVN, dKey } from './du-lieu.js';
+import { taoSb, homNayVN, dKey, CAC_XUONG, tenXuong } from './du-lieu.js';
 import { taoXuong } from './du-lieu-xuong.js';
 import { dsTheoKip, tenKip, thuNgay } from './menu.js';
 import { guiTin } from './zalo.js';
@@ -49,7 +49,9 @@ export async function noiDungBanTin(sb, ngay) {
   }
   const vang = [...(r.theo_ca.NP || []), ...(r.theo_ca.VM || [])];
   phan.push(`🏖️ Nghỉ phép / vắng: ${vang.length ? tenKip(vang) : 'không có'}`);
-  return `🌅 **NHÂN SỰ CA** – ${thuNgay(ngay)}\n\n` + phan.join('\n\n');
+  // xưởng khác SX ghi rõ tên xưởng: cùng một người có thể nhận bản tin của 2 xưởng
+  const xuong = sb.xuong && sb.xuong !== 'SX' ? ' ' + tenXuong(sb.xuong).toUpperCase() : '';
+  return `🌅 **NHÂN SỰ CA${xuong}** – ${thuNgay(ngay)}\n\n` + phan.join('\n\n');
 }
 
 export async function guiBanTin(env, sb = taoSb()) {
@@ -61,9 +63,13 @@ export async function guiBanTin(env, sb = taoSb()) {
   const text = await noiDungBanTin(sb, ngay);
   if (!text) { console.log(`[bantin] ${ngay}: không ai đi làm, bỏ qua`); return { gui: 0, boQua: 'khong_ai_di_lam' }; }
 
-  const r = await sb.from('zalo_links').select('zalo_id,msnv').in('msnv', dsMs);
-  if (r.error) throw new Error('Đọc zalo_links lỗi: ' + r.error.message);
-  const nhan = r.data || [];
+  // Người nhận có thể liên kết Zalo ở xưởng khác (vd bản tin QC gửi cho quản
+  // lý bên SX) -> tìm liên kết ở mọi xưởng; MSNV các xưởng không trùng nhau.
+  const rs = await Promise.all(CAC_XUONG.map(x =>
+    (x === sb.xuong ? sb : taoSb(x)).from('zalo_links').select('zalo_id,msnv').in('msnv', dsMs)));
+  const loi = rs.find(r => r.error);
+  if (loi) throw new Error('Đọc zalo_links lỗi: ' + loi.error.message);
+  const nhan = rs.flatMap(r => r.data || []);
   const chuaLK = dsMs.filter(m => !nhan.some(n => n.msnv === m));
   if (chuaLK.length) console.warn('[bantin] MSNV chưa liên kết Zalo, bỏ qua:', chuaLK.join(', '));
 

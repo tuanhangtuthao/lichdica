@@ -29,6 +29,8 @@
     "CLAUDE_MODEL": "claude-haiku-4.5",
     // MSNV nhận bản tin nhân sự 8:00, cách nhau bằng dấu phẩy (vd "1050,1049")
     "BAN_TIN_MSNV": "1050,1108",
+    // Bản tin nhân sự của xưởng QC (database QC), cũng gửi lúc 8:00
+    "BAN_TIN_MSNV_QC": "1050",
     // MSNV nhận báo "không đồng ý xếp loại" và danh sách quá hạn chưa xác nhận
     "XAC_NHAN_BAO_MSNV": "1050",
     // Zalo gửi webhook vào trạm chuyển tiếp Supabase (supabase/functions/
