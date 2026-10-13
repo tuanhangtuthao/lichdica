@@ -33,6 +33,7 @@
     "BAN_TIN_MSNV_QC": "1050",
     // MSNV nhận báo "không đồng ý xếp loại" và danh sách quá hạn chưa xác nhận
     "XAC_NHAN_BAO_MSNV": "1050",
+    "XAC_NHAN_BAO_MSNV_QC": "1050",
     // Zalo gửi webhook vào trạm chuyển tiếp Supabase (supabase/functions/
     // zalo-webhook), trạm chuyển sang worker. Lý do: workers.dev chặn
     // User-Agent "Java/1.8..." của Zalo bằng lỗi 1010, không tắt được.

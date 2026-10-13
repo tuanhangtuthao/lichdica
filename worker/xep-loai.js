@@ -17,7 +17,7 @@
 // đa NGAN_SACH người (5 phút/lần -> 72 người/giờ, thừa cho 44 nhân viên).
 // ═══════════════════════════════════════════════════════════════
 import {
-  taoSb, homNayVN, dKey, addD, tuKey, round1, caCua, gioTangCa, NHOM, boDau, luuMenu,
+  taoSb, homNayVN, dKey, addD, tuKey, round1, caCua, gioTangCa, NHOM, boDau, luuMenu, CAC_XUONG,
 } from './du-lieu.js';
 import { guiTin } from './zalo.js';
 
@@ -263,11 +263,18 @@ export async function quetXepLoai(env, sb = taoSb()) {
 
 // ── BÁO QUẢN LÝ ───────────────────────────────────────────────
 async function nguoiNhanBao(sb, env) {
-  const ds = String(env.XAC_NHAN_BAO_MSNV || '').split(',').map(s => s.trim()).filter(Boolean);
+  // xưởng khác SX có người nhận riêng (vd XAC_NHAN_BAO_MSNV_QC). Đọc theo sb
+  // để cả lúc nhân viên trả lời trên Zalo (env chung) cũng báo đúng người.
+  const bien = sb.xuong && sb.xuong !== 'SX' ? 'XAC_NHAN_BAO_MSNV_' + sb.xuong : 'XAC_NHAN_BAO_MSNV';
+  const ds = String(env[bien] || '').split(',').map(s => s.trim()).filter(Boolean);
   if (!ds.length) return [];
-  const r = await sb.from('zalo_links').select('zalo_id,msnv').in('msnv', ds);
-  if (r.error) throw new Error(r.error.message);
-  return (r.data || []).map(x => x.zalo_id);
+  // Người nhận có thể liên kết Zalo ở xưởng khác (vd báo xếp loại QC gửi cho
+  // quản lý bên SX) -> tìm liên kết ở mọi xưởng; MSNV các xưởng không trùng.
+  const rs = await Promise.all(CAC_XUONG.map(x =>
+    (x === sb.xuong ? sb : taoSb(x)).from('zalo_links').select('zalo_id,msnv').in('msnv', ds)));
+  const loi = rs.find(r => r.error);
+  if (loi) throw new Error(loi.error.message);
+  return rs.flatMap(r => r.data || []).map(x => x.zalo_id);
 }
 async function baoQuanLy(sb, env, text) {
   let n = 0;
