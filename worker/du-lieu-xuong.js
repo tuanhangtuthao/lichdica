@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════
 import {
   caCua, gioTangCa, round1, tuKey, dKey, DFUL, NHAN_CA, NHOM, timNV, taoCongCu, boDau,
-  DINH_NGHIA_CONG_CU, homNayVN, laQuanLy,
+  DINH_NGHIA_CONG_CU, homNayVN, laQuanLy, docHet,
 } from './du-lieu.js';
 
 const { S_DEFS, tieuChiCua, dsNguoiChiu5S, laLoiCua5S } = globalThis.TieuChi5S;
@@ -55,10 +55,11 @@ export function taoXuong(sb) {
     const [y, m] = thang.split('-').map(Number);
     const sau = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
     const kq = await Promise.all([
-      sb.from('ratings_new').select('emp_id,date,score,note').like('date', thang + '-%'),
+      // cả xưởng cả tháng có thể quá 1000 dòng -> docHet đọc theo trang
+      docHet(() => sb.from('ratings_new').select('emp_id,date,score,note').like('date', thang + '-%').order('id')),
       // s5_checks.date là cột kiểu date thật -> lọc khoảng ngày, không dùng like
-      sb.from('s5_checks').select('*').gte('date', thang + '-01').lt('date', sau),
-      sb.from('overtime').select('*').like('date', thang + '-%'),
+      docHet(() => sb.from('s5_checks').select('*').gte('date', thang + '-01').lt('date', sau).order('id')),
+      docHet(() => sb.from('overtime').select('*').like('date', thang + '-%').order('id')),
       sb.from('monthly_reviews').select('emp_id,grade').eq('month_key', thang).eq('approved', true),
     ]);
     const loi = kq.find(x => x.error);
@@ -122,7 +123,7 @@ export function taoXuong(sb) {
       kiemThang(thang);
       const { emps, grade } = await nen();
       const [rr, mr] = await Promise.all([
-        sb.from('ratings_new').select('emp_id,score').like('date', thang + '-%'),
+        docHet(() => sb.from('ratings_new').select('emp_id,score').like('date', thang + '-%').order('id')),
         sb.from('monthly_reviews').select('*').eq('month_key', thang),
       ]);
       if (rr.error || mr.error) throw new Error((rr.error || mr.error).message);
@@ -150,7 +151,7 @@ export function taoXuong(sb) {
     // s5_checks.date là cột kiểu date thật -> lọc khoảng ngày, không dùng like
     async vi_pham_5s(tu, den) {
       kiemNgay(tu, 'tu_ngay'); kiemNgay(den, 'den_ngay');
-      const r = await sb.from('s5_checks').select('*').gte('date', tu).lte('date', den).order('date');
+      const r = await docHet(() => sb.from('s5_checks').select('*').gte('date', tu).lte('date', den).order('date').order('id'));
       if (r.error) throw new Error(r.error.message);
       const tong = (r.data || []).length;
       const ds = (r.data || []).filter(chuaDat).map(x => ({
@@ -308,7 +309,7 @@ export function taoXuong(sb) {
     // Các lượt chấm điểm thấp (kèm ghi chú) trong khoảng ngày
     async diem_thap(tu, den, duoi = 9) {
       kiemNgay(tu, 'tu_ngay'); kiemNgay(den, 'den_ngay');
-      const r = await sb.from('ratings_new').select('date,emp_name,emp_id,kip,score,note').gte('date', tu).lte('date', den).order('date');
+      const r = await docHet(() => sb.from('ratings_new').select('date,emp_name,emp_id,kip,score,note').gte('date', tu).lte('date', den).order('date').order('id'));
       if (r.error) throw new Error(r.error.message);
       const ds = (r.data || []).filter(x => parseFloat(x.score) < duoi);
       const dem = {};

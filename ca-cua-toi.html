@@ -320,7 +320,7 @@ async function xem(maChon){
       sb.from('emp_schedule').select('*').eq('emp_id', id),
       sb.from('holidays').select('*'),
       sb.from('rating_config').select('*'),
-      sb.from('s5_checks').select('*').gte('date', thang + '-01').lte('date', `${thang}-${cuoiThang}`),
+      docHet(() => sb.from('s5_checks').select('*').gte('date', thang + '-01').lte('date', `${thang}-${cuoiThang}`).order('id')),
     ]);
     const hong = [er, rr, mr, otr, lr, hr, gr].find(r => r.error);
     if(hong) throw hong.error;

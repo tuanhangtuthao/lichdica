@@ -40,6 +40,23 @@
   ch.cac_xuong = XUONG;
   window.CAU_HINH = ch;
 
+  // ── Đọc hết mọi dòng ──
+  // Supabase trả TỐI ĐA 1000 dòng mỗi lần hỏi, dư thì cắt im lặng (5S tháng
+  // 10/2026 có 1334 lượt -> mất hết các ngày sau 10/10). Bảng lớn đọc theo
+  // trang 1000 dòng. taoQ: hàm tạo câu hỏi MỚI mỗi lần, phải có order (thêm
+  // order('id') cho thứ tự cố định). Trả { data, error } như supabase-js.
+  window.docHet = async function (taoQ) {
+    const TRANG = 1000;
+    let tu = 0, kq = [];
+    for (;;) {
+      const { data, error } = await taoQ().range(tu, tu + TRANG - 1);
+      if (error) return { data: kq, error };
+      kq = kq.concat(data || []);
+      if (!data || data.length < TRANG) return { data: kq, error: null };
+      tu += TRANG;
+    }
+  };
+
   // ── Tách dữ liệu nhớ trên trình duyệt giữa các xưởng ──
   // Hai xưởng chung một tên miền nên chung localStorage / sessionStorage: không
   // tách thì MSNV đã xem gần đây, tên người kiểm 5S... của SX hiện sang QC.

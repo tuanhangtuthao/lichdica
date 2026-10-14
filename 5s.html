@@ -1593,9 +1593,10 @@ async function taiThang(){
   const [y,m] = thang.split('-');
   const cuoi = new Date(Number(y), Number(m), 0).getDate();
   try{
-    const {data,error} = await sb.from(TABLE).select('*')
+    // tháng có thể quá 1000 lượt -> đọc hết theo trang (docHet, cau-hinh.js)
+    const {data,error} = await docHet(() => sb.from(TABLE).select('*')
       .gte('date', `${thang}-01`).lte('date', `${thang}-${String(cuoi).padStart(2,'0')}`)
-      .order('date').order('checked_at');
+      .order('date').order('checked_at').order('id'));
     if(error) throw error;
     THANG = data || [];
     // đổ danh sách người vào ô lọc, chỉ những người có mặt trong tháng

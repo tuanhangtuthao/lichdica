@@ -556,7 +556,7 @@ async function loadData(){
       sb.from('holidays').select('*').order('date'),
       sb.from('emp_schedule').select('*').order('start_date'),
       sb.from('monthly_reviews').select('*'),
-      sb.from('s5_checks').select('*').order('date'),
+      docHet(() => sb.from('s5_checks').select('*').order('date').order('id')),   // > 1000 dòng
     ]);
     // chỉ giữ lượt CHƯA ĐẠT - đó là thứ nhân viên cần biết để sửa
     S5 = (s5r && s5r.data ? s5r.data : []).filter(r =>

@@ -52,6 +52,22 @@ export function taoSb(xuong = 'SX') {
   return sb;
 }
 
+// Supabase trả TỐI ĐA 1000 dòng mỗi lần hỏi, dư thì cắt im lặng (5S tháng
+// 10/2026 đã 1334 lượt). Bảng lớn (5S, điểm, tăng ca cả xưởng) đọc theo trang.
+// taoQ: hàm tạo câu hỏi MỚI mỗi lần, có order('id') để thứ tự cố định.
+// Trả { data, error } như supabase-js.
+export async function docHet(taoQ) {
+  const TRANG = 1000;
+  let tu = 0, kq = [];
+  for (;;) {
+    const { data, error } = await taoQ().range(tu, tu + TRANG - 1);
+    if (error) return { data: kq, error };
+    kq = kq.concat(data || []);
+    if (!data || data.length < TRANG) return { data: kq, error: null };
+    tu += TRANG;
+  }
+}
+
 // ── NGÀY GIỜ ───────────────────────────────────────────────────
 // Worker chạy giờ UTC. 6h sáng ở Việt Nam là 23h hôm trước theo UTC, nên
 // "hôm nay" phải tính theo giờ Việt Nam, không thì 7 tiếng mỗi ngày bot
@@ -346,8 +362,8 @@ export function taoCongCu(sb, e) {
       kiemThang(thang);
       const [y, m] = thang.split('-').map(Number);
       const sau = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
-      const r = await sb.from('s5_checks').select('*')
-        .gte('date', thang + '-01').lt('date', sau).order('date');
+      const r = await docHet(() => sb.from('s5_checks').select('*')
+        .gte('date', thang + '-01').lt('date', sau).order('date').order('id'));
       if (r.error) throw new Error(r.error.message);
       const ten = String(e.name || '').trim().toLowerCase();
       const ds = (r.data || [])

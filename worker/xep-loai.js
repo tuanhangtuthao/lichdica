@@ -17,7 +17,7 @@
 // đa NGAN_SACH người (5 phút/lần -> 72 người/giờ, thừa cho 44 nhân viên).
 // ═══════════════════════════════════════════════════════════════
 import {
-  taoSb, homNayVN, dKey, addD, tuKey, round1, caCua, gioTangCa, NHOM, boDau, luuMenu, CAC_XUONG,
+  taoSb, homNayVN, dKey, addD, tuKey, round1, caCua, gioTangCa, NHOM, boDau, luuMenu, CAC_XUONG, docHet,
 } from './du-lieu.js';
 import { guiTin } from './zalo.js';
 
@@ -65,10 +65,11 @@ async function taiNguCanh(sb, mk) {
   const [y, m] = mk.split('-').map(Number);
   const sau = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
   const kq = await Promise.all([
-    sb.from('ratings_new').select('emp_id,score').like('date', mk + '-%'),
+    // cả xưởng cả tháng có thể quá 1000 dòng -> docHet đọc theo trang
+    docHet(() => sb.from('ratings_new').select('emp_id,score').like('date', mk + '-%').order('id')),
     // s5_checks.date là cột kiểu date thật -> lọc khoảng ngày, không dùng like
-    sb.from('s5_checks').select('*').gte('date', mk + '-01').lt('date', sau),
-    sb.from('overtime').select('*').like('date', mk + '-%'),
+    docHet(() => sb.from('s5_checks').select('*').gte('date', mk + '-01').lt('date', sau).order('id')),
+    docHet(() => sb.from('overtime').select('*').like('date', mk + '-%').order('id')),
     sb.from('emp_schedule').select('*'),
     sb.from('holidays').select('*'),
     sb.from('monthly_reviews').select('emp_id,grade').eq('month_key', thangTruoc(mk)).eq('approved', true),

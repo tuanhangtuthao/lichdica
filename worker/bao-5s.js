@@ -10,7 +10,7 @@
 // được "giữ chỗ" trước khi gửi (insert ... on conflict do nothing) nên hai
 // lần quét chồng nhau cũng không báo trùng; gửi hỏng thì nhả ra để lần sau.
 // ═══════════════════════════════════════════════════════════════
-import { taoSb, homNayVN, dKey, DFUL, boDau, CAC_XUONG } from './du-lieu.js';
+import { taoSb, homNayVN, dKey, DFUL, boDau, CAC_XUONG, docHet } from './du-lieu.js';
 import { guiTin, guiAnh } from './zalo.js';
 import { SO_SANG_CA_NHAN } from './menu.js';
 
@@ -127,7 +127,7 @@ export async function baoBuKhiLienKet(env, nv, zaloId, laQL) {
   const [y, m] = thang.split('-').map(Number);
   const sau = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
   // s5_checks.date là cột kiểu date -> lọc khoảng ngày, không dùng like
-  const r = await sb.from('s5_checks').select('*').gte('date', thang + '-01').lt('date', sau).order('date');
+  const r = await docHet(() => sb.from('s5_checks').select('*').gte('date', thang + '-01').lt('date', sau).order('date').order('id'));
   if (r.error) throw new Error('Đọc s5_checks lỗi: ' + r.error.message);
   const id = String(nv.id), ten = boDau(nv.name);
   const cuaNV = (r.data || []).filter(chuaDat)

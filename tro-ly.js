@@ -32,6 +32,18 @@ if (typeof S_DEFS === 'undefined')    { console.warn('[Trợ Lý] thiếu 5s-tie
 // Lấy theo xưởng (cau-hinh.js); trang chưa nạp cau-hinh.js thì dùng SX như cũ
 const SB_URL = (window.CAU_HINH && window.CAU_HINH.SB_URL) || 'https://xtutpuwesganunktrxcv.supabase.co';
 const SB_KEY = (window.CAU_HINH && window.CAU_HINH.SB_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+// Đọc hết mọi dòng theo trang 1000 (Supabase cắt ở 1000 dòng). Hàm chung ở
+// cau-hinh.js; dashboard.html chưa nạp cau-hinh.js nên có bản dự phòng.
+const docHetTL = window.docHet || (async taoQ => {
+  let tu = 0, kq = [];
+  for (;;) {
+    const { data, error } = await taoQ().range(tu, tu + 999);
+    if (error) return { data: kq, error };
+    kq = kq.concat(data || []);
+    if (!data || data.length < 1000) return { data: kq, error: null };
+    tu += 1000;
+  }
+});
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 // ═══════════════════════════════════════════════════════════════
@@ -135,8 +147,8 @@ async function loadS5(monthKey){
   // chỗ đó like chạy bình thường nên đừng copy ngược lại.
   const [y,m] = monthKey.split('-').map(Number);
   const sau = m===12 ? `${y+1}-01-01` : `${y}-${String(m+1).padStart(2,'0')}-01`;
-  const r = await sb.from('s5_checks').select('*')
-              .gte('date', monthKey+'-01').lt('date', sau).order('date');
+  const r = await docHetTL(() => sb.from('s5_checks').select('*')
+              .gte('date', monthKey+'-01').lt('date', sau).order('date').order('id'));
   if(r.error) throw new Error('Đọc dữ liệu 5S lỗi: '+r.error.message);
   DB.s5[monthKey] = (r.data||[]).filter(x => !S_DEFS.every(d => x[d.k] === true));
   return DB.s5[monthKey];
@@ -303,7 +315,7 @@ const TOOLS = {
   async xep_hang_danh_gia({thang, top=10, hang=null}){
     await loadCore();
     const [rr,mr] = await Promise.all([
-      sb.from('ratings_new').select('*').like('date', thang+'-%'),
+      docHetTL(() => sb.from('ratings_new').select('*').like('date', thang+'-%').order('id')),
       sb.from('monthly_reviews').select('*').eq('month_key', thang),
     ]);
     const diemTho = {};
