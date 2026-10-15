@@ -154,6 +154,11 @@ export function laQuanLy(nv) {
   return !!nv && CHUC_VU_QL.includes(boDau(nv.role));
 }
 
+// Chỉ Trưởng Phòng và Tổ Trưởng được gửi thông báo chung cho cả xưởng
+export function duocThongBao(nv) {
+  return !!nv && ['truong phong', 'to truong'].includes(boDau(nv.role));
+}
+
 // Nhớ người dùng đang ở menu nào. Chưa chạy sql/zalo-menu.sql thì cột
 // chưa có -> bỏ qua, không làm hỏng câu trả lời.
 export async function luuMenu(sb, zaloId, menu) {

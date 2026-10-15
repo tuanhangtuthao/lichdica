@@ -29,6 +29,7 @@ import { guiTin, datWebhook } from './zalo.js';
 import { quetBao5S, baoBuKhiLienKet } from './bao-5s.js';
 import { guiBanTin, chiaTin } from './ban-tin.js';
 import { quetXepLoai, baoBuXepLoai, xuLyXacNhan } from './xep-loai.js';
+import { xuLyThongBao, tiepThongBao } from './thong-bao.js';
 
 // Bỏ mọi khoảng trắng / ký tự vô hình. Dán chuỗi vào Terminal trên Windows
 // hay dính thêm dấu cách, \r, ký tự BOM ở cuối mà mắt không thấy được, làm
@@ -63,6 +64,7 @@ export default {
       for (const x of CAC_XUONG)
         ctx.waitUntil(guiBanTin(envXuong(x), taoSb(x)).catch(err => console.error('[bantin]', x, err)));
     else {
+      ctx.waitUntil(tiepThongBao(e).catch(err => console.error('[thongbao]', err)));
       ctx.waitUntil(quetBao5S(e).catch(err => console.error('[bao5s]', err)));
       for (const x of CAC_XUONG)
         ctx.waitUntil(quetXepLoai(envXuong(x), taoSb(x)).catch(err => console.error('[xeploai]', x, err)));
@@ -292,6 +294,17 @@ async function xuLyTin(msg, zaloId, gui, env) {
     await baoNguoiKhac(env, biGo.filter(id => id !== zaloId), BAO_BI_GO(go[1]));
     return gui(`✅ Đã gỡ ${biGo.length} tài khoản Zalo khỏi MSNV ${go[1]}`
       + (biGo.includes(zaloId) ? ' (gồm cả tài khoản của bạn — nhắn MSNV để liên kết lại)' : '') + '.');
+  }
+
+  // ── thông báo chung của xưởng (Trưởng Phòng / Tổ Trưởng): lệnh + bước xác nhận 1/2 ──
+  // Chặn TRƯỚC xếp loại và menu số vì "1"/"2" ngay sau lệnh là xác nhận gửi / huỷ.
+  // Lỗi ở đây không được làm hỏng các tính năng khác -> chỉ ghi log rồi đi tiếp.
+  try {
+    const tb = await xuLyThongBao({ sb, env, nv, lk, text });
+    if (tb) return gui(tb);
+  } catch (e) {
+    console.error('[thongbao] xử lý lỗi:', e);
+    if (/^thong bao\b/.test(tx)) return gui('Chưa gửi được thông báo, bạn thử lại sau ít phút nhé.');
   }
 
   // ── xác nhận xếp loại: 1 Đồng ý · 2 Xem lại · 3 Không đồng ý, hoặc gõ "đồng ý" ──

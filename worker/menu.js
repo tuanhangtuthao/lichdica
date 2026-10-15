@@ -4,7 +4,7 @@
 // Đặc tả: worker/MENU-ZALO.md. Đổi chữ / thứ tự mục thì sửa MUC_CA_NHAN,
 // MUC_QUAN_LY và hàm tương ứng bên dưới, nhớ cập nhật lại file đặc tả.
 // ═══════════════════════════════════════════════════════════════
-import { taoCongCu, homNayVN, dKey, addD, NHAN_CA, NHOM, DFUL, dsLienKet, boDau } from './du-lieu.js';
+import { taoCongCu, homNayVN, dKey, addD, NHAN_CA, NHOM, DFUL, dsLienKet, boDau, duocThongBao } from './du-lieu.js';
 import { taoXuong } from './du-lieu-xuong.js';
 import { trangThaiXacNhan } from './xep-loai.js';
 
@@ -58,6 +58,7 @@ export function menuQuanLy(nv) {
     + MUC_QUAN_LY.map((m, i) => `${SO[i + 1]} ${m}`).join('\n')
     + `\n${SO[SO_SANG_CA_NHAN]} ➜ Menu cá nhân`
     + `\n${SO[0]} Xem lại menu quản lý`
+    + (duocThongBao(nv) ? '\n📢 Gửi thông báo cả xưởng: gõ "thông báo: nội dung" (hoặc "thông báo kíp 2: nội dung")' : '')
     + '\n💬 Hoặc gõ câu hỏi bất kỳ, vd: "kíp 2 tuần này ai nghỉ phép?"';
 }
 
