@@ -172,8 +172,16 @@ async function xuLy(update, env) {
   // Trong nhóm ai cũng đọc được câu trả lời -> không trả dữ liệu cá nhân ở đó
   if (msg.chat.chat_type && msg.chat.chat_type !== 'PRIVATE')
     return gui('Mình chỉ trả lời tin nhắn riêng để giữ kín thông tin cá nhân. Bạn nhắn riêng cho mình nhé.');
-  if (ev.event_name !== 'message.text.received' || !msg.text)
+  // Tin có đường link Zalo không gửi là "message.text.received" (có ô xem trước
+  // link) nhưng vẫn kèm chữ -> có chữ là đọc, không xét loại sự kiện. Lệnh
+  // "thông báo: ... https://..." từng bị trả lời "chỉ đọc được tin nhắn chữ".
+  if (typeof msg.text !== 'string' || !msg.text.trim()) {
+    // chỉ ghi loại sự kiện + tên trường để dò, không ghi nội dung tin
+    console.log('[zalo] tin không có chữ', JSON.stringify({ su_kien: ev.event_name, truong: Object.keys(msg) }));
     return gui('Mình chỉ đọc được tin nhắn chữ. Nhắn **0** để xem menu nhé.');
+  }
+  if (ev.event_name !== 'message.text.received')
+    console.log('[zalo] tin có chữ, loại sự kiện', JSON.stringify({ su_kien: ev.event_name, truong: Object.keys(msg) }));
 
   // Lỗi gì cũng phải trả lời, đừng để người nhắn chờ suông
   try {
