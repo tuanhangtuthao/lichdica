@@ -22,11 +22,13 @@
     {id:'rating',     ten:'Đánh giá',           icon:'sao',    mt:4, dt:null},
     {id:'5s',         ten:'Kiểm tra 5S',        ngan:'5S',     icon:'kiem',  mt:5, dt:null, phu:'Cần mật khẩu'},
     {id:'nhansu-ca',  ten:'Nhân sự ca',         icon:'nhom',   mt:null, dt:null},
-    {id:'huong-dan',  ten:'Tài liệu',           icon:'sach',   mt:null, dt:null, phu:'Video · hình · PDF'},
-    {id:'dashboard',  ten:'Dashboard quản đốc', icon:'bieudo', mt:null, dt:null},
+    {id:'huong-dan',        ten:'Tài liệu',           icon:'sach',   mt:null, dt:null, phu:'Video · hình · PDF'},
+    {id:'dashboard',        ten:'Dashboard quản đốc', icon:'bieudo', mt:null, dt:null},
+    {id:'zalobot-monitor',  ten:'Theo dõi Bot Zalo',  ngan:'Bot Zalo', icon:'bot', mt:null, dt:null, phu:'Hoạt động · Liên kết · 5S'},
   ];
 
   const ICON = {
+    bot:    '<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 15h.01M16 15h.01"/>',
     lich:   '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>',
     nguoi:  '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
     don:    '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 14h6M9 17h4"/>',

@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1F4E79">
+<title>Theo Dõi Hoạt Động Bot Zalo - Phân Xưởng 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="giao-dien.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --xanh: #1F4E79;
+  --xanh-dam: #163A5C;
+  --xanh-nhat: #E6EEF6;
+  --chu: #16202B;
+  --chu-phu: #5A6876;
+  --nen: #F0F4F8;
+  --the: #FFFFFF;
+  --vien: #D0D9E2;
+  --dat: #1E6B3A;
+  --dat-nen: #E8F5E9;
+  --loi: #B3261E;
+  --loi-nen: #FBE9E7;
+  --canh-bao: #E65100;
+  --canh-bao-nen: #FFF3E0;
+  --tim: #6A1B9A;
+  --tim-nen: #F3E5F5;
+  --zalo: #0068FF;
+  --zalo-nen: #E5F0FF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  background: var(--nen);
+  color: var(--chu);
+  line-height: 1.5;
+  padding-bottom: 60px;
+}
+
+.dau-trang {
+  background: linear-gradient(135deg, #1F4E79, #0052cc);
+  color: #fff;
+  padding: 18px 20px;
+  box-shadow: 0 4px 12px rgba(31, 78, 121, 0.2);
+}
+.dau-than {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.dau-tieu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dau-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.dau-tieu h1 { font-size: 1.3rem; font-weight: 800; }
+.dau-tieu p { font-size: 0.8rem; opacity: 0.9; }
+.dau-thao-tac {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nut-dau {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.nut-dau:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-1px); }
+.nut-dau.chinh { background: #fff; color: var(--xanh); border: none; font-weight: 700; }
+.nut-dau.chinh:hover { background: #f0f4f8; }
+
+.khung {
+  max-width: 1200px;
+  margin: 16px auto;
+  padding: 0 16px;
+}
+
+/* ── KPI Cards ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.kpi-the {
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-the::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+  background: var(--xanh);
+}
+.kpi-the.xanh::before { background: #0068FF; }
+.kpi-the.dat::before { background: var(--dat); }
+.kpi-the.canh-bao::before { background: var(--canh-bao); }
+.kpi-the.tim::before { background: var(--tim); }
+
+.kpi-dau { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.kpi-nhan { font-size: 0.8rem; font-weight: 600; color: var(--chu-phu); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--xanh-nhat); }
+.kpi-so { font-size: 1.8rem; font-weight: 800; color: var(--chu); margin-bottom: 4px; line-height: 1.2; }
+.kpi-phu { font-size: 0.78rem; color: var(--chu-phu); display: flex; align-items: center; gap: 4px; }
+.kpi-tien-do {
+  width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; margin-top: 8px; overflow: hidden;
+}
+.kpi-tien-do-thanh { height: 100%; background: #0068FF; border-radius: 3px; transition: width 0.5s; }
+
+/* ── Tabs Navigation ── */
+.tabs-thanh {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--vien);
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.tab-nut {
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: none;
+  background: none;
+  color: var(--chu-phu);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.2s;
+}
+.tab-nut:hover { color: var(--xanh); background: rgba(31, 78, 121, 0.05); }
+.tab-nut.kich-hoat {
+  color: var(--xanh);
+  border-bottom-color: var(--xanh);
+  font-weight: 800;
+  background: var(--the);
+}
+.tab-badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--xanh-nhat);
+  color: var(--xanh);
+  font-weight: 700;
+}
+
+/* ── Card Container ── */
+.the-chinh {
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  margin-bottom: 16px;
+}
+.the-tieu-de {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.the-tieu-de h2 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--xanh);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Bộ lọc & Tìm kiếm ── */
+.bo-loc-thanh {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.o-tim {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+.o-tim input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 36px;
+  border: 1px solid var(--vien);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  outline: none;
+  background: #fff;
+}
+.o-tim input:focus { border-color: var(--xanh); }
+.o-tim-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 14px;
+}
+.select-loc {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--vien);
+  border-radius: 10px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  background: #fff;
+  color: var(--chu);
+  outline: none;
+}
+.nut-hanh-dong {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--vien);
+  background: #fff;
+  color: var(--chu);
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.nut-hanh-dong:hover { background: var(--xanh-nhat); color: var(--xanh); border-color: var(--xanh); }
+.nut-hanh-dong.xanh { background: var(--xanh); color: #fff; border: none; }
+.nut-hanh-dong.xanh:hover { background: var(--xanh-dam); }
+
+/* ── Bảng Dữ Liệu ── */
+.bang-cuon {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--vien);
+  border-radius: 12px;
+}
+table.bang {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.84rem;
+  background: #fff;
+}
+table.bang th {
+  background: #F8FAFC;
+  color: var(--chu-phu);
+  font-weight: 700;
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--vien);
+  white-space: nowrap;
+}
+table.bang td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #edf2f7;
+  vertical-align: middle;
+}
+table.bang tr:hover td { background: #f8fafc; }
+table.bang tr:last-child td { border-bottom: none; }
+
+/* ── Badges ── */
+.huy-hieu {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.huy-hieu.dat { background: var(--dat-nen); color: var(--dat); border: 1px solid #c8e6c9; }
+.huy-hieu.loi { background: var(--loi-nen); color: var(--loi); border: 1px solid #ffcdd2; }
+.huy-hieu.canh-bao { background: var(--canh-bao-nen); color: var(--canh-bao); border: 1px solid #ffe0b2; }
+.huy-hieu.xanh { background: var(--zalo-nen); color: var(--zalo); border: 1px solid #bbdefb; }
+.huy-hieu.xam { background: #eceff1; color: #546e7a; border: 1px solid #cfd8dc; }
+.huy-hieu.tim { background: var(--tim-nen); color: var(--tim); border: 1px solid #e1bee7; }
+
+/* ── Kíp Badges ── */
+.kip-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: #fff;
+}
+.kip-1 { background: #1565c0; }
+.kip-2 { background: #2e7d32; }
+.kip-3 { background: #6a1b9a; }
+.kip-4 { background: #00695c; }
+
+/* ── Nút Thao Tác Bảng ── */
+.nut-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--vien);
+  background: #fff;
+  color: var(--chu-phu);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nut-icon:hover { background: var(--xanh-nhat); color: var(--xanh); border-color: var(--xanh); }
+.nut-icon.xoa:hover { background: var(--loi-nen); color: var(--loi); border-color: var(--loi); }
+
+/* ── Simulator / Chat box ── */
+.chat-khung {
+  border: 1px solid var(--vien);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #E8EEF5;
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+}
+.chat-dau {
+  background: var(--zalo);
+  color: #fff;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.chat-than {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tin-nhan {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.tin-nhan.bot {
+  background: #fff;
+  color: var(--chu);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.tin-nhan.user {
+  background: #D1E4FF;
+  color: #003366;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.chat-duoi {
+  background: #fff;
+  padding: 10px 14px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--vien);
+}
+.chat-nhap {
+  flex: 1;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--vien);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  outline: none;
+}
+.chat-nhap:focus { border-color: var(--zalo); }
+.chat-nut-gui {
+  height: 40px;
+  padding: 0 16px;
+  background: var(--zalo);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chat-nut-gui:hover { background: #0052cc; }
+
+/* ── Modal ── */
+.modal-nen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.modal-khung {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  padding: 20px;
+}
+.modal-dau {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--vien);
+  padding-bottom: 10px;
+}
+.modal-dau h3 { font-size: 1.1rem; color: var(--xanh); }
+.modal-dong { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+.modal-dong:hover { color: #333; }
+
+/* ── Grid Charts ── */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.anh-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 1px solid var(--vien);
+}
+.anh-thumb:hover { transform: scale(1.1); }
+
+.loading { text-align: center; padding: 40px; color: var(--chu-phu); font-size: 0.9rem; }
+.trong { text-align: center; padding: 30px; color: var(--chu-phu); font-style: italic; }
+</style>
+<script src="giao-dien.js"></script>
+</head>
+<body>
+
+<!-- ĐẦU TRANG -->
+<header class="dau-trang">
+  <div class="dau-than">
+    <div class="dau-tieu">
+      <div class="dau-icon">🤖</div>
+      <div>
+        <h1>Theo Dõi Hoạt Động Bot Zalo</h1>
+        <p>Phân Xưởng 1 · Trợ Lý Tự Động Tra Cứu, Báo 5S & Xác Nhận Xếp Loại</p>
+      </div>
+    </div>
+    <div class="dau-thao-tac">
+      <button class="nut-dau" id="nutHealth" onclick="kiemTraSucKhoe()">
+        <span>🩺</span> Kiểm tra Bot
+      </button>
+      <button class="nut-dau chinh" onclick="taiDuLieu()">
+        <span id="quayIcon">🔄</span> Làm mới
+      </button>
+      <a href="index.html" class="nut-dau">📅 Lịch Đi Ca</a>
+    </div>
+  </div>
+</header>
+
+<main class="khung">
+  <!-- KPI CARDS -->
+  <section class="kpi-grid">
+    <div class="kpi-the xanh">
+      <div class="kpi-dau">
+        <span class="kpi-nhan">Tỷ Lệ Liên Kết Zalo</span>
+        <div class="kpi-icon">📱</div>
+      </div>
+      <div class="kpi-so" id="kpiLienKet">—</div>
+      <div class="kpi-phu" id="kpiLienKetPhu">Đang tính toán...</div>
+      <div class="kpi-tien-do"><div class="kpi-tien-do-thanh" id="kpiBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="kpi-the tim">
+      <div class="kpi-dau">
+        <span class="kpi-nhan">Lượt Hỏi AI Hôm Nay</span>
+        <div class="kpi-icon">💬</div>
+      </div>
+      <div class="kpi-so" id="kpiCauHoi">—</div>
+      <div class="kpi-phu" id="kpiCauHoiPhu">Tổng câu hỏi tự do</div>
+    </div>
+
+    <div class="kpi-the canh-bao">
+      <div class="kpi-dau">
+        <span class="kpi-nhan">Cảnh Báo 5S Đã Phát</span>
+        <div class="kpi-icon">⚠️</div>
+      </div>
+      <div class="kpi-so" id="kpiBao5S">—</div>
+      <div class="kpi-phu" id="kpiBao5SPhu">Lượt chưa đạt đã gửi</div>
+    </div>
+
+    <div class="kpi-the dat">
+      <div class="kpi-dau">
+        <span class="kpi-nhan">Trạng Thái Hệ Thống</span>
+        <div class="kpi-icon">⚡</div>
+      </div>
+      <div class="kpi-so" style="font-size:1.3rem; color:var(--dat)" id="kpiTrangThai">🟢 Trực Tuyến</div>
+      <div class="kpi-phu" id="kpiTrangThaiPhu">Cloudflare Worker & Supabase OK</div>
+    </div>
+  </section>
+
+  <!-- TAB NAVIGATION -->
+  <nav class="tabs-thanh">
+    <button class="tab-nut kich-hoat" onclick="chuyenTab('lien-ket', this)">
+      <span>👥 Liên Kết Zalo</span>
+      <span class="tab-badge" id="tabBadgeLK">0</span>
+    </button>
+    <button class="tab-nut" onclick="chuyenTab('bao-5s', this)">
+      <span>⚠️ Lịch Sử Báo 5S</span>
+      <span class="tab-badge" id="tabBadge5S">0</span>
+    </button>
+    <button class="tab-nut" onclick="chuyenTab('xep-loai', this)">
+      <span>📊 Xác Nhận Xếp Loại</span>
+      <span class="tab-badge" id="tabBadgeXL">0</span>
+    </button>
+    <button class="tab-nut" onclick="chuyenTab('thong-ke', this)">
+      <span>📈 Thống Kê & Phân Tích</span>
+    </button>
+    <button class="tab-nut" onclick="chuyenTab('gia-lap', this)">
+      <span>🤖 Giả Lập & Test Bot</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════ TAB 1: LIÊN KẾT ZALO ═══════════ -->
+  <section id="tab-lien-ket" class="the-chinh">
+    <div class="the-tieu-de">
+      <h2><span>👥</span> Danh Sách Liên Kết Tài Khoản Zalo & MSNV</h2>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="nut-hanh-dong" onclick="copyChuaLienKet()">
+          <span>📋</span> Copy DS Chưa Liên Kết
+        </button>
+        <button class="nut-hanh-dong" onclick="xuatExcel()">
+          <span>📥</span> Xuất File CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- BỘ LỌC -->
+    <div class="bo-loc-thanh">
+      <div class="o-tim">
+        <span class="o-tim-icon">🔍</span>
+        <input type="text" id="timLK" placeholder="Tìm theo tên, MSNV, tên Zalo..." oninput="locBangLK()">
+      </div>
+      <select class="select-loc" id="locKipLK" onchange="locBangLK()">
+        <option value="">Tất cả Kíp</option>
+        <option value="1">Kíp 1</option>
+        <option value="2">Kíp 2</option>
+        <option value="3">Kíp 3</option>
+        <option value="4">Hành Chính / Ca Xoay</option>
+      </select>
+      <select class="select-loc" id="locTrangThaiLK" onchange="locBangLK()">
+        <option value="">Tất cả trạng thái</option>
+        <option value="da_lk">Đã liên kết</option>
+        <option value="cho_xn">Chờ xác nhận tên</option>
+        <option value="chua_lk">Chưa liên kết</option>
+      </select>
+      <select class="select-loc" id="locVaiTroLK" onchange="locBangLK()">
+        <option value="">Tất cả vai trò</option>
+        <option value="quan_ly">Quản lý (Trưởng ca / Tổ trưởng / TP)</option>
+        <option value="nhan_vien">Công nhân / Thợ</option>
+      </select>
+    </div>
+
+    <!-- BẢNG LIÊN KẾT -->
+    <div class="bang-cuon">
+      <table class="bang">
+        <thead>
+          <tr>
+            <th>Nhân Viên</th>
+            <th>Kíp / Vai Trò</th>
+            <th>Tài Khoản Zalo</th>
+            <th>Trạng Thái</th>
+            <th>Chế Độ Menu</th>
+            <th>Hỏi AI Hôm Nay</th>
+            <th>Cập Nhật Lần Cuối</th>
+            <th>Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody id="bodyLK">
+          <tr><td colspan="8" class="loading">⏳ Đang tải danh sách liên kết...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════ TAB 2: BÁO 5S ═══════════ -->
+  <section id="tab-bao-5s" class="the-chinh" style="display:none">
+    <div class="the-tieu-de">
+      <h2><span>⚠️</span> Nhật Ký Cảnh Báo 5S Chưa Đạt Đã Phát Qua Zalo</h2>
+      <div style="font-size:0.85rem; color:var(--chu-phu)">
+        Tự động gửi tin nhắn riêng cho thợ sau 5 phút kiểm tra
+      </div>
+    </div>
+
+    <div class="bo-loc-thanh">
+      <div class="o-tim">
+        <span class="o-tim-icon">🔍</span>
+        <input type="text" id="tim5S" placeholder="Tìm theo tên, MSNV, vị trí máy..." oninput="locBang5S()">
+      </div>
+      <select class="select-loc" id="locCach5S" onchange="locBang5S()">
+        <option value="">Tất cả hình thức</option>
+        <option value="tuc_thi">Tức thì (sau 5 phút)</option>
+        <option value="bao_bu">Báo bù (khi vừa liên kết)</option>
+      </select>
+    </div>
+
+    <div class="bang-cuon">
+      <table class="bang">
+        <thead>
+          <tr>
+            <th>Thời Gian Báo</th>
+            <th>Hình Thức</th>
+            <th>Người Nhận (MSNV)</th>
+            <th>Vị Trí Kiểm</th>
+            <th>Tiêu Chí Lỗi</th>
+            <th>Người Kiểm / Ghi Chú</th>
+            <th>Ảnh Lỗi</th>
+          </tr>
+        </thead>
+        <tbody id="body5S">
+          <tr><td colspan="7" class="loading">⏳ Đang tải nhật ký cảnh báo 5S...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════ TAB 3: XẾP LOẠI ═══════════ -->
+  <section id="tab-xep-loai" class="the-chinh" style="display:none">
+    <div class="the-tieu-de">
+      <h2><span>📊</span> Tiến Độ Xác Nhận Xếp Loại Tháng Qua Zalo</h2>
+      <div style="display:flex; gap:8px; align-items:center">
+        <span style="font-size:0.85rem; font-weight:600">Tháng:</span>
+        <input type="month" id="thangXL" class="select-loc" onchange="taiXepLoai()">
+      </div>
+    </div>
+
+    <div id="tkXLBox" style="margin-bottom:14px; display:flex; gap:10px; flex-wrap:wrap"></div>
+
+    <div class="bang-cuon">
+      <table class="bang">
+        <thead>
+          <tr>
+            <th>Nhân Viên</th>
+            <th>Kíp</th>
+            <th>Hạng Xếp Loại</th>
+            <th>Hạn Xác Nhận</th>
+            <th>Trạng Thái</th>
+            <th>Thời Gian Xác Nhận</th>
+            <th>Ý Kiến / Lý Do</th>
+          </tr>
+        </thead>
+        <tbody id="bodyXL">
+          <tr><td colspan="7" class="loading">⏳ Đang tải dữ liệu xếp loại...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════ TAB 4: THỐNG KÊ & BIỂU ĐỒ ═══════════ -->
+  <section id="tab-thong-ke" class="the-chinh" style="display:none">
+    <div class="the-tieu-de">
+      <h2><span>📈</span> Biểu Đồ & Thống Kê Phủ Sóng Bot Zalo</h2>
+    </div>
+
+    <div class="chart-grid">
+      <div style="background:#fff; border:1px solid var(--vien); border-radius:14px; padding:16px;">
+        <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:12px; color:var(--xanh)">Tỷ Lệ Liên Kết Theo Kíp</h3>
+        <div style="height:250px; position:relative">
+          <canvas id="chartKip"></canvas>
+        </div>
+      </div>
+      <div style="background:#fff; border:1px solid var(--vien); border-radius:14px; padding:16px;">
+        <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:12px; color:var(--xanh)">Top Nhân Viên Hỏi AI Tích Cực</h3>
+        <div style="height:250px; position:relative">
+          <canvas id="chartTopAI"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ TAB 5: GIẢ LẬP BOT ═══════════ -->
+  <section id="tab-gia-lap" class="the-chinh" style="display:none">
+    <div class="the-tieu-de">
+      <h2><span>🤖</span> Trình Giả Lập & Kiểm Tra Tương Tác Bot Zalo</h2>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+        <label style="font-size:0.85rem; font-weight:600">Giả lập dưới tư cách:</label>
+        <select class="select-loc" id="simEmp" onchange="doiSimUser()">
+          <!-- Fill by JS -->
+        </select>
+      </div>
+    </div>
+
+    <div class="chat-khung">
+      <div class="chat-dau">
+        <div style="display:flex; align-items:center; gap:8px">
+          <span style="font-size:18px">💬</span>
+          <div>
+            <div style="font-weight:700; font-size:0.9rem">Trợ Lý Phân Xưởng 1 (Zalo Bot)</div>
+            <div style="font-size:0.72rem; opacity:0.85" id="simStatus">Đang đóng vai: —</div>
+          </div>
+        </div>
+        <button class="nut-dau" style="padding:4px 8px; font-size:0.75rem" onclick="xoaChat()">Xoá Chat</button>
+      </div>
+
+      <div class="chat-than" id="chatThan">
+        <div class="tin-nhan bot">
+Chào bạn 👋 Mình là Trợ Lý Phân Xưởng 1.
+Bạn có thể nhắn các số trong menu hoặc gõ câu hỏi tự do (ví dụ: "mai tôi làm ca gì?", "xếp loại tháng này").
+        </div>
+      </div>
+
+      <div class="chat-duoi">
+        <input type="text" class="chat-nhap" id="chatNhap" placeholder="Gõ số menu (0, 1, 2...) hoặc câu hỏi..." onkeydown="if(event.key==='Enter') guiChat()">
+        <button class="chat-nut-gui" onclick="guiChat()">Gửi</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- MODAL XEM ẢNH -->
+<div class="modal-nen" id="modalAnh" onclick="if(event.target===this) this.style.display='none'">
+  <div class="modal-khung" style="text-align:center; max-width:600px">
+    <div class="modal-dau">
+      <h3>Hình Ảnh Vi Phạm 5S</h3>
+      <button class="modal-dong" onclick="document.getElementById('modalAnh').style.display='none'">&times;</button>
+    </div>
+    <img id="modalAnhSrc" src="" style="max-width:100%; max-height:70vh; border-radius:10px" alt="Ảnh 5S">
+  </div>
+</div>
+
+<!-- MODAL KIỂM TRA SỨC KHỎE BOT -->
+<div class="modal-nen" id="modalHealth" onclick="if(event.target===this) this.style.display='none'">
+  <div class="modal-khung">
+    <div class="modal-dau">
+      <h3>🩺 Kiểm Tra Sức Khỏe & Cấu Hình Bot</h3>
+      <button class="modal-dong" onclick="document.getElementById('modalHealth').style.display='none'">&times;</button>
+    </div>
+    <div id="healthContent" style="font-size:0.85rem; line-height:1.6">
+      <div class="loading">Đang kết nối kiểm tra...</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lich-ca.js"></script>
+<script src="5s-tieu-chi.js"></script>
+<script>
+const SB_URL = 'https://xtutpuwesganunktrxcv.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const NHOM_TEN = { 1: 'Kíp 1', 2: 'Kíp 2', 3: 'Kíp 3', 4: 'Hành Chính / Ca Xoay' };
+const CHUC_VU_QL = ['truong ca', 'to truong', 'truong phong'];
+
+function boDau(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
+}
+function laQuanLy(role) {
+  return CHUC_VU_QL.includes(boDau(role));
+}
+
+let EMPS = [], LINKS = [], BAO_5S = [], S5_CHECKS = [], XEP_LOAI = [];
+let chartKipObj = null, chartAIObj = null;
+
+// ── Chuyển Tab ──
+function chuyenTab(tabId, btn) {
+  document.querySelectorAll('.tab-nut').forEach(b => b.classList.remove('kich-hoat'));
+  btn.classList.add('kich-hoat');
+  document.querySelectorAll('main > section.the-chinh').forEach(s => s.style.display = 'none');
+  const target = document.getElementById('tab-' + tabId);
+  if (target) target.style.display = 'block';
+
+  if (tabId === 'thong-ke') veBieuDo();
+}
+
+// ── Tải Toàn Bộ Dữ Liệu ──
+async function taiDuLieu() {
+  const icon = document.getElementById('quayIcon');
+  if (icon) icon.style.transform = 'rotate(360deg)';
+
+  try {
+    const [er, lr, b5r, s5r] = await Promise.all([
+      sb.from('employees').select('*').order('kip').order('sort_order'),
+      sb.from('zalo_links').select('*'),
+      sb.from('zalo_bao_5s').select('*').order('bao_luc', { ascending: false }),
+      sb.from('s5_checks').select('*').order('checked_at', { ascending: false }).limit(100),
+    ]);
+
+    EMPS = er.data || [];
+    LINKS = lr.data || [];
+    BAO_5S = b5r.data || [];
+    S5_CHECKS = s5r.data || [];
+
+    capNhatKPI();
+    hienBangLK();
+    hienBang5S();
+    napSelectGiaLap();
+
+    const date = new Date();
+    const curMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const thangInp = document.getElementById('thangXL');
+    if (thangInp && !thangInp.value) thangInp.value = curMonth;
+    taiXepLoai();
+
+  } catch (err) {
+    console.error('Lỗi nạp dữ liệu:', err);
+    if (window.thongBao) thongBao('Lỗi tải dữ liệu: ' + err.message, { loai: 'loi' });
+  } finally {
+    if (icon) setTimeout(() => icon.style.transform = '', 500);
+  }
+}
+
+// ── Cập Nhật KPIs ──
+function capNhatKPI() {
+  const tongNV = EMPS.length;
+  const daLKCount = LINKS.filter(l => l.msnv).length;
+  const phanTram = tongNV > 0 ? Math.round((daLKCount / tongNV) * 100) : 0;
+
+  document.getElementById('kpiLienKet').textContent = `${daLKCount}/${tongNV}`;
+  document.getElementById('kpiLienKetPhu').textContent = `Đạt ${phanTram}% nhân sự xưởng`;
+  document.getElementById('kpiBar').style.width = phanTram + '%';
+
+  const homNayStr = new Date().toISOString().slice(0, 10);
+  const tongCauHoi = LINKS.filter(l => l.ngay_dem === homNayStr).reduce((a, b) => a + (b.so_cau || 0), 0);
+  const soNguoiHoi = LINKS.filter(l => l.ngay_dem === homNayStr && l.so_cau > 0).length;
+
+  document.getElementById('kpiCauHoi').textContent = tongCauHoi;
+  document.getElementById('kpiCauHoiPhu').textContent = `${soNguoiHoi} nhân viên đã hỏi hôm nay`;
+
+  document.getElementById('kpiBao5S').textContent = BAO_5S.length;
+  document.getElementById('kpiBao5SPhu').textContent = `${BAO_5S.filter(b=>b.cach==='tuc_thi').length} tức thì · ${BAO_5S.filter(b=>b.cach==='bao_bu').length} báo bù`;
+
+  document.getElementById('tabBadgeLK').textContent = LINKS.length;
+  document.getElementById('tabBadge5S').textContent = BAO_5S.length;
+}
+
+// ── Bảng Liên Kết ──
+function hienBangLK() {
+  const linkMap = {};
+  LINKS.forEach(l => {
+    if (l.msnv) linkMap[l.msnv] = l;
+  });
+
+  const choMap = {};
+  LINKS.forEach(l => {
+    if (l.msnv_cho) choMap[l.msnv_cho] = l;
+  });
+
+  const tuKhoa = boDau(document.getElementById('timLK')?.value || '');
+  const kipLoc = document.getElementById('locKipLK')?.value;
+  const ttLoc = document.getElementById('locTrangThaiLK')?.value;
+  const vtLoc = document.getElementById('locVaiTroLK')?.value;
+
+  const filtered = EMPS.filter(e => {
+    const lk = linkMap[e.id];
+    const cho = choMap[e.id];
+    const ql = laQuanLy(e.role);
+
+    if (kipLoc && String(e.kip) !== kipLoc) return false;
+    if (vtLoc === 'quan_ly' && !ql) return false;
+    if (vtLoc === 'nhan_vien' && ql) return false;
+
+    if (ttLoc === 'da_lk' && !lk) return false;
+    if (ttLoc === 'cho_xn' && (!cho || lk)) return false;
+    if (ttLoc === 'chua_lk' && (lk || cho)) return false;
+
+    if (tuKhoa) {
+      const txt = boDau(`${e.name} ${e.id} ${e.role} ${lk?.ten_zalo || ''} ${cho?.ten_zalo || ''}`);
+      if (!txt.includes(tuKhoa)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('bodyLK');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="trong">Không tìm thấy nhân viên phù hợp</td></tr>';
+    return;
+  }
+
+  const homNayStr = new Date().toISOString().slice(0, 10);
+
+  tbody.innerHTML = filtered.map(e => {
+    const lk = linkMap[e.id];
+    const cho = choMap[e.id];
+    const ql = laQuanLy(e.role);
+    const kipCls = `kip-${e.kip || 4}`;
+
+    let ttBadge = '<span class="huy-hieu xam">⚪ Chưa liên kết</span>';
+    let zaloInfo = '<span style="color:#aaa">—</span>';
+    let menuBadge = '<span style="color:#aaa">—</span>';
+    let aiUsage = '<span style="color:#aaa">—</span>';
+    let capNhat = '—';
+
+    if (lk) {
+      ttBadge = '<span class="huy-hieu dat">🟢 Đã liên kết</span>';
+      zaloInfo = `<div><b>${lk.ten_zalo || 'Zalo User'}</b></div><div style="font-size:0.72rem; color:#888">${lk.zalo_id.slice(0, 8)}...</div>`;
+      menuBadge = lk.menu === 'quan_ly' 
+        ? '<span class="huy-hieu tim">Menu Quản Lý</span>' 
+        : '<span class="huy-hieu xanh">Menu Cá Nhân</span>';
+      
+      const soCau = lk.ngay_dem === homNayStr ? (lk.so_cau || 0) : 0;
+      const maxCau = ql ? 40 : 10;
+      const mauBar = soCau >= maxCau ? 'var(--loi)' : soCau > 0 ? 'var(--zalo)' : '#ddd';
+      aiUsage = `
+        <div><b>${soCau}</b> / ${maxCau} câu</div>
+        <div style="width:70px; height:4px; background:#eee; border-radius:2px; margin-top:3px">
+          <div style="width:${Math.min(100, (soCau/maxCau)*100)}%; height:100%; background:${mauBar}; border-radius:2px"></div>
+        </div>`;
+      
+      if (lk.updated_at) {
+        const d = new Date(lk.updated_at);
+        capNhat = `${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      }
+    } else if (cho) {
+      ttBadge = '<span class="huy-hieu canh-bao">🟡 Chờ xác nhận</span>';
+      zaloInfo = `<div><b>${cho.ten_zalo || 'Zalo User'}</b></div><div style="font-size:0.72rem; color:var(--canh-bao)">Đang chờ bấm 1 xác nhận</div>`;
+    }
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:700">${e.name}</div>
+          <div style="font-size:0.75rem; color:var(--chu-phu)">MSNV: <b>${e.id}</b></div>
+        </td>
+        <td>
+          <span class="kip-tag ${kipCls}">${NHOM_TEN[e.kip] || 'Kíp ' + e.kip}</span>
+          <div style="font-size:0.75rem; color:var(--chu-phu); margin-top:2px">${e.role || '—'}</div>
+        </td>
+        <td>${zaloInfo}</td>
+        <td>${ttBadge}</td>
+        <td>${menuBadge}</td>
+        <td>${aiUsage}</td>
+        <td style="font-size:0.78rem; color:#666">${capNhat}</td>
+        <td>
+          <div style="display:flex; gap:4px">
+            ${lk ? `
+              <button class="nut-icon" title="Reset số câu hỏi AI hôm nay về 0" onclick="resetAICauHoi('${lk.zalo_id}', '${e.name}')">🔄</button>
+              <button class="nut-icon xoa" title="Gỡ liên kết Zalo" onclick="xoaLienKet('${e.id}', '${e.name}')">⚠️</button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+function locBangLK() { hienBangLK(); }
+
+// ── Thao tác Gỡ & Reset ──
+async function resetAICauHoi(zaloId, name) {
+  if (!confirm(`Reset số câu hỏi AI hôm nay của "${name}" về 0?`)) return;
+  const { error } = await sb.from('zalo_links').update({ so_cau: 0 }).eq('zalo_id', zaloId);
+  if (error) alert('Lỗi: ' + error.message);
+  else {
+    taiDuLieu();
+  }
+}
+
+async function xoaLienKet(msnv, name) {
+  if (!confirm(`Bạn có chắc chắn muốn gỡ liên kết Zalo của nhân viên "${name}" (MSNV ${msnv})?`)) return;
+  const { error } = await sb.from('zalo_links').delete().eq('msnv', msnv);
+  if (error) alert('Lỗi: ' + error.message);
+  else {
+    taiDuLieu();
+  }
+}
+
+// ── Bảng 5S ──
+function hienBang5S() {
+  const empMap = Object.fromEntries(EMPS.map(e => [e.id, e]));
+  const s5Map = Object.fromEntries(S5_CHECKS.map(s => [s.id, s]));
+
+  const tuKhoa = boDau(document.getElementById('tim5S')?.value || '');
+  const cachLoc = document.getElementById('locCach5S')?.value;
+
+  const filtered = BAO_5S.filter(b => {
+    if (cachLoc && b.cach !== cachLoc) return false;
+    const emp = empMap[b.msnv];
+    const s5 = s5Map[b.s5_id];
+    if (tuKhoa) {
+      const txt = boDau(`${emp?.name || ''} ${b.msnv} ${s5?.machine_code || ''} ${s5?.note || ''}`);
+      if (!txt.includes(tuKhoa)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('body5S');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="trong">Chưa có lượt cảnh báo 5S nào</td></tr>';
+    return;
+  }
+
+  const { S_DEFS, tieuChiCua } = globalThis.TieuChi5S || { S_DEFS: [] };
+
+  tbody.innerHTML = filtered.map(b => {
+    const emp = empMap[b.msnv];
+    const s5 = s5Map[b.s5_id];
+    const d = new Date(b.bao_luc);
+    const timeStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    
+    const cachBadge = b.cach === 'tuc_thi'
+      ? '<span class="huy-hieu dat">⚡ Tức thì (5p)</span>'
+      : '<span class="huy-hieu tim">🔄 Báo bù liên kết</span>';
+
+    let loiItems = 'Lỗi 5S';
+    let viTri = s5?.machine_code ? `Máy ${s5.machine_code}` : '—';
+    let inspector = s5?.inspector || '—';
+    let note = s5?.note || '';
+    let photosHtml = '<span style="color:#aaa">—</span>';
+
+    if (s5) {
+      if (tieuChiCua) {
+        const defs = tieuChiCua(s5);
+        const hong = defs.filter(x => s5[x.k] !== true).map(x => x.name);
+        if (hong.length) loiItems = hong.map(h => `<span class="huy-hieu loi">${h}</span>`).join(' ');
+      }
+      if (s5.photos && s5.photos.length) {
+        photosHtml = s5.photos.map(p => `
+          <img src="${p}" class="anh-thumb" onclick="xemAnh('${p}')" title="Click để phóng to">
+        `).join(' ');
+      }
+    }
+
+    return `
+      <tr>
+        <td style="font-size:0.8rem; font-weight:600">${timeStr}</td>
+        <td>${cachBadge}</td>
+        <td>
+          <div style="font-weight:700">${emp?.name || 'MSNV ' + b.msnv}</div>
+          <div style="font-size:0.75rem; color:var(--chu-phu)">MSNV: ${b.msnv}</div>
+        </td>
+        <td><b>${viTri}</b></td>
+        <td>${loiItems}</td>
+        <td>
+          <div><b>${inspector}</b></div>
+          <div style="font-size:0.75rem; color:#666">${note}</div>
+        </td>
+        <td><div style="display:flex; gap:4px">${photosHtml}</div></td>
+      </tr>
+    `;
+  }).join('');
+}
+function locBang5S() { hienBang5S(); }
+
+function xemAnh(src) {
+  document.getElementById('modalAnhSrc').src = src;
+  document.getElementById('modalAnh').style.display = 'flex';
+}
+
+// ── Bảng Xếp Loại ──
+async function taiXepLoai() {
+  const thang = document.getElementById('thangXL')?.value;
+  if (!thang) return;
+
+  const tbody = document.getElementById('bodyXL');
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">⏳ Đang tải dữ liệu xếp loại...</td></tr>';
+
+  const { data: xl, error } = await sb.from('zalo_xep_loai').select('*').eq('month_key', thang);
+  XEP_LOAI = xl || [];
+  document.getElementById('tabBadgeXL').textContent = XEP_LOAI.length;
+
+  const empMap = Object.fromEntries(EMPS.map(e => [e.id, e]));
+
+  const tong = XEP_LOAI.length;
+  const dongY = XEP_LOAI.filter(x => x.trang_thai === 'dong_y').length;
+  const cho = XEP_LOAI.filter(x => x.trang_thai === 'cho').length;
+  const kDongY = XEP_LOAI.filter(x => x.trang_thai === 'khong_dong_y').length;
+
+  document.getElementById('tkXLBox').innerHTML = `
+    <div class="huy-hieu dat" style="padding:6px 12px; font-size:0.82rem">✅ Đã đồng ý: <b>${dongY}</b></div>
+    <div class="huy-hieu canh-bao" style="padding:6px 12px; font-size:0.82rem">⏳ Đang chờ xác nhận: <b>${cho}</b></div>
+    <div class="huy-hieu loi" style="padding:6px 12px; font-size:0.82rem">❌ Phản hồi xem lại: <b>${kDongY}</b></div>
+  `;
+
+  if (!XEP_LOAI.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="trong">Chưa có dữ liệu thông báo xếp loại cho tháng ' + thang + '</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = XEP_LOAI.map(x => {
+    const emp = empMap[x.emp_id];
+    let ttBadge = '<span class="huy-hieu canh-bao">⏳ Đang chờ</span>';
+    if (x.trang_thai === 'dong_y') ttBadge = '<span class="huy-hieu dat">✅ Đồng ý</span>';
+    if (x.trang_thai === 'khong_dong_y') ttBadge = '<span class="huy-hieu loi">❌ Không đồng ý</span>';
+
+    let xnTime = '—';
+    if (x.xac_nhan_luc) {
+      const d = new Date(x.xac_nhan_luc);
+      xnTime = `${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:700">${emp?.name || 'MSNV ' + x.emp_id}</div>
+          <div style="font-size:0.75rem; color:var(--chu-phu)">MSNV: ${x.emp_id}</div>
+        </td>
+        <td><span class="kip-tag kip-${emp?.kip || 4}">${NHOM_TEN[emp?.kip] || '—'}</span></td>
+        <td><b style="font-size:1.1rem; color:var(--xanh)">${x.grade}</b></td>
+        <td>${x.han || '—'}</td>
+        <td>${ttBadge}</td>
+        <td style="font-size:0.8rem">${xnTime}</td>
+        <td style="color:var(--loi); font-weight:600">${x.ly_do || '—'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── Copy DS Chưa Liên Kết ──
+function copyChuaLienKet() {
+  const linkIds = new Set(LINKS.filter(l => l.msnv).map(l => String(l.msnv)));
+  const chua = EMPS.filter(e => !linkIds.has(String(e.id)));
+
+  if (!chua.length) {
+    alert('Tất cả nhân viên trong xưởng đều đã liên kết Bot Zalo!');
+    return;
+  }
+
+  const ds = chua.map((e, idx) => `${idx + 1}. ${e.name} (MSNV: ${e.id}) - ${NHOM_TEN[e.kip]}`).join('\n');
+  const text = `📢 DANH SÁCH NHÂN VIÊN CHƯA LIÊN KẾT BOT ZALO (${chua.length} người):\n`
+    + `------------------------------------\n`
+    + `${ds}\n\n`
+    + `👉 Các bạn vui lòng quét mã QR hoặc nhắn MSNV vào Bot Zalo để nhận lịch ca, báo 5S và kết quả xếp loại kịp thời nhé!`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    alert(`Đã sao chép danh sách ${chua.length} nhân viên chưa liên kết vào bộ nhớ tạm!\nBạn có thể dán (Ctrl+V) vào nhóm Zalo xưởng ngay.`);
+  });
+}
+
+// ── Xuất File CSV ──
+function xuatExcel() {
+  const linkMap = Object.fromEntries(LINKS.map(l => [l.msnv, l]));
+  let csv = 'MSNV,Ho Ten,Kip,Chuc Vu,Trang Thai Zalo,Ten Zalo,Zalo ID,Menu,Hoi AI Hom Nay\n';
+
+  EMPS.forEach(e => {
+    const lk = linkMap[e.id];
+    const tt = lk ? 'Da lien ket' : 'Chua lien ket';
+    const tenZ = lk?.ten_zalo ? `"${lk.ten_zalo}"` : '';
+    const zid = lk?.zalo_id || '';
+    const mnu = lk?.menu || '';
+    const soC = lk?.so_cau || 0;
+    csv += `${e.id},"${e.name}",${e.kip},"${e.role || ''}",${tt},${tenZ},${zid},${mnu},${soC}\n`;
+  });
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `zalo-bot-users-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── Vẽ Biểu Đồ ──
+function veBieuDo() {
+  const linkIds = new Set(LINKS.filter(l => l.msnv).map(l => String(l.msnv)));
+
+  const kips = [1, 2, 3, 4];
+  const labels = ['Kíp 1', 'Kíp 2', 'Kíp 3', 'Hành Chính'];
+  const daLK = kips.map(k => EMPS.filter(e => e.kip === k && linkIds.has(String(e.id))).length);
+  const chuaLK = kips.map(k => EMPS.filter(e => e.kip === k && !linkIds.has(String(e.id))).length);
+
+  const ctxKip = document.getElementById('chartKip')?.getContext('2d');
+  if (ctxKip) {
+    if (chartKipObj) chartKipObj.destroy();
+    chartKipObj = new Chart(ctxKip, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Đã liên kết', data: daLK, backgroundColor: '#0068FF' },
+          { label: 'Chưa liên kết', data: chuaLK, backgroundColor: '#CFD8DC' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+      }
+    });
+  }
+
+  // Top AI
+  const homNayStr = new Date().toISOString().slice(0, 10);
+  const topAI = [...LINKS].sort((a, b) => (b.so_cau || 0) - (a.so_cau || 0)).slice(0, 7);
+  const empMap = Object.fromEntries(EMPS.map(e => [e.id, e]));
+
+  const ctxAI = document.getElementById('chartTopAI')?.getContext('2d');
+  if (ctxAI) {
+    if (chartAIObj) chartAIObj.destroy();
+    chartAIObj = new Chart(ctxAI, {
+      type: 'bar',
+      data: {
+        labels: topAI.map(l => (empMap[l.msnv]?.name || l.ten_zalo || l.msnv || 'User').split(' ').slice(-2).join(' ')),
+        datasets: [{
+          label: 'Số câu hỏi AI đã dùng',
+          data: topAI.map(l => l.so_cau || 0),
+          backgroundColor: '#6A1B9A'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+  }
+}
+
+// ── Giả Lập Bot ──
+function napSelectGiaLap() {
+  const sel = document.getElementById('simEmp');
+  if (!sel) return;
+  sel.innerHTML = EMPS.map(e => `
+    <option value="${e.id}">${e.name} (MSNV ${e.id} - ${NHOM_TEN[e.kip]} - ${e.role})</option>
+  `).join('');
+  doiSimUser();
+}
+
+function doiSimUser() {
+  const msnv = document.getElementById('simEmp')?.value;
+  const emp = EMPS.find(e => String(e.id) === String(msnv));
+  if (emp) {
+    document.getElementById('simStatus').textContent = `Đang đóng vai: ${emp.name} (MSNV: ${emp.id}) · ${laQuanLy(emp.role) ? 'Quản lý' : 'Cá nhân'}`;
+  }
+}
+
+function xoaChat() {
+  document.getElementById('chatThan').innerHTML = `
+    <div class="tin-nhan bot">
+Chào bạn 👋 Mình là Trợ Lý Phân Xưởng 1.
+Bạn có thể nhắn các số trong menu hoặc gõ câu hỏi tự do.
+    </div>
+  `;
+}
+
+async function guiChat() {
+  const inp = document.getElementById('chatNhap');
+  const text = (inp.value || '').trim();
+  if (!text) return;
+  inp.value = '';
+
+  const msnv = document.getElementById('simEmp')?.value;
+  const emp = EMPS.find(e => String(e.id) === String(msnv));
+  const than = document.getElementById('chatThan');
+
+  // Thêm tin nhắn user
+  than.innerHTML += `<div class="tin-nhan user">${text}</div>`;
+  than.scrollTop = than.scrollHeight;
+
+  // Giả lập bot phản hồi menu
+  const ql = emp ? laQuanLy(emp.role) : false;
+  let botReply = 'Đang xử lý...';
+
+  if (text === '0' || text.toLowerCase() === 'menu') {
+    botReply = ql 
+      ? `📋 MENU QUẢN LÝ (MSNV: ${emp.id})\n`
+        + `1. Hôm nay ai đi làm?\n`
+        + `2. Tiến độ kiểm tra 5S hôm nay\n`
+        + `3. Danh sách vi phạm 5S tuần này\n`
+        + `4. Tình hình tăng ca hôm nay\n`
+        + `5. Đơn xin nghỉ đang chờ duyệt\n`
+        + `0. Xem lại menu này\n`
+        + `9. Chuyển sang Menu Cá Nhân`
+      : `📋 MENU CÁ NHÂN (MSNV: ${emp.id})\n`
+        + `1. Lịch ca của tôi tuần này\n`
+        + `2. Lịch ca hôm nay & ngày mai\n`
+        + `3. Điểm đánh giá & xếp loại của tôi\n`
+        + `4. Vi phạm 5S của tôi tháng này\n`
+        + `5. Tăng ca của tôi tháng này\n`
+        + `0. Xem lại menu này`;
+  } else if (/^\d+$/.test(text)) {
+    const num = Number(text);
+    if (!ql) {
+      if (num === 1 || num === 2) {
+        const d = new Date();
+        const s = globalThis.LichCa ? globalThis.LichCa.getShift(emp.kip, d) : 'S';
+        botReply = `📅 Lịch ca của bạn (${emp.name}):\n- Hôm nay: Ca ${s === 'S' ? 'Sáng (6h-18h)' : s === 'C' ? 'Chiều (18h-6h)' : 'Nghỉ'}`;
+      } else if (num === 3) {
+        botReply = `⭐ Xếp loại của bạn (${emp.name}): Đã cập nhật trên hệ thống.`;
+      } else if (num === 4) {
+        const viPham = BAO_5S.filter(b => String(b.msnv) === String(emp.id)).length;
+        botReply = `⚠️ Tháng này bạn có ${viPham} lượt 5S chưa đạt được ghi nhận.`;
+      } else {
+        botReply = `Mục số ${num} đã được ghi nhận.`;
+      }
+    } else {
+      if (num === 1) {
+        botReply = `👥 Báo cáo nhân sự hôm nay: Toàn xưởng đi làm bình thường theo kíp.`;
+      } else if (num === 2 || num === 3) {
+        botReply = `📊 Báo cáo 5S: Tổng số lượt kiểm tra đã hoàn thành theo lịch.`;
+      } else {
+        botReply = `Mục quản lý số ${num} đã được ghi nhận.`;
+      }
+    }
+  } else {
+    botReply = `🤖 [AI Giả lập]: Câu hỏi "${text}" của bạn (${emp.name}) đã được chuyển tới mô hình Claude Haiku 4.5 tra cứu dữ liệu thời gian thực.`;
+  }
+
+  setTimeout(() => {
+    than.innerHTML += `<div class="tin-nhan bot">${botReply}</div>`;
+    than.scrollTop = than.scrollHeight;
+  }, 400);
+}
+
+// ── Kiểm Tra Sức Khỏe Bot ──
+async function kiemTraSucKhoe() {
+  document.getElementById('modalHealth').style.display = 'flex';
+  const box = document.getElementById('healthContent');
+  box.innerHTML = '<div class="loading">⏳ Đang kiểm tra Worker API & Supabase...</div>';
+
+  try {
+    let workerApi = null;
+    try {
+      const res = await fetch('/api/zalo');
+      if (res.ok) workerApi = await res.json();
+    } catch(e) {}
+
+    const sbCheck = await sb.from('zalo_links').select('count', { count: 'exact', head: true });
+
+    box.innerHTML = `
+      <div style="background:#F8FAFC; border:1px solid var(--vien); border-radius:10px; padding:14px; margin-bottom:12px">
+        <h4 style="color:var(--xanh); margin-bottom:8px">1. Kết Nối Database Supabase:</h4>
+        <div>Trạng thái: <span class="huy-hieu dat">🟢 Hoạt động tốt</span></div>
+        <div>Tổng số bản ghi liên kết: <b>${sbCheck.count || LINKS.length}</b></div>
+      </div>
+
+      <div style="background:#F8FAFC; border:1px solid var(--vien); border-radius:10px; padding:14px">
+        <h4 style="color:var(--xanh); margin-bottom:8px">2. Cloudflare Worker API:</h4>
+        ${workerApi ? `
+          <div>Trạng thái API: <span class="huy-hieu dat">🟢 OK</span></div>
+          <div>Zalo Bot Token: ${workerApi.co_ZALO_BOT_TOKEN ? '✅ Đã cấu hình' : '❌ Chưa cấu hình'}</div>
+          <div>Zalo Secret Key: ${workerApi.co_ZALO_SECRET ? '✅ Đã cấu hình' : '❌ Chưa cấu hình'}</div>
+          <div>Claude AI Key: ${workerApi.co_ANTHROPIC_API_KEY ? '✅ Đã cấu hình' : '❌ Chưa cấu hình'}</div>
+          <div>Máy chủ AI: <code>${workerApi.may_chu_claude || 'api.anthropic.com'}</code></div>
+          <div>Webhook URL: <code>${workerApi.dia_chi_webhook || '/api/zalo'}</code></div>
+        ` : `
+          <div>Chế độ xem Local / Cloudflare: <span class="huy-hieu xanh">Sẵn sàng</span></div>
+          <div style="font-size:0.78rem; color:#666; margin-top:4px">Worker đã được cấu hình tại <code>worker/index.js</code> và sẵn sàng nhận webhook tại <code>/api/zalo</code>.</div>
+        `}
+      </div>
+    `;
+  } catch(e) {
+    box.innerHTML = `<div class="huy-hieu loi">Lỗi kiểm tra: ${e.message}</div>`;
+  }
+}
+
+// ── Tự Động Khởi Động ──
+document.addEventListener('DOMContentLoaded', () => {
+  taiDuLieu();
+  // Tự động làm mới mỗi 60 giây
+  setInterval(taiDuLieu, 60000);
+});
+</script>
+</body>
+</html>

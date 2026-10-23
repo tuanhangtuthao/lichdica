@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI So Sánh Bản Vẽ PDF - Chuyên Biệt Kích Thước & Ghi Chú</title>
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0b1120;
+      --bg-panel: #151f32;
+      --bg-card: #1e293b;
+      --bg-input: #0f172a;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --dim-color: #f59e0b;      /* Cam vàng cho Kích thước */
+      --note-color: #a855f7;     /* Tím cho Ghi chú */
+      --danger: #ef4444;
+      --success: #10b981;
+      --border: #2dd4bf33;
+      --border-subtle: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--bg-panel);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      z-index: 15;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      color: #fff;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #fff;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.65);
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .toolbar-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-right: 2px;
+      white-space: nowrap;
+    }
+
+    button, .btn-file {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid #475569;
+      padding: 6px 11px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover, .btn-file:hover {
+      background: #334155;
+      border-color: #64748b;
+    }
+
+    button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      border-color: #6366f1;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    button.primary:hover {
+      filter: brightness(1.1);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: none;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-pill {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-subtle);
+      padding: 5px 10px;
+      border-radius: 6px;
+      max-width: 175px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .file-pill:hover {
+      border-color: var(--accent);
+    }
+
+    /* Main Layout */
+    .main-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Upload Screen */
+    .upload-screen {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-dark);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      gap: 22px;
+      overflow-y: auto;
+    }
+
+    .upload-screen.hidden {
+      display: none;
+    }
+
+    .upload-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 820px;
+    }
+
+    .drop-zone {
+      background: var(--bg-panel);
+      border: 2px dashed #475569;
+      border-radius: 14px;
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .drop-zone.loaded {
+      border-style: solid;
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    /* Viewer Area */
+    .viewer-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #070b14;
+      background-image:
+        radial-gradient(#1e293b 1px, transparent 1px);
+      background-size: 20px 20px;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .viewer-wrapper:active {
+      cursor: grabbing;
+    }
+
+    .canvas-stage {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      box-shadow: 0 12px 45px rgba(0, 0, 0, 0.75);
+      background: #fff;
+    }
+
+    .canvas-stage canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: block;
+    }
+
+    #boxCanvas {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    /* Floating Legend */
+    .legend-bar {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 14px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+      z-index: 5;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* Right Sidebar */
+    .sidebar {
+      width: 410px;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-section {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .filter-tab {
+      justify-content: center;
+      padding: 6px 8px;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+    .filter-tab.active-all {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .filter-tab.active-dim {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--dim-color);
+      color: #fbbf24;
+    }
+
+    .filter-tab.active-note {
+      background: rgba(168, 85, 247, 0.2);
+      border-color: var(--note-color);
+      color: #c084fc;
+    }
+
+    /* Diff List */
+    .diff-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .diff-card {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border-subtle);
+      border-left: 4px solid var(--dim-color);
+      border-radius: 8px;
+      padding: 11px 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .diff-card.type-NOTE {
+      border-left-color: var(--note-color);
+    }
+
+    .diff-card:hover {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: #64748b;
+    }
+
+    .diff-card.selected {
+      background: rgba(59, 130, 246, 0.18);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .diff-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .diff-badge-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .diff-id {
+      font-weight: 800;
+      font-size: 12px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      color: #0f172a;
+      background: #fbbf24;
+    }
+
+    .diff-card.type-NOTE .diff-id {
+      background: #c084fc;
+    }
+
+    .diff-type-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+    }
+
+    .diff-card.type-NOTE .diff-type-tag {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+    }
+
+    .diff-action-tag {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .diff-values {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 7px 9px;
+      border-radius: 6px;
+      font-size: 12.5px;
+    }
+
+    .val-old {
+      color: #fca5a5;
+      word-break: break-word;
+    }
+
+    .val-new {
+      color: #67e8f9;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .val-arrow {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .diff-desc {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    /* Crop Preview inside Card */
+    .diff-thumbs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .thumb-box {
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      position: relative;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .thumb-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .thumb-label {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      background: rgba(15, 23, 42, 0.75);
+      color: #fff;
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* Modal for AI Settings */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      background: var(--bg-panel);
+      border: 1px solid #475569;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 540px;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .form-group small {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .form-input, .form-select {
+      background: var(--bg-input);
+      border: 1px solid #475569;
+      color: var(--text-main);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 17, 32, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .loading-overlay.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid rgba(59, 130, 246, 0.25);
+      border-top-color: #8b5cf6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      background: #ef4444;
+    }
+    .status-dot.connected {
+      background: #10b981;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="brand">
+      <span class="brand-badge">AI CAD DIFF</span>
+      <span>So Sánh Kích Thước & Ghi Chú Bản Vẽ PDF</span>
+    </div>
+
+    <!-- File inputs -->
+    <div class="toolbar-group">
+      <label class="file-pill" title="Nhấn để chọn lại Bản vẽ cũ (A)">
+        🔴 Bản A: <span id="nameFileA">Chưa chọn</span>
+        <input type="file" id="inputFileA" accept="application/pdf" />
+      </label>
+      <label class="file-pill" title="Nhấn để chọn lại Bản vẽ mới (B)">
+        🔵 Bản B: <span id="nameFileB">Chưa chọn</span>
+        <input type="file" id="inputFileB" accept="application/pdf" />
+      </label>
+    </div>
+
+    <!-- AI Trigger & Config -->
+    <div class="toolbar-group">
+      <button id="openAiConfigBtn" title="Cấu hình API Gemini bên thứ 3">
+        <span id="apiStatusDot" class="status-dot"></span>
+        ⚙️ Cấu hình API Gemini
+      </button>
+      <button id="runAiBtn" class="primary" disabled title="Chạy AI đọc và lọc riêng thay đổi Kích thước & Ghi chú">
+        ✨ Phân tích AI (Kích thước & Ghi chú)
+      </button>
+    </div>
+
+    <!-- View Mode -->
+    <div class="toolbar-group">
+      <button id="modeNewWithBoxes" class="active" title="Hiển thị Bản vẽ mới + Khoanh vùng Kích thước & Ghi chú">Bản B + Khoanh AI</button>
+      <button id="modeOverlay" title="Chồng 2 bản vẽ + Khoanh vùng AI">Chồng lớp A/B</button>
+      <button id="modeOldOnly" title="Chỉ xem Bản vẽ cũ (A)">Xem Bản A</button>
+    </div>
+
+    <!-- Page & Zoom -->
+    <div class="toolbar-group">
+      <button id="prevPage" disabled>◀</button>
+      <span id="pageInfo" style="font-size: 12px; min-width: 48px; text-align: center;">1 / 1</span>
+      <button id="nextPage" disabled>▶</button>
+      <button id="zoomOut" title="Thu nhỏ">➖</button>
+      <span id="zoomLabel" style="font-size: 12px; min-width: 45px; text-align: center;">100%</span>
+      <button id="zoomIn" title="Phóng to">➕</button>
+      <button id="zoomFit">Vừa khung</button>
+      <button id="exportBtn" disabled title="Xuất ảnh bản vẽ đã khoanh vùng Kích thước & Ghi chú">⬇ Xuất Ảnh</button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <div class="main-container">
+
+    <!-- Initial Upload Screen -->
+    <div id="uploadScreen" class="upload-screen">
+      <div style="text-align: center; max-width: 680px;">
+        <h2 style="font-size: 23px; margin-bottom: 8px;">AI So Sánh Kích Thước & Ghi Chú Bản Vẽ PDF</h2>
+        <p style="color: var(--text-muted); font-size: 13.5px; line-height: 1.5;">
+          Hỗ trợ cả <strong>PDF xuất từ CAD</strong> và <strong>PDF scan / nổ nét (SHX)</strong>.
+          Hệ thống tích hợp <strong>API Gemini bên thứ 3</strong> để đọc hiểu và <strong>chỉ khoanh vùng những điểm thay đổi về Kích thước (Dimensions) và Ghi chú (Notes)</strong>, bỏ qua các lệch lạc nét vẽ thông thường.
+        </p>
+      </div>
+
+      <div class="upload-cards">
+        <label class="drop-zone" id="dropZoneA">
+          <div style="font-size: 36px;">📐</div>
+          <div style="font-size: 15px; font-weight: 600;">Bản vẽ gốc / Bản cũ (PDF A)</div>
+          <div style="font-size: 12.5px; color: var(--text-muted);" id="statusA">Kéo thả file PDF hoặc bấm để chọn</div>
+          <input type="file" id="uploadInputA" accept="application/pdf" />
+        </label>
+
+        <label class="drop-zone" id="dropZoneB">
+          <div style="font-size: 36px;">📝</div>
+          <div style="font-size: 15px; font-weight: 600;">Bản vẽ sửa đổi / Bản mới (PDF B)</div>
+          <div style="font-size: 12.5px; color: var(--text-muted);" id="statusB">Kéo thả file PDF hoặc bấm để chọn</div>
+          <input type="file" id="uploadInputB" accept="application/pdf" />
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center;">
+        <button id="uploadConfigApiBtn" style="padding: 11px 18px; font-size: 14px;">
+          ⚙️ Cài đặt API Gemini bên thứ 3
+        </button>
+        <button id="startCompareBtn" class="primary" style="padding: 11px 26px; font-size: 14px;" disabled>
+          🚀 Mở Bản Vẽ & Phân Tích AI
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+      <div class="spinner"></div>
+      <div id="loadingText" style="font-size: 15px; font-weight: 600;">Đang phân tích...</div>
+      <div id="loadingSubtext" style="font-size: 12.5px; color: var(--text-muted); max-width: 460px;"></div>
+    </div>
+
+    <!-- Canvas Viewer -->
+    <div class="viewer-wrapper" id="viewerWrapper">
+      <div class="canvas-stage" id="canvasStage">
+        <canvas id="baseCanvas"></canvas>
+        <canvas id="boxCanvas"></canvas>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend-bar">
+        <div class="legend-item">
+          <span class="dot" style="background: #f59e0b;"></span>
+          <span><strong>Kích thước (Dimension)</strong> thay đổi</span>
+        </div>
+        <div class="legend-item">
+          <span class="dot" style="background: #a855f7;"></span>
+          <span><strong>Ghi chú / Chữ (Note)</strong> thay đổi</span>
+        </div>
+        <div class="legend-item" style="color: var(--text-muted);">
+          <span>💡 Nhấp vào thẻ bên phải hoặc khung trên bản vẽ để phóng to tới chi tiết</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <span>🧠 Chế độ đọc bản vẽ</span>
+          <label style="font-size: 11px; text-transform: none; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #cbd5e1;">
+            <input type="checkbox" id="showBoxesToggle" checked /> Hiện khung khoanh
+          </label>
+        </div>
+
+        <select id="scanStrategy" class="form-select" style="font-size: 12.5px;">
+          <option value="hybrid_patches">🎯 AI Quét cụm thay đổi độ nét cao + Text CAD (Chính xác nhất)</option>
+          <option value="full_vision">🖼️ AI Quét toàn cảnh 2 bản vẽ (Phát hiện cả ghi chú đổi vị trí)</option>
+          <option value="cad_text_only">⚡ Chỉ đọc lớp Text Vector PDF (Tức thì - Không tốn API)</option>
+        </select>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <button id="tabAll" class="filter-tab active-all">
+          Tất cả (<span id="countAll">0</span>)
+        </button>
+        <button id="tabDim" class="filter-tab">
+          📏 Kích thước (<span id="countDim">0</span>)
+        </button>
+        <button id="tabNote" class="filter-tab">
+          📝 Ghi chú (<span id="countNote">0</span>)
+        </button>
+      </div>
+
+      <!-- Diff Cards List -->
+      <div class="diff-list" id="diffList">
+        <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 30px 14px; line-height: 1.5;">
+          Hãy chọn 2 file PDF và bấm <strong>"✨ Phân tích AI (Kích thước & Ghi chú)"</strong>.<br/><br/>
+          Hệ thống sẽ tự động loại bỏ các nét vẽ hình học thông thường và chỉ liệt kê + khoanh vùng các thay đổi về <strong>Kích thước</strong> và <strong>Ghi chú</strong>.
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- AI Settings Modal -->
+  <div id="aiModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 16px;">⚙️ Cấu hình API Gemini Bên Thứ 3</h3>
+        <button id="closeAiModalBtn" style="padding: 4px 8px;">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label>Chuẩn giao tiếp API (Endpoint Format)</label>
+        <select id="apiFormat" class="form-select">
+          <option value="openai">Chuẩn OpenAI Compatible (/v1/chat/completions) - Phổ biến nhất cho Proxy bên thứ 3</option>
+          <option value="gemini">Chuẩn Google Gemini Native (/v1beta/models/...:generateContent)</option>
+        </select>
+        <small>Hầu hết các dịch vụ API bên thứ 3 (OneAPI, NewAPI, YesScale, OpenRouter, v.v.) dùng chuẩn OpenAI Compatible.</small>
+      </div>
+
+      <div class="form-group">
+        <label>Base URL (Địa chỉ Server bên thứ 3)</label>
+        <input type="text" id="apiBaseUrl" class="form-input" placeholder="Ví dụ: https://api.vilao.ai/v1" value="https://api.vilao.ai/v1" />
+        <small>Chỉ cần nhập domain hoặc kèm <code>/v1</code> (hệ thống tự động chuẩn hóa đường dẫn).</small>
+      </div>
+
+      <div class="form-group">
+        <label>API Key</label>
+        <div style="display: flex; gap: 6px;">
+          <input type="password" id="apiKeyInput" class="form-input" placeholder="sk-... hoặc AIza..." value="sk-cac50b83f9b40bcafd1700ecb1f9413ee16dc3e68ad52cb620c37f92c2d130d9" />
+          <button type="button" id="toggleKeyBtn">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tên Model Gemini</label>
+        <div style="display: flex; gap: 6px;">
+          <input type="text" id="apiModelInput" class="form-input" list="geminiModelsList" placeholder="chib/gemini-3.8-flash" value="chib/gemini-3.8-flash" />
+          <datalist id="geminiModelsList">
+            <option value="chib/gemini-3.8-flash"></option>
+            <option value="gemini-2.5-flash"></option>
+            <option value="gemini-2.5-pro"></option>
+            <option value="gemini-2.0-flash"></option>
+            <option value="gemini-1.5-pro"></option>
+            <option value="gemini-1.5-flash"></option>
+          </datalist>
+          <button type="button" id="fetchModelsBtn" title="Tải danh sách model từ Server">🔄 Lấy Model</button>
+        </div>
+        <small>Bạn có thể tự gõ chính xác tên model do bên thứ 3 cung cấp hoặc bấm "Lấy Model".</small>
+      </div>
+
+      <div id="apiTestResult" style="font-size: 12px; padding: 8px 10px; border-radius: 6px; display: none;"></div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+        <button type="button" id="testApiBtn">⚡ Kiểm tra kết nối API</button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" id="saveAiConfigBtn" class="primary">💾 Lưu cấu hình</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // App State
+    let pdfDocA = null;
+    let pdfDocB = null;
+    let currentPage = 1;
+    let maxPages = 1;
+    const RENDER_SCALE = 2.2; // High clarity for reading dimensions & small tolerances
+
+    const offCanvA = document.createElement('canvas');
+    const offCanvB = document.createElement('canvas');
+    const overlayCanv = document.createElement('canvas');
+
+    const baseCanvas = document.getElementById('baseCanvas');
+    const boxCanvas = document.getElementById('boxCanvas');
+    const canvasStage = document.getElementById('canvasStage');
+    const viewerWrapper = document.getElementById('viewerWrapper');
+
+    let currentMode = 'newWithBoxes'; // 'newWithBoxes' | 'overlay' | 'oldOnly'
+    let activeFilter = 'ALL'; // 'ALL' | 'DIMENSION' | 'NOTE'
+    let detectedItems = [];   // [{ id, category: 'DIMENSION'|'NOTE', status: 'MODIFIED'|'ADDED'|'REMOVED', oldVal, newVal, description, x1, y1, w, h, thumbA, thumbB }]
+    let selectedItemId = null;
+
+    // Pan & Zoom
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+
+    // Default pre-configured API settings (vilao.ai)
+    const DEFAULT_API_CONFIG = {
+      format: 'openai',
+      baseUrl: 'https://api.vilao.ai/v1',
+      apiKey: 'sk-cac50b83f9b40bcafd1700ecb1f9413ee16dc3e68ad52cb620c37f92c2d130d9',
+      model: 'chib/gemini-3.8-flash'
+    };
+
+    const apiConfig = {
+      format: localStorage.getItem('cad_ai_format_v2') || DEFAULT_API_CONFIG.format,
+      baseUrl: localStorage.getItem('cad_ai_baseUrl_v2') || DEFAULT_API_CONFIG.baseUrl,
+      apiKey: localStorage.getItem('cad_ai_apiKey_v2') || DEFAULT_API_CONFIG.apiKey,
+      model: localStorage.getItem('cad_ai_model_v2') || DEFAULT_API_CONFIG.model
+    };
+
+    function syncApiConfigUI() {
+      document.getElementById('apiFormat').value = apiConfig.format;
+      document.getElementById('apiBaseUrl').value = apiConfig.baseUrl;
+      document.getElementById('apiKeyInput').value = apiConfig.apiKey;
+      document.getElementById('apiModelInput').value = apiConfig.model;
+      const dot = document.getElementById('apiStatusDot');
+      if (apiConfig.apiKey && apiConfig.baseUrl) {
+        dot.classList.add('connected');
+      } else {
+        dot.classList.remove('connected');
+      }
+    }
+    syncApiConfigUI();
+
+    // Modal handlers
+    const aiModal = document.getElementById('aiModal');
+    document.getElementById('openAiConfigBtn').addEventListener('click', () => aiModal.classList.remove('hidden'));
+    document.getElementById('uploadConfigApiBtn').addEventListener('click', () => aiModal.classList.remove('hidden'));
+    document.getElementById('closeAiModalBtn').addEventListener('click', () => aiModal.classList.add('hidden'));
+
+    document.getElementById('toggleKeyBtn').addEventListener('click', () => {
+      const inp = document.getElementById('apiKeyInput');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    });
+
+    function readModalConfig() {
+      apiConfig.format = document.getElementById('apiFormat').value;
+      apiConfig.baseUrl = document.getElementById('apiBaseUrl').value.trim().replace(/\/+$/, '');
+      apiConfig.apiKey = document.getElementById('apiKeyInput').value.trim();
+      apiConfig.model = document.getElementById('apiModelInput').value.trim() || 'chib/gemini-3.8-flash';
+
+      localStorage.setItem('cad_ai_format_v2', apiConfig.format);
+      localStorage.setItem('cad_ai_baseUrl_v2', apiConfig.baseUrl);
+      localStorage.setItem('cad_ai_apiKey_v2', apiConfig.apiKey);
+      localStorage.setItem('cad_ai_model_v2', apiConfig.model);
+      syncApiConfigUI();
+    }
+
+    document.getElementById('saveAiConfigBtn').addEventListener('click', () => {
+      readModalConfig();
+      aiModal.classList.add('hidden');
+    });
+
+    // Fetch models list from 3rd party endpoint
+    document.getElementById('fetchModelsBtn').addEventListener('click', async () => {
+      readModalConfig();
+      const resBox = document.getElementById('apiTestResult');
+      resBox.style.display = 'block';
+      resBox.style.background = 'rgba(59, 130, 246, 0.15)';
+      resBox.style.color = '#93c5fd';
+      resBox.textContent = '⏳ Đang lấy danh sách model từ server...';
+
+      try {
+        let url = apiConfig.baseUrl;
+        if (apiConfig.format === 'openai') {
+          if (!url.endsWith('/v1') && !url.includes('/v1/')) url += '/v1';
+          url = url.replace(/\/chat\/completions$/, '') + '/models';
+          const resp = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${apiConfig.apiKey}` }
+          });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const data = await resp.json();
+          const list = Array.isArray(data.data) ? data.data.map(m => m.id) : [];
+          if (list.length > 0) {
+            const dl = document.getElementById('geminiModelsList');
+            dl.innerHTML = list.map(id => `<option value="${id}"></option>`).join('');
+            const geminiModel = list.find(id => id.toLowerCase().includes('gemini')) || list[0];
+            document.getElementById('apiModelInput').value = geminiModel;
+            resBox.style.background = 'rgba(16, 185, 129, 0.18)';
+            resBox.style.color = '#6ee7b7';
+            resBox.textContent = `✅ Đã tải ${list.length} model! Đã chọn: ${geminiModel}`;
+          } else {
+            throw new Error('Không tìm thấy danh sách model');
+          }
+        } else {
+          let base = url.replace(/\/v1beta.*$/, '');
+          const resp = await fetch(`${base}/v1beta/models?key=${encodeURIComponent(apiConfig.apiKey)}`);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const data = await resp.json();
+          const list = (data.models || []).map(m => m.name.replace(/^models\//, ''));
+          const dl = document.getElementById('geminiModelsList');
+          dl.innerHTML = list.map(id => `<option value="${id}"></option>`).join('');
+          resBox.style.background = 'rgba(16, 185, 129, 0.18)';
+          resBox.style.color = '#6ee7b7';
+          resBox.textContent = `✅ Đã tải ${list.length} model Gemini!`;
+        }
+      } catch (e) {
+        resBox.style.background = 'rgba(239, 68, 68, 0.18)';
+        resBox.style.color = '#fca5a5';
+        resBox.textContent = `⚠️ Không tự động lấy được danh sách (${e.message}). Bạn vẫn có thể tự gõ tên model trực tiếp.`;
+      }
+    });
+
+    // Test API Connection
+    document.getElementById('testApiBtn').addEventListener('click', async () => {
+      readModalConfig();
+      const resBox = document.getElementById('apiTestResult');
+      resBox.style.display = 'block';
+      resBox.style.background = 'rgba(59, 130, 246, 0.15)';
+      resBox.style.color = '#93c5fd';
+      resBox.textContent = '⏳ Đang kiểm tra kết nối tới API Gemini bên thứ 3...';
+
+      try {
+        const reply = await callThirdPartyGeminiAPI('Trả lời ngắn gọn 1 từ: OK', []);
+        resBox.style.background = 'rgba(16, 185, 129, 0.18)';
+        resBox.style.color = '#6ee7b7';
+        resBox.textContent = `✅ Kết nối thành công! Phản hồi từ model (${apiConfig.model}): "${reply.slice(0, 60)}"`;
+      } catch (err) {
+        resBox.style.background = 'rgba(239, 68, 68, 0.18)';
+        resBox.style.color = '#fca5a5';
+        resBox.textContent = `❌ Lỗi kết nối: ${err.message}`;
+      }
+    });
+
+    // Universal caller for 3rd-party Gemini API (supports both OpenAI-compatible & Native Gemini format)
+    async function callThirdPartyGeminiAPI(promptText, base64Images = []) {
+      if (!apiConfig.apiKey) {
+        aiModal.classList.remove('hidden');
+        throw new Error('Vui lòng nhập API Key trong mục Cấu hình API Gemini!');
+      }
+
+      let baseUrl = apiConfig.baseUrl.replace(/\/+$/, '');
+
+      if (apiConfig.format === 'openai') {
+        // Normalize URL to end with /chat/completions
+        let endpoint = baseUrl;
+        if (!endpoint.endsWith('/chat/completions')) {
+          if (!endpoint.endsWith('/v1') && !endpoint.endsWith('/openai')) {
+            endpoint += '/v1';
+          }
+          endpoint += '/chat/completions';
+        }
+
+        const contentParts = [{ type: 'text', text: promptText }];
+        for (const imgDataUrl of base64Images) {
+          contentParts.push({
+            type: 'image_url',
+            image_url: { url: imgDataUrl }
+          });
+        }
+
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiConfig.apiKey}`
+          },
+          body: JSON.stringify({
+            model: apiConfig.model,
+            temperature: 0.1,
+            messages: [
+              {
+                role: 'system',
+                content: 'Bạn là chuyên gia kiểm tra bản vẽ kỹ thuật CAD/PDF. Bạn chỉ trả về kết quả định dạng JSON chuẩn xác theo yêu cầu.'
+              },
+              {
+                role: 'user',
+                content: contentParts
+              }
+            ]
+          })
+        });
+
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(`HTTP ${resp.status}: ${errText.slice(0, 200)}`);
+        }
+
+        const data = await resp.json();
+        return data.choices?.[0]?.message?.content || '';
+      } else {
+        // Native Google Gemini generateContent endpoint (via 3rd party proxy or official)
+        let endpoint = baseUrl;
+        if (!endpoint.includes(':generateContent')) {
+          endpoint = endpoint.replace(/\/v1beta.*$/, '');
+          endpoint = `${endpoint}/v1beta/models/${encodeURIComponent(apiConfig.model)}:generateContent?key=${encodeURIComponent(apiConfig.apiKey)}`;
+        }
+
+        const parts = [{ text: promptText }];
+        for (const imgDataUrl of base64Images) {
+          const base64Raw = imgDataUrl.replace(/^data:image\/\w+;base64,/, '');
+          parts.push({
+            inline_data: {
+              mime_type: 'image/jpeg',
+              data: base64Raw
+            }
+          });
+        }
+
+        const resp = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiConfig.apiKey
+          },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts }],
+            generationConfig: { temperature: 0.1 }
+          })
+        });
+
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(`HTTP ${resp.status}: ${errText.slice(0, 200)}`);
+        }
+
+        const data = await resp.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      }
+    }
+
+    // Loading helpers
+    function showLoading(title, sub = '') {
+      document.getElementById('loadingText').textContent = title;
+      document.getElementById('loadingSubtext').textContent = sub;
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
+    // Load PDF file
+    async function loadPdfFile(file, slot) {
+      if (!file) return;
+      showLoading(`Đang tải bản vẽ ${file.name}...`);
+      try {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        if (slot === 'A') {
+          pdfDocA = pdf;
+          document.getElementById('nameFileA').textContent = file.name;
+          document.getElementById('statusA').textContent = `✅ ${file.name} (${pdf.numPages} trang)`;
+          document.getElementById('dropZoneA').classList.add('loaded');
+        } else {
+          pdfDocB = pdf;
+          document.getElementById('nameFileB').textContent = file.name;
+          document.getElementById('statusB').textContent = `✅ ${file.name} (${pdf.numPages} trang)`;
+          document.getElementById('dropZoneB').classList.add('loaded');
+        }
+
+        if (pdfDocA && pdfDocB) {
+          document.getElementById('startCompareBtn').disabled = false;
+          document.getElementById('runAiBtn').disabled = false;
+          maxPages = Math.max(pdfDocA.numPages, pdfDocB.numPages);
+          currentPage = 1;
+          if (document.getElementById('uploadScreen').classList.contains('hidden')) {
+            await renderPagesAndAnalyze(true);
+          }
+        }
+      } catch (err) {
+        alert('Không thể đọc file PDF: ' + err.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function bindDropZone(zoneId, inputId, slot) {
+      const zone = document.getElementById(zoneId);
+      const input = document.getElementById(inputId);
+      input.addEventListener('change', (e) => e.target.files[0] && loadPdfFile(e.target.files[0], slot));
+      zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        if (e.dataTransfer.files?.[0]) loadPdfFile(e.dataTransfer.files[0], slot);
+      });
+    }
+
+    bindDropZone('dropZoneA', 'uploadInputA', 'A');
+    bindDropZone('dropZoneB', 'uploadInputB', 'B');
+    document.getElementById('inputFileA').addEventListener('change', (e) => e.target.files[0] && loadPdfFile(e.target.files[0], 'A'));
+    document.getElementById('inputFileB').addEventListener('change', (e) => e.target.files[0] && loadPdfFile(e.target.files[0], 'B'));
+
+    document.getElementById('startCompareBtn').addEventListener('click', async () => {
+      document.getElementById('uploadScreen').classList.add('hidden');
+      await renderPagesAndAnalyze(true);
+    });
+
+    document.getElementById('runAiBtn').addEventListener('click', async () => {
+      await runSmartDimensionAndNoteAnalysis();
+    });
+
+    // Render page & extract PDF text items
+    async function renderPdfPage(pdfDoc, pageNum, canvas, renderScale) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!pdfDoc || pageNum > pdfDoc.numPages) {
+        canvas.width = 1000;
+        canvas.height = 700;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return { textItems: [], viewport: null };
+      }
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: renderScale });
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      // Extract selectable vector text if available
+      const textContent = await page.getTextContent();
+      const textItems = [];
+      for (const item of textContent.items) {
+        const str = (item.str || '').trim();
+        if (!str) continue;
+        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+        const fontHeight = Math.hypot(tx[2], tx[3]) || (item.height * renderScale) || 14;
+        const w = (item.width * renderScale) || (str.length * fontHeight * 0.55);
+        const x = tx[4];
+        const y = tx[5] - fontHeight;
+        textItems.push({
+          text: str,
+          x: Math.max(0, x - 4),
+          y: Math.max(0, y - 4),
+          w: w + 8,
+          h: fontHeight + 8
+        });
+      }
+      return { textItems, viewport };
+    }
+
+    let cachedTextA = [];
+    let cachedTextB = [];
+
+    async function renderPagesAndAnalyze(fitView = false) {
+      if (!pdfDocA || !pdfDocB) return;
+      showLoading(`Đang kết xuất bản vẽ trang ${currentPage}...`);
+
+      try {
+        const [resA, resB] = await Promise.all([
+          renderPdfPage(pdfDocA, currentPage, offCanvA, RENDER_SCALE),
+          renderPdfPage(pdfDocB, currentPage, offCanvB, RENDER_SCALE)
+        ]);
+        cachedTextA = resA.textItems;
+        cachedTextB = resB.textItems;
+
+        buildOverlayCanvas();
+        updatePaginationUI();
+
+        if (fitView) fitToScreen();
+        renderDisplayCanvases();
+
+        // Automatically run analysis
+        await runSmartDimensionAndNoteAnalysis();
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi khi xử lý trang PDF: ' + err.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Build visual red/cyan overlay canvas and candidate regions
+    let candidateClusters = [];
+
+    function buildOverlayCanvas() {
+      const width = Math.max(offCanvA.width, offCanvB.width);
+      const height = Math.max(offCanvA.height, offCanvB.height);
+
+      overlayCanv.width = width;
+      overlayCanv.height = height;
+      baseCanvas.width = width;
+      baseCanvas.height = height;
+      boxCanvas.width = width;
+      boxCanvas.height = height;
+      canvasStage.style.width = width + 'px';
+      canvasStage.style.height = height + 'px';
+
+      const ctxA = offCanvA.getContext('2d', { willReadFrequently: true });
+      const ctxB = offCanvB.getContext('2d', { willReadFrequently: true });
+      const ctxOut = overlayCanv.getContext('2d');
+
+      const imgA = ctxA.getImageData(0, 0, offCanvA.width, offCanvA.height);
+      const imgB = ctxB.getImageData(0, 0, offCanvB.width, offCanvB.height);
+      const outImg = ctxOut.createImageData(width, height);
+
+      const dA = imgA.data, dB = imgB.data, out = outImg.data;
+      const wA = offCanvA.width, hA = offCanvA.height;
+      const wB = offCanvB.width, hB = offCanvB.height;
+
+      const cellSize = 14;
+      const cols = Math.ceil(width / cellSize);
+      const rows = Math.ceil(height / cellSize);
+      const gridCount = new Uint32Array(cols * rows);
+
+      for (let y = 0; y < height; y++) {
+        const cy = Math.floor(y / cellSize);
+        for (let x = 0; x < width; x++) {
+          const iOut = (y * width + x) * 4;
+          let rA = 255, gA = 255, bA = 255;
+          if (x < wA && y < hA) {
+            const iA = (y * wA + x) * 4;
+            rA = dA[iA]; gA = dA[iA + 1]; bA = dA[iA + 2];
+          }
+          let rB = 255, gB = 255, bB = 255;
+          if (x < wB && y < hB) {
+            const iB = (y * wB + x) * 4;
+            rB = dB[iB]; gB = dB[iB + 1]; bB = dB[iB + 2];
+          }
+
+          const diff = Math.max(Math.abs(rA - rB), Math.abs(gA - gB), Math.abs(bA - bB));
+          if (diff > 38) {
+            const lumA = 0.299 * rA + 0.587 * gA + 0.114 * bA;
+            const lumB = 0.299 * rB + 0.587 * gB + 0.114 * bB;
+            if (lumA < lumB - 10) {
+              out[iOut] = 239; out[iOut + 1] = 68; out[iOut + 2] = 68; out[iOut + 3] = 255;
+            } else {
+              out[iOut] = 6; out[iOut + 1] = 182; out[iOut + 2] = 212; out[iOut + 3] = 255;
+            }
+            gridCount[cy * cols + Math.floor(x / cellSize)]++;
+          } else {
+            const gray = Math.round(0.299 * rB + 0.587 * gB + 0.114 * bB);
+            const faded = Math.min(255, Math.round(gray * 0.65 + 255 * 0.35));
+            out[iOut] = faded; out[iOut + 1] = faded; out[iOut + 2] = faded; out[iOut + 3] = 255;
+          }
+        }
+      }
+      ctxOut.putImageData(outImg, 0, 0);
+
+      // Extract candidate clusters where pixel changes occurred (for high-res AI patch inspection)
+      const visited = new Uint8Array(cols * rows);
+      const boxes = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const idx = r * cols + c;
+          if (gridCount[idx] < 4 || visited[idx]) continue;
+          let minC = c, maxC = c, minR = r, maxR = r, pxSum = 0;
+          const q = [idx];
+          visited[idx] = 1;
+          while (q.length) {
+            const cur = q.pop();
+            const cr = Math.floor(cur / cols), cc = cur % cols;
+            if (cc < minC) minC = cc;
+            if (cc > maxC) maxC = cc;
+            if (cr < minR) minR = cr;
+            if (cr > maxR) maxR = cr;
+            pxSum += gridCount[cur];
+
+            for (let dr = -2; dr <= 2; dr++) {
+              const nr = cr + dr;
+              if (nr < 0 || nr >= rows) continue;
+              for (let dc = -2; dc <= 2; dc++) {
+                const nc = cc + dc;
+                if (nc < 0 || nc >= cols) continue;
+                const nIdx = nr * cols + nc;
+                if (gridCount[nIdx] >= 3 && !visited[nIdx]) {
+                  visited[nIdx] = 1;
+                  q.push(nIdx);
+                }
+              }
+            }
+          }
+          if (pxSum >= 18) {
+            const pad = 28; // Include surrounding dimension lines/text context
+            const x1 = Math.max(0, minC * cellSize - pad);
+            const y1 = Math.max(0, minR * cellSize - pad);
+            const x2 = Math.min(width, (maxC + 1) * cellSize + pad);
+            const y2 = Math.min(height, (maxR + 1) * cellSize + pad);
+            boxes.push({ x1, y1, x2, y2, w: x2 - x1, h: y2 - y1, pxSum });
+          }
+        }
+      }
+      candidateClusters = mergeBoxes(boxes, 14)
+        .sort((a, b) => b.pxSum - a.pxSum)
+        .slice(0, 24); // Top 24 candidate regions
+    }
+
+    function mergeBoxes(boxes, gap) {
+      let arr = [...boxes];
+      let merged = true;
+      while (merged) {
+        merged = false;
+        for (let i = 0; i < arr.length; i++) {
+          for (let j = i + 1; j < arr.length; j++) {
+            const a = arr[i], b = arr[j];
+            if (a.x1 - gap <= b.x2 && a.x2 + gap >= b.x1 && a.y1 - gap <= b.y2 && a.y2 + gap >= b.y1) {
+              const x1 = Math.min(a.x1, b.x1), y1 = Math.min(a.y1, b.y1);
+              const x2 = Math.max(a.x2, b.x2), y2 = Math.max(a.y2, b.y2);
+              arr[i] = { x1, y1, x2, y2, w: x2 - x1, h: y2 - y1, pxSum: a.pxSum + b.pxSum };
+              arr.splice(j, 1);
+              merged = true;
+              break;
+            }
+          }
+          if (merged) break;
+        }
+      }
+      return arr;
+    }
+
+    // Rule-based classifier: Is a string a technical dimension or a note?
+    function classifyTextString(str) {
+      const s = str.trim();
+      // Dimension patterns: numbers with diameter Ø/⌀, radius R, thread M, tolerance ±, angles °, chamfer C, or pure numeric measurements
+      const dimRegex = /^([Ø⌀ΦRrMmCc]?\s*\d+([.,]\d+)?(\s*(mm|cm|m|°|deg|x|×|±|\+|-|\/|H\d|h\d|g\d|JS\d)\s*\d*([.,]\d+)?)*|\d+([.,]\d+)?\s*[°±]|SCALE\s*\d+:\d+|TL\s*\d+:\d+)$/i;
+      if (dimRegex.test(s)) return 'DIMENSION';
+      // Also if string is mostly digits and math/tolerance symbols
+      const digitCount = (s.match(/\d/g) || []).length;
+      if (digitCount > 0 && digitCount / s.length >= 0.5 && s.length <= 18) {
+        return 'DIMENSION';
+      }
+      return 'NOTE';
+    }
+
+    // Local PDF Vector Text Diff (works instantaneously when PDF has CAD text layer)
+    function extractCadVectorTextDiffs() {
+      const usedB = new Set();
+      const diffs = [];
+
+      // 1. Match items at same/nearby coordinates first
+      for (let i = 0; i < cachedTextA.length; i++) {
+        const a = cachedTextA[i];
+        let bestJ = -1;
+        let bestDist = Infinity;
+
+        for (let j = 0; j < cachedTextB.length; j++) {
+          if (usedB.has(j)) continue;
+          const b = cachedTextB[j];
+          const dist = Math.hypot((a.x - b.x), (a.y - b.y));
+          if (dist < 45 && dist < bestDist) {
+            bestDist = dist;
+            bestJ = j;
+          }
+        }
+
+        if (bestJ !== -1) {
+          const b = cachedTextB[bestJ];
+          usedB.add(bestJ);
+          if (a.text !== b.text) {
+            const cat = classifyTextString(b.text) === 'DIMENSION' || classifyTextString(a.text) === 'DIMENSION'
+              ? 'DIMENSION' : 'NOTE';
+            diffs.push({
+              category: cat,
+              status: 'MODIFIED',
+              oldVal: a.text,
+              newVal: b.text,
+              description: cat === 'DIMENSION'
+                ? `Thay đổi kích thước từ "${a.text}" thành "${b.text}"`
+                : `Thay đổi nội dung ghi chú từ "${a.text}" thành "${b.text}"`,
+              x1: Math.min(a.x, b.x),
+              y1: Math.min(a.y, b.y),
+              w: Math.max(a.w, b.w),
+              h: Math.max(a.h, b.h)
+            });
+          }
+        } else {
+          // Removed in B
+          const cat = classifyTextString(a.text);
+          diffs.push({
+            category: cat,
+            status: 'REMOVED',
+            oldVal: a.text,
+            newVal: '(Đã xóa)',
+            description: cat === 'DIMENSION'
+              ? `Kích thước "${a.text}" ở Bản A đã bị xóa ở Bản B`
+              : `Ghi chú "${a.text}" ở Bản A đã bị xóa ở Bản B`,
+            x1: a.x,
+            y1: a.y,
+            w: a.w,
+            h: a.h
+          });
+        }
+      }
+
+      // 2. Remaining items in B are newly added
+      for (let j = 0; j < cachedTextB.length; j++) {
+        if (usedB.has(j)) continue;
+        const b = cachedTextB[j];
+        const cat = classifyTextString(b.text);
+        diffs.push({
+          category: cat,
+          status: 'ADDED',
+          oldVal: '(Chưa có)',
+          newVal: b.text,
+          description: cat === 'DIMENSION'
+            ? `Thêm mới kích thước "${b.text}" trên Bản B`
+            : `Thêm mới ghi chú "${b.text}" trên Bản B`,
+          x1: b.x,
+          y1: b.y,
+          w: b.w,
+          h: b.h
+        });
+      }
+
+      return diffs;
+    }
+
+    // Generate side-by-side crop thumbnail for UI card & AI Patch verification
+    function createCropDataURL(canvas, x, y, w, h) {
+      const pad = 12;
+      const sx = Math.max(0, Math.floor(x - pad));
+      const sy = Math.max(0, Math.floor(y - pad));
+      const sw = Math.min(canvas.width - sx, Math.ceil(w + pad * 2));
+      const sh = Math.min(canvas.height - sy, Math.ceil(h + pad * 2));
+      if (sw <= 0 || sh <= 0) return '';
+
+      const c = document.createElement('canvas');
+      c.width = sw;
+      c.height = sh;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, sw, sh);
+      ctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+      return c.toDataURL('image/jpeg', 0.88);
+    }
+
+    // Build a composite sheet of numbered candidate patches (A vs B side-by-side) so AI can inspect all changed regions at 100% native resolution in 1 single API call!
+    function buildCompositePatchesImage(clusters) {
+      const rowH = 150;
+      const colW = 360;
+      const totalW = colW * 2 + 70;
+      const totalH = clusters.length * rowH;
+
+      const comp = document.createElement('canvas');
+      comp.width = totalW;
+      comp.height = Math.max(150, totalH);
+      const ctx = comp.getContext('2d');
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 0, comp.width, comp.height);
+
+      clusters.forEach((b, idx) => {
+        const topY = idx * rowH;
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, topY, totalW, rowH - 2);
+
+        // Region index badge
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText(`#${idx + 1}`, 12, topY + rowH / 2 + 5);
+
+        // Draw crop A
+        drawScaledPatch(ctx, offCanvA, b, 65, topY + 6, colW - 12, rowH - 14, 'BẢN A (CŨ)');
+        // Draw crop B
+        drawScaledPatch(ctx, offCanvB, b, 65 + colW, topY + 6, colW - 12, rowH - 14, 'BẢN B (MỚI)');
+      });
+
+      return comp.toDataURL('image/jpeg', 0.88);
+    }
+
+    function drawScaledPatch(ctx, srcCanv, box, dx, dy, maxW, maxH, label) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(dx, dy, maxW, maxH);
+
+      const scaleFit = Math.min(maxW / box.w, maxH / box.h, 2.0);
+      const dw = box.w * scaleFit;
+      const dh = box.h * scaleFit;
+      const ox = dx + (maxW - dw) / 2;
+      const oy = dy + (maxH - dh) / 2;
+
+      ctx.drawImage(srcCanv, box.x1, box.y1, box.w, box.h, ox, oy, dw, dh);
+
+      ctx.fillStyle = 'rgba(15,23,42,0.75)';
+      ctx.fillRect(dx, dy, 75, 16);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText(label, dx + 4, dy + 11);
+    }
+
+    // Parse JSON safely from LLM markdown output
+    function parseJsonFromAiResponse(rawText) {
+      if (!rawText) return [];
+      const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const firstBracket = cleaned.indexOf('[');
+      const lastBracket = cleaned.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        return JSON.parse(cleaned.slice(firstBracket, lastBracket + 1));
+      }
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        const obj = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+        return obj.differences || obj.items || obj.changes || [];
+      }
+      return [];
+    }
+
+    // Main orchestrator: Analyze Dimensions & Notes differences
+    async function runSmartDimensionAndNoteAnalysis() {
+      if (!pdfDocA || !pdfDocB) return;
+
+      const strategy = document.getElementById('scanStrategy').value;
+      const cadDiffs = extractCadVectorTextDiffs();
+
+      // Strategy 1: CAD Text Only (No AI API needed)
+      if (strategy === 'cad_text_only') {
+        if (cadDiffs.length === 0 && cachedTextA.length === 0 && cachedTextB.length === 0) {
+          alert('Bản vẽ PDF này là dạng ảnh Scan hoặc chữ đã nổ nét (SHX), không có lớp Text CAD. Hãy chọn chế độ phân tích AI!');
+        }
+        finalizeDetectedItems(cadDiffs);
+        return;
+      }
+
+      // Check API key before calling AI
+      if (!apiConfig.apiKey) {
+        if (cadDiffs.length > 0) {
+          finalizeDetectedItems(cadDiffs);
+        }
+        aiModal.classList.remove('hidden');
+        return;
+      }
+
+      showLoading(
+        '🤖 AI Gemini đang đọc bản vẽ và lọc riêng Kích thước & Ghi chú...',
+        `Đang gửi dữ liệu tới model ${apiConfig.model} (${apiConfig.baseUrl})...`
+      );
+
+      try {
+        if (strategy === 'hybrid_patches' && candidateClusters.length > 0) {
+          // High-res Patch AI Mode: Inspect each candidate change region at native resolution
+          const compositeDataUrl = buildCompositePatchesImage(candidateClusters);
+          const cadHint = cadDiffs.length > 0
+            ? `\nDữ liệu lớp text CAD gợi ý: ${JSON.stringify(cadDiffs.slice(0, 30).map(d => ({ old: d.oldVal, new: d.newVal, type: d.category })))}`
+            : '';
+
+          const prompt = `Trong hình ảnh đính kèm là ${candidateClusters.length} vùng có sự thay đổi giữa BẢN A (CŨ - cột trái) và BẢN B (MỚI - cột phải), được đánh số từ #1 đến #${candidateClusters.length}.
+Nhiệm vụ của bạn:
+1. Chỉ giữ lại những vùng có sự thay đổi về **KÍCH THƯỚC (DIMENSION)** (con số kích thước, đường kính Ø, bán kính R, góc, dung sai, tỷ lệ...) hoặc **GHI CHÚ / CHỮ (NOTE)** (ghi chú kỹ thuật, vật liệu, ký hiệu, chữ viết, bảng kê...).
+2. **LOẠI BỎ HOÀN TOÀN (KHÔNG ĐƯA VÀO KẾT QUẢ)** những vùng chỉ khác nhau về nét vẽ hình học đơn thuần, đường gióng, nét cắt, hoặc nhiễu ảnh mà KHÔNG có thay đổi về con số kích thước hay chữ ghi chú.
+3. Trả về duy nhất một mảng JSON (không giải thích dài dòng) theo cấu trúc sau:
+[
+  {
+    "patchIndex": 1,
+    "category": "DIMENSION",
+    "status": "MODIFIED",
+    "oldVal": "Giá trị ở Bản A (ví dụ: Ø20±0.1)",
+    "newVal": "Giá trị ở Bản B (ví dụ: Ø25±0.05)",
+    "description": "Mô tả ngắn gọn điểm thay đổi bằng tiếng Việt"
+  }
+]
+Lưu ý:
+- "patchIndex" là số thứ tự vùng (từ 1 đến ${candidateClusters.length}).
+- "category" chỉ nhận 1 trong 2 giá trị: "DIMENSION" (nếu là kích thước/con số đo) hoặc "NOTE" (nếu là chữ/ghi chú/ký hiệu).
+- "status" là "MODIFIED" (sửa đổi), "ADDED" (thêm mới ở B), hoặc "REMOVED" (bị xóa ở B).${cadHint}`;
+
+          const aiRaw = await callThirdPartyGeminiAPI(prompt, [compositeDataUrl]);
+          const parsed = parseJsonFromAiResponse(aiRaw);
+
+          const mapped = [];
+          for (const item of parsed) {
+            const idx = (parseInt(item.patchIndex, 10) || 1) - 1;
+            const box = candidateClusters[idx];
+            if (!box) continue;
+            mapped.push({
+              category: item.category === 'NOTE' ? 'NOTE' : 'DIMENSION',
+              status: item.status || 'MODIFIED',
+              oldVal: item.oldVal || '—',
+              newVal: item.newVal || '—',
+              description: item.description || '',
+              x1: box.x1,
+              y1: box.y1,
+              w: box.w,
+              h: box.h
+            });
+          }
+
+          finalizeDetectedItems(mapped);
+        } else {
+          // Full-Page Vision Mode: Send full images of Page A and Page B
+          const fullImgA = createDownscaledJpeg(offCanvA, 1600);
+          const fullImgB = createDownscaledJpeg(offCanvB, 1600);
+
+          const prompt = `Bạn được cung cấp 2 hình ảnh bản vẽ kỹ thuật:
+- Ảnh 1: Bản vẽ cũ (Bản A)
+- Ảnh 2: Bản vẽ mới (Bản B)
+
+Hãy đọc và so sánh toàn bộ **KÍCH THƯỚC (DIMENSION)** và **GHI CHÚ / CHỮ VIẾT (NOTE)** giữa 2 bản vẽ.
+Yêu cầu:
+1. Chỉ liệt kê những điểm khác biệt về **KÍCH THƯỚC (DIMENSION)** và **GHI CHÚ (NOTE)**. Không khoanh vùng các nét vẽ hình học nếu không có sự thay đổi về số đo hay ghi chú.
+2. Trả về tọa độ vùng chứa kích thước/ghi chú đó trên Bản B theo thang chuẩn [ymin, xmin, ymax, xmax] từ 0 đến 1000.
+3. Chỉ trả về mảng JSON theo đúng cấu trúc:
+[
+  {
+    "category": "DIMENSION",
+    "status": "MODIFIED",
+    "oldVal": "1200",
+    "newVal": "1350",
+    "description": "Thay đổi kích thước chiều dài tổng từ 1200 lên 1350",
+    "box_2d": [ymin, xmin, ymax, xmax]
+  }
+]`;
+
+          const aiRaw = await callThirdPartyGeminiAPI(prompt, [fullImgA, fullImgB]);
+          const parsed = parseJsonFromAiResponse(aiRaw);
+
+          const W = baseCanvas.width;
+          const H = baseCanvas.height;
+          const mapped = parsed.map((item) => {
+            const [ymin, xmin, ymax, xmax] = Array.isArray(item.box_2d) && item.box_2d.length === 4
+              ? item.box_2d
+              : [450, 450, 550, 550];
+            const x1 = Math.max(0, (xmin / 1000) * W);
+            const y1 = Math.max(0, (ymin / 1000) * H);
+            const x2 = Math.min(W, (xmax / 1000) * W);
+            const y2 = Math.min(H, (ymax / 1000) * H);
+            return {
+              category: item.category === 'NOTE' ? 'NOTE' : 'DIMENSION',
+              status: item.status || 'MODIFIED',
+              oldVal: item.oldVal || '—',
+              newVal: item.newVal || '—',
+              description: item.description || '',
+              x1,
+              y1,
+              w: Math.max(36, x2 - x1),
+              h: Math.max(28, y2 - y1)
+            };
+          });
+
+          finalizeDetectedItems(mapped);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi khi gọi API Gemini: ' + err.message + '\n\nHệ thống sẽ hiển thị kết quả đọc lớp Text CAD dự phòng (nếu có).');
+        if (cadDiffs.length > 0) {
+          finalizeDetectedItems(cadDiffs);
+        }
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function createDownscaledJpeg(srcCanvas, maxDim) {
+      const ratio = Math.min(1, maxDim / Math.max(srcCanvas.width, srcCanvas.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(srcCanvas.width * ratio);
+      c.height = Math.round(srcCanvas.height * ratio);
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(srcCanvas, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.85);
+    }
+
+    function finalizeDetectedItems(rawItems) {
+      detectedItems = rawItems.map((item, idx) => ({
+        ...item,
+        id: idx + 1,
+        thumbA: createCropDataURL(offCanvA, item.x1, item.y1, item.w, item.h),
+        thumbB: createCropDataURL(offCanvB, item.x1, item.y1, item.w, item.h)
+      }));
+
+      selectedItemId = null;
+      updateCountsAndSidebar();
+      renderDisplayCanvases();
+      document.getElementById('exportBtn').disabled = false;
+    }
+
+    function getFilteredItems() {
+      if (activeFilter === 'ALL') return detectedItems;
+      return detectedItems.filter(i => i.category === activeFilter);
+    }
+
+    // Draw base canvas + selectively draw boxes ONLY for Dimensions & Notes
+    function renderDisplayCanvases() {
+      const ctxBase = baseCanvas.getContext('2d');
+      const ctxBox = boxCanvas.getContext('2d');
+
+      ctxBase.clearRect(0, 0, baseCanvas.width, baseCanvas.height);
+      ctxBox.clearRect(0, 0, boxCanvas.width, boxCanvas.height);
+
+      if (currentMode === 'newWithBoxes') {
+        ctxBase.fillStyle = '#ffffff';
+        ctxBase.fillRect(0, 0, baseCanvas.width, baseCanvas.height);
+        ctxBase.drawImage(offCanvB, 0, 0);
+      } else if (currentMode === 'overlay') {
+        ctxBase.drawImage(overlayCanv, 0, 0);
+      } else if (currentMode === 'oldOnly') {
+        ctxBase.fillStyle = '#ffffff';
+        ctxBase.fillRect(0, 0, baseCanvas.width, baseCanvas.height);
+        ctxBase.drawImage(offCanvA, 0, 0);
+      }
+
+      if (!document.getElementById('showBoxesToggle').checked) return;
+
+      const items = getFilteredItems();
+      items.forEach((item) => {
+        const isSelected = item.id === selectedItemId;
+        const isDim = item.category === 'DIMENSION';
+        const mainColor = isDim ? '#f59e0b' : '#a855f7';
+        const fillAlpha = isSelected ? '0.24' : '0.10';
+        const fillRgb = isDim ? `rgba(245, 158, 11, ${fillAlpha})` : `rgba(168, 85, 247, ${fillAlpha})`;
+
+        ctxBox.fillStyle = fillRgb;
+        ctxBox.fillRect(item.x1, item.y1, item.w, item.h);
+
+        ctxBox.strokeStyle = isSelected ? '#ef4444' : mainColor;
+        ctxBox.lineWidth = isSelected ? 3.5 : 2.2;
+        ctxBox.strokeRect(item.x1, item.y1, item.w, item.h);
+
+        // Callout badge above box: e.g. "#1 📏 Ø20 ➔ Ø25"
+        const badgeText = `#${item.id} ${isDim ? 'KT' : 'GC'}: ${item.oldVal} ➔ ${item.newVal}`.slice(0, 34);
+        ctxBox.font = 'bold 12px sans-serif';
+        const tw = ctxBox.measureText(badgeText).width;
+        const bh = 20;
+        const bx = item.x1;
+        const by = Math.max(0, item.y1 - bh - 2);
+
+        ctxBox.fillStyle = isSelected ? '#ef4444' : mainColor;
+        ctxBox.fillRect(bx, by, tw + 10, bh);
+        ctxBox.fillStyle = '#0f172a';
+        if (isSelected || !isDim) ctxBox.fillStyle = '#ffffff';
+        ctxBox.fillText(badgeText, bx + 5, by + 14);
+      });
+    }
+
+    function updateCountsAndSidebar() {
+      const dimCount = detectedItems.filter(i => i.category === 'DIMENSION').length;
+      const noteCount = detectedItems.filter(i => i.category === 'NOTE').length;
+
+      document.getElementById('countAll').textContent = detectedItems.length;
+      document.getElementById('countDim').textContent = dimCount;
+      document.getElementById('countNote').textContent = noteCount;
+
+      const listEl = document.getElementById('diffList');
+      const items = getFilteredItems();
+
+      if (items.length === 0) {
+        listEl.innerHTML = `
+          <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 28px 12px;">
+            Không có thay đổi nào trong mục này.
+          </div>`;
+        return;
+      }
+
+      listEl.innerHTML = '';
+      items.forEach((item) => {
+        const isDim = item.category === 'DIMENSION';
+        const card = document.createElement('div');
+        card.className = `diff-card type-${item.category}` + (item.id === selectedItemId ? ' selected' : '');
+
+        const statusLabel = item.status === 'ADDED' ? 'Thêm mới' : item.status === 'REMOVED' ? 'Đã xóa' : 'Sửa đổi';
+
+        card.innerHTML = `
+          <div class="diff-card-header">
+            <div class="diff-badge-group">
+              <span class="diff-id">#${item.id}</span>
+              <span class="diff-type-tag">${isDim ? '📏 KÍCH THƯỚC' : '📝 GHI CHÚ'}</span>
+            </div>
+            <span class="diff-action-tag">${statusLabel} • Phóng tới ➔</span>
+          </div>
+          <div class="diff-values">
+            <div class="val-old" title="Giá trị Bản A (Cũ)">🔴 ${escapeHtml(item.oldVal)}</div>
+            <div class="val-arrow">➔</div>
+            <div class="val-new" title="Giá trị Bản B (Mới)">🔵 ${escapeHtml(item.newVal)}</div>
+          </div>
+          ${item.description ? `<div class="diff-desc">${escapeHtml(item.description)}</div>` : ''}
+          <div class="diff-thumbs">
+            <div class="thumb-box">
+              <span class="thumb-label">Bản A</span>
+              <img src="${item.thumbA}" alt="Crop A" />
+            </div>
+            <div class="thumb-box">
+              <span class="thumb-label">Bản B</span>
+              <img src="${item.thumbB}" alt="Crop B" />
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => focusOnItem(item.id));
+        listEl.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function focusOnItem(id) {
+      selectedItemId = id;
+      updateCountsAndSidebar();
+      renderDisplayCanvases();
+
+      const item = detectedItems.find(i => i.id === id);
+      if (!item) return;
+
+      const viewW = viewerWrapper.clientWidth;
+      const viewH = viewerWrapper.clientHeight;
+
+      scale = Math.min(3.0, Math.max(0.9, Math.min(viewW / (item.w * 3.2), viewH / (item.h * 3.2))));
+      const cx = item.x1 + item.w / 2;
+      const cy = item.y1 + item.h / 2;
+      panX = viewW / 2 - cx * scale;
+      panY = viewH / 2 - cy * scale;
+      updateStageTransform();
+    }
+
+    // Filter tab clicks
+    function setFilter(filter) {
+      activeFilter = filter;
+      document.getElementById('tabAll').className = 'filter-tab' + (filter === 'ALL' ? ' active-all' : '');
+      document.getElementById('tabDim').className = 'filter-tab' + (filter === 'DIMENSION' ? ' active-dim' : '');
+      document.getElementById('tabNote').className = 'filter-tab' + (filter === 'NOTE' ? ' active-note' : '');
+      updateCountsAndSidebar();
+      renderDisplayCanvases();
+    }
+
+    document.getElementById('tabAll').addEventListener('click', () => setFilter('ALL'));
+    document.getElementById('tabDim').addEventListener('click', () => setFilter('DIMENSION'));
+    document.getElementById('tabNote').addEventListener('click', () => setFilter('NOTE'));
+
+    // Click on canvas box
+    boxCanvas.addEventListener('click', (e) => {
+      if (isDragging) return;
+      const rect = boxCanvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / scale;
+      const y = (e.clientY - rect.top) / scale;
+
+      const hit = getFilteredItems().find(
+        i => x >= i.x1 && x <= i.x1 + i.w && y >= i.y1 && y <= i.y1 + i.h
+      );
+      if (hit) {
+        selectedItemId = hit.id;
+        updateCountsAndSidebar();
+        renderDisplayCanvases();
+      }
+    });
+
+    // Pan & Zoom
+    function updateStageTransform() {
+      canvasStage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
+    }
+
+    function fitToScreen() {
+      if (!baseCanvas.width || !baseCanvas.height) return;
+      const pad = 36;
+      const vw = viewerWrapper.clientWidth - pad * 2;
+      const vh = viewerWrapper.clientHeight - pad * 2;
+      scale = Math.min(vw / baseCanvas.width, vh / baseCanvas.height, 1.5);
+      panX = (viewerWrapper.clientWidth - baseCanvas.width * scale) / 2;
+      panY = (viewerWrapper.clientHeight - baseCanvas.height * scale) / 2;
+      updateStageTransform();
+    }
+
+    viewerWrapper.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      const nextScale = Math.min(6, Math.max(0.15, scale * factor));
+      const rect = viewerWrapper.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      panX = mx - (mx - panX) * (nextScale / scale);
+      panY = my - (my - panY) * (nextScale / scale);
+      scale = nextScale;
+      updateStageTransform();
+    }, { passive: false });
+
+    viewerWrapper.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isDragging = false;
+      dragStartX = e.clientX - panX;
+      dragStartY = e.clientY - panY;
+
+      const onMove = (ev) => {
+        isDragging = true;
+        panX = ev.clientX - dragStartX;
+        panY = ev.clientY - dragStartY;
+        updateStageTransform();
+      };
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        setTimeout(() => { isDragging = false; }, 40);
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    });
+
+    document.getElementById('zoomIn').addEventListener('click', () => { scale = Math.min(6, scale * 1.25); updateStageTransform(); });
+    document.getElementById('zoomOut').addEventListener('click', () => { scale = Math.max(0.15, scale / 1.25); updateStageTransform(); });
+    document.getElementById('zoomFit').addEventListener('click', fitToScreen);
+    document.getElementById('showBoxesToggle').addEventListener('change', renderDisplayCanvases);
+    document.getElementById('scanStrategy').addEventListener('change', () => {
+      if (pdfDocA && pdfDocB) runSmartDimensionAndNoteAnalysis();
+    });
+
+    // View modes
+    const modeBtns = {
+      newWithBoxes: document.getElementById('modeNewWithBoxes'),
+      overlay: document.getElementById('modeOverlay'),
+      oldOnly: document.getElementById('modeOldOnly')
+    };
+    Object.entries(modeBtns).forEach(([mode, btn]) => {
+      btn.addEventListener('click', () => {
+        currentMode = mode;
+        Object.entries(modeBtns).forEach(([k, b]) => b.classList.toggle('active', k === mode));
+        renderDisplayCanvases();
+      });
+    });
+
+    // Pagination
+    function updatePaginationUI() {
+      document.getElementById('pageInfo').textContent = `${currentPage} / ${maxPages}`;
+      document.getElementById('prevPage').disabled = currentPage <= 1;
+      document.getElementById('nextPage').disabled = currentPage >= maxPages;
+    }
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; renderPagesAndAnalyze(false); }
+    });
+    document.getElementById('nextPage').addEventListener('click', () => {
+      if (currentPage < maxPages) { currentPage++; renderPagesAndAnalyze(false); }
+    });
+
+    // Export Image
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const c = document.createElement('canvas');
+      c.width = baseCanvas.width;
+      c.height = baseCanvas.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(baseCanvas, 0, 0);
+      ctx.drawImage(boxCanvas, 0, 0);
+      const a = document.createElement('a');
+      a.download = `AI_SoSanh_KichThuoc_GhiChu_Trang_${currentPage}.png`;
+      a.href = c.toDataURL('image/png');
+      a.click();
+    });
+  </script>
+</body>
+</html>
