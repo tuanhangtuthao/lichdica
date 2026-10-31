@@ -44,7 +44,7 @@ const docHetTL = window.docHet || (async taoQ => {
     tu += 1000;
   }
 });
-const sb = supabase.createClient(SB_URL, SB_KEY);
+const sb = supabase.createClient(SB_URL, SB_KEY, window.CAU_HINH && window.CAU_HINH.SB_OPT);   // ngăn kt: xem cau-hinh.js
 
 // ═══════════════════════════════════════════════════════════════
 // BỘ MÁY  (nguyên văn từ chatbot.html cũ)

@@ -190,7 +190,7 @@ button,input{font-family:inherit}
 <script>
 const SB_URL = CAU_HINH.SB_URL;
 const SB_KEY = CAU_HINH.SB_KEY;
-const sb = supabase.createClient(SB_URL, SB_KEY);
+const sb = supabase.createClient(SB_URL, SB_KEY, CAU_HINH.SB_OPT);
 
 const THU   = ['CN','T2','T3','T4','T5','T6','T7'];
 const THU_D = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];

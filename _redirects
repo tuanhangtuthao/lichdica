@@ -36,3 +36,30 @@
 /qc/tra-cuu.html                   /qc/tra-cuu 301
 /qc/xin-nghi.html                  /qc/xin-nghi 301
 /qc/*            /:splat     200
+
+# Kỹ Thuật CNC: cùng cách với QC (cau-hinh.js, ngăn "kt" trong database QC)
+/kt              /kt/        301
+/kt/index.html   /kt/        301
+/kt/index        /kt/        301
+/kt/dashboard.html        /kt/   302
+/kt/dashboard             /kt/   302
+/kt/zalobot-monitor.html  /kt/   302
+/kt/zalobot-monitor       /kt/   302
+/kt/nhansu-ca.html        /kt/   302
+/kt/nhansu-ca             /kt/   302
+/kt/5s.html               /5s    302
+/kt/5s                    /5s    302
+/kt/ca-cua-toi.html                /kt/ca-cua-toi 301
+/kt/demo-cap-nhat.html             /kt/demo-cap-nhat 301
+/kt/huong-dan.html                 /kt/huong-dan 301
+/kt/nav-demo.html                  /kt/nav-demo 301
+/kt/ot-demo.html                   /kt/ot-demo 301
+/kt/rating-print-kip1.html         /kt/rating-print-kip1 301
+/kt/rating-print-kip2.html         /kt/rating-print-kip2 301
+/kt/rating-print-kip3.html         /kt/rating-print-kip3 301
+/kt/rating-print-kip4.html         /kt/rating-print-kip4 301
+/kt/rating-print.html              /kt/rating-print 301
+/kt/rating.html                    /kt/rating 301
+/kt/tra-cuu.html                   /kt/tra-cuu 301
+/kt/xin-nghi.html                  /kt/xin-nghi 301
+/kt/*            /:splat     200

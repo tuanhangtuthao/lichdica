@@ -1083,7 +1083,7 @@ const SB_URL = CAU_HINH.SB_URL;
 const SB_KEY = CAU_HINH.SB_KEY;
 // ══════════════════════════════════════════
 const SB_OK = SB_URL.startsWith('https://') && !SB_URL.includes('PASTE');
-const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY) : null;
+const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY, CAU_HINH.SB_OPT) : null;
 
 // Lịch ca (CYCLE / SCHED_OVR / getShift / getBlockStatus) nằm ở
 // lich-ca.js - nguồn duy nhất, nạp bằng thẻ <script> phía trên.

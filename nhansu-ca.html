@@ -347,7 +347,7 @@ html,body{min-height:100%;font-family:'Segoe UI',sans-serif;background:#eef0f4}
 const SB_URL=CAU_HINH.SB_URL;
 const SB_KEY=CAU_HINH.SB_KEY;
 const SB_OK=SB_URL.startsWith('https://')&&!SB_URL.includes('PASTE');
-const sb=SB_OK?supabase.createClient(SB_URL,SB_KEY):null;
+const sb=SB_OK?supabase.createClient(SB_URL,SB_KEY,CAU_HINH.SB_OPT):null;
 
 // ══════════════════════════════════════════════════════════
 // LAYOUT NHÀ MÁY – Mặc định nếu DB trống

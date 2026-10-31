@@ -13,6 +13,10 @@
 //
 // THÊM XƯỞNG MỚI: thêm 1 mục vào XUONG bên dưới (tiền tố đường dẫn + database),
 // và thêm dòng chuyển tiền tố đó về cùng bộ file web trong file _redirects.
+//
+// SB_SCHEMA: Supabase gói miễn phí chỉ cho 2 database (SX, QC) nên Kỹ Thuật
+// CNC nằm trong database QC nhưng ở NGĂN RIÊNG (schema "kt", sql/kt-1-tao-ngan-kt.sql):
+// bảng riêng, nhân viên riêng. Trang tạo client bằng CAU_HINH.SB_OPT để vào đúng ngăn.
 (function () {
   'use strict';
 
@@ -29,12 +33,23 @@
       SB_URL: 'https://lvqloajqzjlqofbxgimm.supabase.co',
       SB_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2cWxvYWpxempscW9mYnhnaW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4OTY5NzYsImV4cCI6MjEwMzQ3Mjk3Nn0.EllSuxT94UXBHUnZJY7cmiqF8HjwQwFLjV5UxELjovo',
     },
+    KT: {
+      ma: 'KT', ten: 'Kỹ Thuật CNC', tien_to: '/kt',
+      an_trang: ['nhansu-ca'],
+      // cùng database với QC, khác ngăn (schema)
+      SB_URL: 'https://lvqloajqzjlqofbxgimm.supabase.co',
+      SB_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2cWxvYWpxempscW9mYnhnaW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4OTY5NzYsImV4cCI6MjEwMzQ3Mjk3Nn0.EllSuxT94UXBHUnZJY7cmiqF8HjwQwFLjV5UxELjovo',
+      SB_SCHEMA: 'kt',
+    },
   };
 
   const duong = location.pathname.toLowerCase();
-  const ma = (duong === '/qc' || duong.startsWith('/qc/')) ? 'QC' : 'SX';
+  const ma = Object.keys(XUONG).find(m => XUONG[m].tien_to &&
+    (duong === XUONG[m].tien_to || duong.startsWith(XUONG[m].tien_to + '/'))) || 'SX';
   const ch = Object.assign({}, XUONG[ma]);
   ch.SB_OK = /^https:\/\//.test(ch.SB_URL) && !!ch.SB_KEY;
+  // tuỳ chọn cho supabase.createClient(SB_URL, SB_KEY, CAU_HINH.SB_OPT): vào đúng ngăn
+  ch.SB_OPT = ch.SB_SCHEMA ? { db: { schema: ch.SB_SCHEMA } } : undefined;
   // Danh sách mọi xưởng (khoá anon vốn công khai): trang dùng chung cả nhà máy
   // như 5S cần đọc thêm danh sách nhân viên của xưởng khác.
   ch.cac_xuong = XUONG;

@@ -25,20 +25,24 @@ const XUONG = {
         key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0dXRwdXdlc2dhbnVua3RyeGN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzQzMjksImV4cCI6MjA5MjI1MDMyOX0.0LWgIofa8QuMqP5Sjr3QdAK1tbH6aOljbqqXdrtrLc4' },
   QC: { ten: 'QC', url: 'https://lvqloajqzjlqofbxgimm.supabase.co',
         key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2cWxvYWpxempscW9mYnhnaW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4OTY5NzYsImV4cCI6MjEwMzQ3Mjk3Nn0.EllSuxT94UXBHUnZJY7cmiqF8HjwQwFLjV5UxELjovo' },
+  // Kỹ Thuật CNC: cùng database QC, ngăn riêng (schema kt) - Supabase miễn phí chỉ cho 2 database
+  KT: { ten: 'Kỹ Thuật CNC', url: 'https://lvqloajqzjlqofbxgimm.supabase.co', schema: 'kt',
+        key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2cWxvYWpxempscW9mYnhnaW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4OTY5NzYsImV4cCI6MjEwMzQ3Mjk3Nn0.EllSuxT94UXBHUnZJY7cmiqF8HjwQwFLjV5UxELjovo' },
 };
 export const CAC_XUONG = Object.keys(XUONG);
 export const tenXuong = ma => (XUONG[ma] || XUONG.SX).ten;
 
 // 5S chấm chung cả nhà máy, dữ liệu nằm ở database SX (nút 5S bên web QC mở
 // trang 5S của SX). Xưởng QC đọc 5S từ đó nhưng CHỈ các lượt chấm khu QC.
-const KHU_5S = { QC: 'kv_qc' };
+const KHU_5S = { QC: 'kv_qc', KT: 'kv_kt' };
 
 // taoSb()      -> SX (mặc định, như trước)
 // taoSb('QC')  -> database QC; riêng s5_checks / zalo_bao_5s chuyển sang SX
 // sb.xuong cho biết đang ở xưởng nào.
 export function taoSb(xuong = 'SX') {
   const ma = XUONG[xuong] ? xuong : 'SX';
-  const tao = m => createClient(XUONG[m].url, XUONG[m].key, { auth: { persistSession: false } });
+  const tao = m => createClient(XUONG[m].url, XUONG[m].key,
+    { auth: { persistSession: false }, ...(XUONG[m].schema ? { db: { schema: XUONG[m].schema } } : {}) });
   const sb = tao(ma);
   sb.xuong = ma;
   if (ma === 'SX') return sb;

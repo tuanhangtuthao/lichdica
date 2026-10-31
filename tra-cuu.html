@@ -73,7 +73,7 @@ body{font-family:'Segoe UI','Arial',sans-serif;background:#eef1f6;color:#333;lin
 <script>
 const SB_URL = CAU_HINH.SB_URL;
 const SB_KEY = CAU_HINH.SB_KEY;
-const sb = supabase.createClient(SB_URL, SB_KEY);
+const sb = supabase.createClient(SB_URL, SB_KEY, CAU_HINH.SB_OPT);
 
 // Lịch ca (CYCLE / SCHED_OVR / getShift / getBlockStatus) nằm ở
 // lich-ca.js - nguồn duy nhất, nạp bằng thẻ <script> phía trên.

@@ -199,10 +199,13 @@ async function xuLyTin(msg, zaloId, gui, env) {
   // Tài khoản Zalo này thuộc xưởng nào: xem liên kết trong database của từng
   // xưởng. Đang chờ xác nhận MSNV ở xưởng nào thì xử lý ở xưởng đó trước;
   // chưa có ở đâu thì như cũ (SX). Từ đây mọi dữ liệu lấy từ database đó.
-  const theoXuong = await Promise.all(CAC_XUONG.map(async x => {
+  // Xưởng phụ (QC, KT) đọc lỗi (vd ngăn kt chưa tạo) thì bỏ qua xưởng đó,
+  // KHÔNG làm hỏng bot của SX. SX lỗi thì vẫn báo lỗi như cũ.
+  const theoXuong = (await Promise.all(CAC_XUONG.map(async x => {
     const s = taoSb(x);
-    return { sb: s, lk: await layLienKet(s, zaloId) };
-  }));
+    try { return { sb: s, lk: await layLienKet(s, zaloId) }; }
+    catch (e) { if (x === 'SX') throw e; console.error('[zalo] bỏ qua xưởng', x, e.message); return null; }
+  }))).filter(Boolean);
   const choXN = theoXuong.find(d => d.lk && d.lk.msnv_cho);
   const daCo = theoXuong.find(d => d.lk && d.lk.msnv);
   let { sb, lk } = choXN || daCo || theoXuong[0];
@@ -252,7 +255,8 @@ async function xuLyTin(msg, zaloId, gui, env) {
     // MSNV thuộc xưởng nào thì liên kết ở xưởng đó (tìm SX trước, rồi QC)
     let nv = null, sbNV = null;
     for (const d of theoXuong) {
-      nv = await timNV(d.sb, ma);
+      try { nv = await timNV(d.sb, ma); }
+      catch (e) { if (d.sb.xuong === 'SX') throw e; console.error('[zalo] bỏ qua xưởng', d.sb.xuong, e.message); nv = null; }
       if (nv) { sbNV = d.sb; break; }
     }
     if (!nv) return gui(`Không tìm thấy MSNV **${ma}**. Bạn kiểm tra lại giúp mình nhé.`);

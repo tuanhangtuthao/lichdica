@@ -97,7 +97,7 @@
 <script>
 const SB_URL = CAU_HINH.SB_URL;
 const SB_KEY = CAU_HINH.SB_KEY;
-const sb = supabase.createClient(SB_URL, SB_KEY);
+const sb = supabase.createClient(SB_URL, SB_KEY, CAU_HINH.SB_OPT);
 
 let allEmps = [];
 

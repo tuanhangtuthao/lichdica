@@ -91,8 +91,14 @@ export async function quetBao5S(env) {
       s.from('zalo_links').select('zalo_id,msnv').not('msnv', 'is', null),
     ]);
   }));
-  const loiDoc = doc.flat().find(x => x.error);
-  if (loiDoc) throw new Error(loiDoc.error.message);
+  // SX đọc lỗi thì dừng như cũ; xưởng phụ lỗi (vd ngăn kt chưa tạo) thì bỏ qua xưởng đó
+  doc.forEach((cap, i) => {
+    const loi = cap.find(x => x.error);
+    if (!loi) return;
+    if (CAC_XUONG[i] === 'SX') throw new Error(loi.error.message);
+    console.error('[bao5s] bỏ qua xưởng', CAC_XUONG[i], loi.error.message);
+    cap[0] = { data: [] }; cap[1] = { data: [] };
+  });
   const theoTen = Object.fromEntries(doc.flatMap(([er]) => er.data || []).map(e => [boDau(e.name), String(e.id)]));
   const zaloCua = Object.fromEntries(doc.flatMap(([, lr]) => lr.data || []).map(l => [String(l.msnv), l.zalo_id]));
 
