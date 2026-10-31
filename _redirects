@@ -35,7 +35,6 @@
 /qc/rating.html                    /qc/rating 301
 /qc/tra-cuu.html                   /qc/tra-cuu 301
 /qc/xin-nghi.html                  /qc/xin-nghi 301
-/qc/*            /:splat     200
 
 # Kỹ Thuật CNC: cùng cách với QC (cau-hinh.js, ngăn "kt" trong database QC)
 /kt              /kt/        301
@@ -62,4 +61,8 @@
 /kt/rating.html                    /kt/rating 301
 /kt/tra-cuu.html                   /kt/tra-cuu 301
 /kt/xin-nghi.html                  /kt/xin-nghi 301
+
+# Dòng chung (có *) PHẢI nằm cuối file: Cloudflare bỏ qua các dòng cụ thể
+# đặt sau một dòng có * (đã gặp: thêm khối /kt sau "/qc/*" thì /kt/5s không chuyển).
+/qc/*            /:splat     200
 /kt/*            /:splat     200
