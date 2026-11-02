@@ -597,9 +597,11 @@ function empShiftFor(e, d, dk){
   if(e.kip >= 1 && e.kip <= 3) return getShift(e.kip, d);
   return 'UN';
 }
-// Các trạng thái bị khóa không cho chấm điểm. VM (vắng mặt) chỉ là ghi chú,
-// vẫn chấm được: ô có nền hồng + chữ VM.
-const LOCK_SHIFTS = {N:'Ngày nghỉ', L:'Nghỉ lễ', NP:'Nghỉ phép'};
+// Các trạng thái bị khóa không cho chấm điểm
+const LOCK_SHIFTS = {N:'Ngày nghỉ', L:'Nghỉ lễ'};
+// Vắng mặt / nghỉ phép chỉ là ghi chú, vẫn chấm được: ô có nền màu + chữ VM / NP
+const NOTE_SHIFTS = {VM:{lbl:'Vắng mặt', nen:'#ffebee', chu:'#c62828'},
+                     NP:{lbl:'Nghỉ phép', nen:'#fff8e1', chu:'#ef6c00'}};
 
 // ── TAB 1: KẾT QUẢ ────────────────────────
 
@@ -1030,11 +1032,11 @@ function renderScoring(){
          const ratingRecord = RATINGS.find(r => r.emp_id === e.id && r.date === dk);
          const ratingId = ratingRecord ? ratingRecord.id : '';
 
-         // Kiểm tra ngày nghỉ/lễ/phép → khóa ô
+         // Kiểm tra ngày nghỉ/lễ → khóa ô
          const dateObj = new Date(Number(y), Number(m)-1, i);
          const shift = empShiftFor(e, dateObj, dk);
          const lockLbl = LOCK_SHIFTS[shift];
-         const laVM = shift === 'VM';
+         const gc = NOTE_SHIFTS[shift];
 
          if(lockLbl && sVal === ''){
             // Ngày nghỉ chưa có điểm → khóa hoàn toàn
@@ -1048,10 +1050,10 @@ function renderScoring(){
          const lockWarn = lockLbl && sVal !== '';
          const inpBorder = lockWarn ? '2px solid #e53935' : noteHint;
          const inpTitle = lockWarn ? `⚠️ Điểm chấm nhầm vào ${lockLbl} - hover để xóa`
-                        : laVM ? 'Vắng mặt' + (nVal ? ' - ' + nVal : '') : nVal;
+                        : gc ? gc.lbl + (nVal ? ' - ' + nVal : '') : nVal;
 
-         html += `<td style="text-align:center;padding:2px 0;position:relative;${lockWarn||laVM?'background:#ffebee':''}">
-           ${laVM ? '<div style="font-size:.55rem;color:#c62828;font-weight:700;line-height:1">VM</div>' : ''}
+         html += `<td style="text-align:center;padding:2px 0;position:relative;${lockWarn?'background:#ffebee':gc?'background:'+gc.nen:''}">
+           ${gc ? `<div style="font-size:.55rem;color:${gc.chu};font-weight:700;line-height:1">${shift}</div>` : ''}
            <div style="display:flex;align-items:center;justify-content:center;gap:2px;position:relative">
              <input type="number" min="0" max="12" step="0.1" title="${inpTitle}" data-note="${nVal}"
                     data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}" data-rating-id="${ratingId}"
