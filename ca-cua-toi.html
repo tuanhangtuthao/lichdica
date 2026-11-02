@@ -191,6 +191,8 @@ button,input{font-family:inherit}
 const SB_URL = CAU_HINH.SB_URL;
 const SB_KEY = CAU_HINH.SB_KEY;
 const sb = supabase.createClient(SB_URL, SB_KEY, CAU_HINH.SB_OPT);
+// 5S nằm ở database dùng chung (cau-hinh.js); xưởng Sản xuất thì chính là sb
+const sb5 = (CAU_HINH.SB5_URL === SB_URL && !CAU_HINH.SB_OPT) ? sb : supabase.createClient(CAU_HINH.SB5_URL, CAU_HINH.SB5_KEY);
 
 const THU   = ['CN','T2','T3','T4','T5','T6','T7'];
 const THU_D = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
@@ -320,7 +322,7 @@ async function xem(maChon){
       sb.from('emp_schedule').select('*').eq('emp_id', id),
       sb.from('holidays').select('*'),
       sb.from('rating_config').select('*'),
-      docHet(() => sb.from('s5_checks').select('*').gte('date', thang + '-01').lte('date', `${thang}-${cuoiThang}`).order('id')),
+      docHet(() => sb5.from('s5_checks').select('*').gte('date', thang + '-01').lte('date', `${thang}-${cuoiThang}`).order('id')),
     ]);
     const hong = [er, rr, mr, otr, lr, hr, gr].find(r => r.error);
     if(hong) throw hong.error;

@@ -403,6 +403,8 @@ const SB_KEY = CAU_HINH.SB_KEY;
 // ══════════════════════════════════════════
 const SB_OK = SB_URL.startsWith('https://') && !SB_URL.includes('PASTE');
 const sb = SB_OK ? supabase.createClient(SB_URL, SB_KEY, CAU_HINH.SB_OPT) : null;
+// 5S nằm ở database dùng chung (cau-hinh.js); xưởng Sản xuất thì chính là sb
+const sb5 = !SB_OK ? null : (CAU_HINH.SB5_URL === SB_URL && !CAU_HINH.SB_OPT) ? sb : supabase.createClient(CAU_HINH.SB5_URL, CAU_HINH.SB5_KEY);
 
 // ── STATE ──────────────────────────────────
 let EMPS = {1:[],2:[],3:[],4:[]};
@@ -556,7 +558,7 @@ async function loadData(){
       sb.from('holidays').select('*').order('date'),
       sb.from('emp_schedule').select('*').order('start_date'),
       sb.from('monthly_reviews').select('*'),
-      docHet(() => sb.from('s5_checks').select('*').order('date').order('id')),   // > 1000 dòng
+      docHet(() => sb5.from('s5_checks').select('*').order('date').order('id')),   // > 1000 dòng
     ]);
     // chỉ giữ lượt CHƯA ĐẠT - đó là thứ nhân viên cần biết để sửa
     S5 = (s5r && s5r.data ? s5r.data : []).filter(r =>

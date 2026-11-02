@@ -53,6 +53,11 @@
   // Danh sách mọi xưởng (khoá anon vốn công khai): trang dùng chung cả nhà máy
   // như 5S cần đọc thêm danh sách nhân viên của xưởng khác.
   ch.cac_xuong = XUONG;
+  // 5S dùng chung cả nhà máy: mọi lượt chấm nằm ở database Sản xuất (/qc/5s, /kt/5s chuyển về
+  // trang 5S của SX). Trang nào chỉ ĐỌC 5S (điểm đánh giá, ca của tôi, trợ lý) lấy s5_checks từ
+  // đây qua sb5 thay vì database của xưởng mình, không thì ở QC / KT luôn thấy 0 lỗi 5S.
+  ch.SB5_URL = XUONG.SX.SB_URL;
+  ch.SB5_KEY = XUONG.SX.SB_KEY;
   window.CAU_HINH = ch;
 
   // ── Đọc hết mọi dòng ──

@@ -45,6 +45,9 @@ const docHetTL = window.docHet || (async taoQ => {
   }
 });
 const sb = supabase.createClient(SB_URL, SB_KEY, window.CAU_HINH && window.CAU_HINH.SB_OPT);   // ngăn kt: xem cau-hinh.js
+// 5S đọc từ database dùng chung giữa các xưởng (cau-hinh.js)
+const _c5 = window.CAU_HINH || {};
+const sb5 = (_c5.SB5_URL && (_c5.SB5_URL !== SB_URL || _c5.SB_OPT)) ? supabase.createClient(_c5.SB5_URL, _c5.SB5_KEY) : sb;
 
 // ═══════════════════════════════════════════════════════════════
 // BỘ MÁY  (nguyên văn từ chatbot.html cũ)
@@ -147,7 +150,7 @@ async function loadS5(monthKey){
   // chỗ đó like chạy bình thường nên đừng copy ngược lại.
   const [y,m] = monthKey.split('-').map(Number);
   const sau = m===12 ? `${y+1}-01-01` : `${y}-${String(m+1).padStart(2,'0')}-01`;
-  const r = await docHetTL(() => sb.from('s5_checks').select('*')
+  const r = await docHetTL(() => sb5.from('s5_checks').select('*')
               .gte('date', monthKey+'-01').lt('date', sau).order('date').order('id'));
   if(r.error) throw new Error('Đọc dữ liệu 5S lỗi: '+r.error.message);
   DB.s5[monthKey] = (r.data||[]).filter(x => !S_DEFS.every(d => x[d.k] === true));
