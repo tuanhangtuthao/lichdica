@@ -597,8 +597,9 @@ function empShiftFor(e, d, dk){
   if(e.kip >= 1 && e.kip <= 3) return getShift(e.kip, d);
   return 'UN';
 }
-// Các trạng thái bị khóa không cho chấm điểm
-const LOCK_SHIFTS = {N:'Ngày nghỉ', L:'Nghỉ lễ', NP:'Nghỉ phép', VM:'Vắng mặt'};
+// Các trạng thái bị khóa không cho chấm điểm. VM (vắng mặt) chỉ là ghi chú,
+// vẫn chấm được: ô có nền hồng + chữ VM.
+const LOCK_SHIFTS = {N:'Ngày nghỉ', L:'Nghỉ lễ', NP:'Nghỉ phép'};
 
 // ── TAB 1: KẾT QUẢ ────────────────────────
 
@@ -1029,16 +1030,16 @@ function renderScoring(){
          const ratingRecord = RATINGS.find(r => r.emp_id === e.id && r.date === dk);
          const ratingId = ratingRecord ? ratingRecord.id : '';
 
-         // Kiểm tra ngày nghỉ/lễ/phép/vắng mặt → khóa ô
+         // Kiểm tra ngày nghỉ/lễ/phép → khóa ô
          const dateObj = new Date(Number(y), Number(m)-1, i);
          const shift = empShiftFor(e, dateObj, dk);
          const lockLbl = LOCK_SHIFTS[shift];
+         const laVM = shift === 'VM';
 
          if(lockLbl && sVal === ''){
             // Ngày nghỉ chưa có điểm → khóa hoàn toàn
-            const isVM = shift === 'VM';
-            html += `<td title="${lockLbl}" style="text-align:center;padding:2px 0;background:${isVM?'#ffebee':'#f1f1f1'}">
-              <span style="font-size:.62rem;color:${isVM?'#c62828':'#bbb'};font-weight:700">${shift==='L'?'Lễ':shift}</span>
+            html += `<td title="${lockLbl}" style="text-align:center;padding:2px 0;background:#f1f1f1">
+              <span style="font-size:.62rem;color:#bbb;font-weight:700">${shift==='L'?'Lễ':shift}</span>
             </td>`;
             continue;
          }
@@ -1046,9 +1047,11 @@ function renderScoring(){
          // Ngày nghỉ nhưng LỠ có điểm → cảnh báo đỏ, khóa nhập, vẫn xóa được bằng nút ×
          const lockWarn = lockLbl && sVal !== '';
          const inpBorder = lockWarn ? '2px solid #e53935' : noteHint;
-         const inpTitle = lockWarn ? `⚠️ Điểm chấm nhầm vào ${lockLbl} - hover để xóa` : nVal;
+         const inpTitle = lockWarn ? `⚠️ Điểm chấm nhầm vào ${lockLbl} - hover để xóa`
+                        : laVM ? 'Vắng mặt' + (nVal ? ' - ' + nVal : '') : nVal;
 
-         html += `<td style="text-align:center;padding:2px 0;position:relative;${lockWarn?'background:#ffebee':''}">
+         html += `<td style="text-align:center;padding:2px 0;position:relative;${lockWarn||laVM?'background:#ffebee':''}">
+           ${laVM ? '<div style="font-size:.55rem;color:#c62828;font-weight:700;line-height:1">VM</div>' : ''}
            <div style="display:flex;align-items:center;justify-content:center;gap:2px;position:relative">
              <input type="number" min="0" max="12" step="0.1" title="${inpTitle}" data-note="${nVal}"
                     data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}" data-rating-id="${ratingId}"
