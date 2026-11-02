@@ -129,3 +129,6 @@ MENU QUẢN LÝ – nhắn SỐ để xem:
 
 ## CÒN CHỜ XÁC NHẬN
 - Gửi ngay "⏳ Đang tra, bạn chờ chút nhé…" khi câu hỏi tự do chuyển cho AI (AI mất 6–24 giây)? Đã đề xuất, chưa có trả lời.
+
+## Tăng ca: TẠM TẮT
+Số giờ tăng ca trong hệ thống chưa đúng nên bot không nói về tăng ca ở đâu cả: menu cá nhân mục 6, menu quản lý mục 10, câu hỏi tự do (công cụ `tra_tang_ca`, `tang_ca_xuong`, bảng tổng hợp tháng) và tin tổng kết xếp loại. Mục 6 / 10 vẫn còn trong menu (để không đổi số) và trả lời "đang tạm tắt". Bật lại: đổi `TANG_CA_TAT` thành `false` trong `worker/du-lieu.js` (tin tổng kết xếp loại đã bỏ hẳn dòng tăng ca, muốn có lại phải thêm vào `noiDungTongKet` ở `worker/xep-loai.js`).

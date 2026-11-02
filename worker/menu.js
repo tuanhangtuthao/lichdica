@@ -4,7 +4,7 @@
 // Đặc tả: worker/MENU-ZALO.md. Đổi chữ / thứ tự mục thì sửa MUC_CA_NHAN,
 // MUC_QUAN_LY và hàm tương ứng bên dưới, nhớ cập nhật lại file đặc tả.
 // ═══════════════════════════════════════════════════════════════
-import { taoCongCu, homNayVN, dKey, addD, NHAN_CA, NHOM, DFUL, dsLienKet, boDau, duocThongBao } from './du-lieu.js';
+import { taoCongCu, homNayVN, dKey, addD, NHAN_CA, NHOM, DFUL, dsLienKet, boDau, duocThongBao, TANG_CA_TAT, TIN_TANG_CA_TAT } from './du-lieu.js';
 import { taoXuong } from './du-lieu-xuong.js';
 import { trangThaiXacNhan } from './xep-loai.js';
 
@@ -36,10 +36,10 @@ const CUOI_QL_CA_NHAN = '\n\n↩️ Nhắn **0** về menu quản lý · nhắn 
 
 // ── MENU ───────────────────────────────────────────────────────
 const MUC_CA_NHAN = ['Ca ngày mai', 'Lịch 7 ngày tới', 'Vi phạm 5S tháng này', 'Điểm & xếp loại tháng này',
-  'Ngày nghỉ sắp tới', 'Tăng ca tháng này', 'Nghỉ phép tháng này', 'Tiêu chí 5S'];
+  'Ngày nghỉ sắp tới', 'Tăng ca (tạm tắt)', 'Nghỉ phép tháng này', 'Tiêu chí 5S'];
 const MUC_QUAN_LY = ['Ai làm ca Sáng hôm nay', 'Ai làm ca Tối hôm nay', 'Quân số hôm nay', 'Ai làm ca ngày mai',
   'Ai chưa được phân ca', 'Ai chưa được chấm điểm hôm nay', 'Xếp loại tháng (A/B/C/D + DS hạng C/D)',
-  'Vi phạm 5S hôm nay', 'Top vi phạm 5S tháng / máy tái phạm', 'Tăng ca hôm nay / top tháng',
+  'Vi phạm 5S hôm nay', 'Top vi phạm 5S tháng / máy tái phạm', 'Tăng ca (tạm tắt)',
   'Đơn xin nghỉ đang chờ duyệt', 'Liên kết Zalo (ai đã / chưa vào bot)',
   'Xác nhận xếp loại tháng (ai đã / chưa)'];
 export const SO_MUC_QL = MUC_QUAN_LY.length;          // 13
@@ -113,6 +113,7 @@ export async function traLoiCaNhan(sb, nv, so, laQL) {
     }
     case 6: {
       const r = await cc.chay('tra_tang_ca', { thang });
+      if (r.ket_qua) { s = r.ket_qua; break; }
       if (!r.so_lan) { s = `⏰ Tháng ${tenThang(thang)} bạn chưa có tăng ca.`; break; }
       const caCa = r.lan.filter(x => x.ca_ca).length;
       s = `⏰ **Tăng ca tháng ${tenThang(thang)}**\nTổng: **${gio(r.tong_gio)}**${caCa ? ` + ${caCa} lần cả ca` : ''} (${r.so_lan} lần)\n`
@@ -237,6 +238,7 @@ export async function traLoiQuanLy(sb, so) {
       break;
     }
     case 10: {
+      if (TANG_CA_TAT) { s = TIN_TANG_CA_TAT; break; }
       const [h, m] = await Promise.all([x.tang_ca(nay, nay), x.tang_ca(thang + '-01', nay)]);
       const moTa = v => v.so_gio ? gio(v.so_gio) : v.ca_ca ? 'cả ca' : '?';
       s = `⏰ **Tăng ca hôm nay** – ${thuNgay(nay)}\n`

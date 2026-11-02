@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════
 import {
   caCua, gioTangCa, round1, tuKey, dKey, DFUL, NHAN_CA, NHOM, timNV, taoCongCu, boDau,
-  DINH_NGHIA_CONG_CU, homNayVN, laQuanLy, docHet,
+  DINH_NGHIA_CONG_CU, homNayVN, laQuanLy, docHet, TANG_CA_TAT, TIN_TANG_CA_TAT,
 } from './du-lieu.js';
 
 const { S_DEFS, tieuChiCua, dsNguoiChiu5S, laLoiCua5S } = globalThis.TieuChi5S;
@@ -59,13 +59,12 @@ export function taoXuong(sb) {
       docHet(() => sb.from('ratings_new').select('emp_id,date,score,note').like('date', thang + '-%').order('id')),
       // s5_checks.date là cột kiểu date thật -> lọc khoảng ngày, không dùng like
       docHet(() => sb.from('s5_checks').select('*').gte('date', thang + '-01').lt('date', sau).order('id')),
-      docHet(() => sb.from('overtime').select('*').like('date', thang + '-%').order('id')),
       sb.from('monthly_reviews').select('emp_id,grade').eq('month_key', thang).eq('approved', true),
     ]);
     const loi = kq.find(x => x.error);
     if (loi) throw new Error(loi.error.message);
-    const [rt, s5, ot, rv] = kq.map(x => x.data || []);
-    return { ...base, thang, cuoi: new Date(y, m, 0).getDate(), rt, s5, ot, rv };
+    const [rt, s5, rv] = kq.map(x => x.data || []);
+    return { ...base, thang, cuoi: new Date(y, m, 0).getDate(), rt, s5, rv };
   }
   // Gom các dòng theo người: { emp_id -> Set của giá trị lay(dòng) }
   const theoNguoi = (rows, khoa, lay) => rows.reduce((m, r) => ((m[String(r[khoa])] = m[String(r[khoa])] || new Set()).add(lay(r)), m), {});
@@ -184,6 +183,7 @@ export function taoXuong(sb) {
 
     // overtime.date là cột text YYYY-MM-DD -> gte/lte theo chuỗi vẫn đúng
     async tang_ca(tu, den) {
+      if (TANG_CA_TAT) return { ket_qua: TIN_TANG_CA_TAT };
       kiemNgay(tu, 'tu_ngay'); kiemNgay(den, 'den_ngay');
       const r = await sb.from('overtime').select('*').gte('date', tu).lte('date', den).order('date');
       if (r.error) throw new Error(r.error.message);
@@ -285,13 +285,10 @@ export function taoXuong(sb) {
           lam++;
           if (i <= cuoiCham && !co.has(dk) && !laQuanLy(e)) thieu++;
         }
-        let gio = 0, caCa = 0;
-        c.ot.filter(o => String(o.emp_id) === id).forEach(o => { const h = gioTangCa(o); if (h) gio += h; if (o.ot_type === 'full') caCa++; });
         const sc = [...(diem[id] || [])].map(r => parseFloat(r.score));
         return {
           ten: e.name, kip: e.kip, chuc_vu: e.role || '',
           ngay_lam: lam, nghi_phep: np, vang_mat: vm,
-          tang_ca_gio: round1(gio), tang_ca_ca_ca: caCa,
           vi_pham_5s: c.s5.filter(chuaDat).filter(x => laLoiCua5S(x, id, e.name, boDau)).length,
           diem_trung_binh: sc.length ? round1(sc.reduce((a, b) => a + b, 0) / sc.length) : null,
           so_ngay_da_cham: sc.length, so_ngay_thieu_diem: laQuanLy(e) ? null : thieu,
@@ -357,7 +354,7 @@ const DINH_NGHIA_XUONG = [
     input_schema: obj({ ngay: NGAY }, ['ngay']) },
   { name: 'thieu_diem_thang', description: 'Thống kê CẢ THÁNG ai thiếu điểm đánh giá, thiếu những ngày nào (chỉ tính ngày người đó đi làm theo lịch): số người thiếu, tổng lượt thiếu, người không có điểm nào, danh sách theo người và theo ngày. Dùng cho "tháng này ai chưa được chấm điểm", "ai bị bỏ sót nhiều nhất".',
     input_schema: obj({ thang: THANG }, ['thang']) },
-  { name: 'bang_tong_hop_thang', description: 'Bảng tổng hợp CẢ THÁNG của từng nhân viên trong một lần gọi: ngày làm, nghỉ phép, vắng mặt, giờ tăng ca, số lần 5S chưa đạt, điểm trung bình, số ngày thiếu điểm, xếp loại đã duyệt. Dùng cho mọi câu so sánh hoặc xếp hạng nhiều người ("ai nghỉ nhiều nhất", "ai tăng ca nhiều", "kíp nào 5S kém", "so sánh các kíp").',
+  { name: 'bang_tong_hop_thang', description: 'Bảng tổng hợp CẢ THÁNG của từng nhân viên trong một lần gọi: ngày làm, nghỉ phép, vắng mặt, số lần 5S chưa đạt, điểm trung bình, số ngày thiếu điểm, xếp loại đã duyệt. Dùng cho mọi câu so sánh hoặc xếp hạng nhiều người ("ai nghỉ nhiều nhất", "kíp nào 5S kém", "so sánh các kíp").',
     input_schema: obj({ thang: THANG }, ['thang']) },
   { name: 'diem_thap_xuong', description: 'Các lượt chấm điểm thấp của cả xưởng trong khoảng ngày, kèm ghi chú của người chấm. Dùng cho "ai bị điểm thấp", "vì sao điểm thấp". Mặc định điểm dưới 9.',
     input_schema: obj({ tu_ngay: NGAY, den_ngay: NGAY, duoi_diem: { type: 'number', description: 'Chỉ lấy điểm nhỏ hơn số này, mặc định 9' } }, ['tu_ngay', 'den_ngay']) },
@@ -367,7 +364,7 @@ const DINH_NGHIA_XUONG = [
     input_schema: obj({ tu_ngay: NGAY, den_ngay: NGAY }, ['tu_ngay', 'den_ngay']) },
   { name: 'top_5s_thang', description: 'Top người vi phạm 5S và máy hay tái phạm trong tháng.',
     input_schema: obj({ thang: THANG }, ['thang']) },
-  { name: 'tang_ca_xuong', description: 'Ai tăng ca trong khoảng ngày, bao nhiêu giờ, và tổng theo người.',
+  { name: 'tang_ca_xuong', description: 'TẠM TẮT: thông tin tăng ca đang tắt vì số giờ chưa đúng, công cụ này chỉ trả về thông báo tạm tắt.',
     input_schema: obj({ tu_ngay: NGAY, den_ngay: NGAY }, ['tu_ngay', 'den_ngay']) },
   { name: 'don_xin_nghi_cho_duyet', description: 'Các đơn xin nghỉ đang chờ duyệt.', input_schema: obj({}) },
 ];

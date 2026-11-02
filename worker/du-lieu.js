@@ -112,6 +112,11 @@ export function caCua(e, d, hols, sched) {
   return 'UN';
 }
 
+// Số giờ tăng ca trong hệ thống chưa đúng nên TẮT mọi chỗ bot nói về tăng ca (menu, AI, tổng hợp).
+// Muốn bật lại: đổi TANG_CA_TAT thành false (các chỗ dùng công tắc này tự chạy lại như cũ).
+export const TANG_CA_TAT = true;
+export const TIN_TANG_CA_TAT = '⏰ Thông tin tăng ca đang tạm tắt vì số giờ đang được rà soát lại. Bạn cần thì hỏi quản lý nhé.';
+
 export function gioTangCa(o) {
   let h = null;
   if (o.note) { const m = o.note.match(/^([\d.]+)h/); if (m) h = parseFloat(m[1]); }
@@ -280,7 +285,7 @@ export const DINH_NGHIA_CONG_CU = [
   },
   {
     name: 'tra_tang_ca',
-    description: 'Các lần tăng ca và tổng số giờ tăng ca trong tháng của người đang hỏi.',
+    description: 'TẠM TẮT: tăng ca đang tắt vì số giờ chưa đúng, chỉ trả về thông báo tạm tắt.',
     input_schema: { type: 'object', properties: { thang: THANG }, required: ['thang'], additionalProperties: false },
   },
   {
@@ -390,6 +395,7 @@ export function taoCongCu(sb, e) {
     },
 
     async tra_tang_ca({ thang }) {
+      if (TANG_CA_TAT) return { ket_qua: TIN_TANG_CA_TAT };
       kiemThang(thang);
       const r = await sb.from('overtime').select('*').eq('emp_id', id).like('date', thang + '-%').order('date');
       if (r.error) throw new Error(r.error.message);
