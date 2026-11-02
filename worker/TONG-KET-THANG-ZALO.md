@@ -19,7 +19,6 @@ Chốt phạm vi ngày 05/10/2026: **chỉ tổng kết khi quản lý chốt (d
 
 📅 Đi làm: 16 ngày
 🧹 5S chưa đạt: 0 lần
-⏰ Tăng ca: 0 giờ
 🏖️ Nghỉ phép / vắng: 0 ngày
 
 Nhắn 4 để xem điểm tháng này.
@@ -27,8 +26,8 @@ Nhắn 4 để xem điểm tháng này.
 - Hạng: `monthly_reviews.grade`. Mũi tên so với tháng trước theo thứ tự A+ > A > B > C > D: ⬆️ lên, ⬇️ xuống, ➡️ giữ nguyên. Không có tháng trước thì bỏ phần ngoặc.
 - Điểm: `final_score` nếu có, không thì trung bình `ratings_new` của tháng (cùng công thức `tra_danh_gia`).
 - Đi làm: số ngày có ca làm trong tháng theo lịch (không tính Nghỉ / Lễ / Nghỉ Phép / Vắng / Chưa phân ca).
-- 5S: số lượt chưa đạt (cùng công thức rating.html). Tăng ca: tổng giờ (+ số lần cả ca). Nghỉ phép/vắng: tổng số NGÀY trong tháng.
-- Tái dùng công cụ cá nhân sẵn có: `tra_danh_gia`, `tra_vi_pham_5s`, `tra_tang_ca`, `tra_nghi_phep`, `tra_lich_ca`.
+- 5S: số lượt chưa đạt (cùng công thức rating.html). Nghỉ phép/vắng: tổng số NGÀY trong tháng.
+- Tái dùng công cụ cá nhân sẵn có: `tra_danh_gia`, `tra_vi_pham_5s`, `tra_nghi_phep`, `tra_lich_ca`.
 
 ## ĐÃ CHỐT 05/10/2026 ("ok" cho cả 3 đề xuất)
 1. **Nhận xét của quản lý: gửi kèm** (trang Tra Cứu trên web đã hiển thị cho nhân viên).

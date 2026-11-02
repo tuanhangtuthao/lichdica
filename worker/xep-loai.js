@@ -17,7 +17,7 @@
 // đa NGAN_SACH người (5 phút/lần -> 72 người/giờ, thừa cho 44 nhân viên).
 // ═══════════════════════════════════════════════════════════════
 import {
-  taoSb, homNayVN, dKey, addD, tuKey, round1, caCua, gioTangCa, NHOM, boDau, luuMenu, CAC_XUONG, docHet,
+  taoSb, homNayVN, dKey, addD, tuKey, round1, caCua, NHOM, boDau, luuMenu, CAC_XUONG, docHet,
 } from './du-lieu.js';
 import { guiTin } from './zalo.js';
 
@@ -69,15 +69,14 @@ async function taiNguCanh(sb, mk) {
     docHet(() => sb.from('ratings_new').select('emp_id,score').like('date', mk + '-%').order('id')),
     // s5_checks.date là cột kiểu date thật -> lọc khoảng ngày, không dùng like
     docHet(() => sb.from('s5_checks').select('*').gte('date', mk + '-01').lt('date', sau).order('id')),
-    docHet(() => sb.from('overtime').select('*').like('date', mk + '-%').order('id')),
     sb.from('emp_schedule').select('*'),
     sb.from('holidays').select('*'),
     sb.from('monthly_reviews').select('emp_id,grade').eq('month_key', thangTruoc(mk)).eq('approved', true),
   ]);
   const loi = kq.find(x => x.error);
   if (loi) throw new Error('Nạp dữ liệu tháng lỗi: ' + loi.error.message);
-  const [rt, s5, ot, sc, hl, rp] = kq.map(x => x.data || []);
-  return { mk, cuoi: new Date(y, m, 0).getDate(), rt, s5, ot, sc, hl, rp };
+  const [rt, s5, sc, hl, rp] = kq.map(x => x.data || []);
+  return { mk, cuoi: new Date(y, m, 0).getDate(), rt, s5, sc, hl, rp };
 }
 
 function noiDungTongKet(ctx, nv, rv) {
@@ -94,12 +93,6 @@ function noiDungTongKet(ctx, nv, rv) {
   const vp5s = ctx.s5.filter(x => !S_DEFS.every(d => x[d.k] === true))
     // Lỗi 5S tính cho ai: thợ / kỹ thuật / cả hai (laLoiCua5S, 5s-tieu-chi.js)
     .filter(x => laLoiCua5S(x, id, nv.name, boDau)).length;
-
-  let gio = 0, caCa = 0;
-  ctx.ot.filter(o => String(o.emp_id) === id).forEach(o => {
-    const h = gioTangCa(o); if (h) gio += h;
-    if (o.ot_type === 'full') caCa++;
-  });
 
   const schedNV = ctx.sc.filter(s => String(s.emp_id) === id);
   let nghi = 0, lam = 0;
@@ -123,8 +116,8 @@ function noiDungTongKet(ctx, nv, rv) {
     + `⭐ Xếp loại: **${rv.grade}**${xu}\n`
     + `📊 Điểm: ${diem != null ? diem + '/10' : 'chưa có'}${diemNgay.length ? ` · đã chấm ${diemNgay.length} ngày` : ''}\n`
     + (rv.note ? `📝 Nhận xét của quản lý: ${rv.note}\n` : '')
-    + `\n📅 Đi làm: ${lam} ngày\n🧹 5S chưa đạt: ${vp5s} lần\n`
-    + `⏰ Tăng ca: ${round1(gio)} giờ${caCa ? ` + ${caCa} lần cả ca` : ''}\n🏖️ Nghỉ phép / vắng: ${nghi} ngày`;
+    // Không có dòng Tăng ca: số giờ trong hệ thống chưa đúng nên không gửi cho nhân viên
+    + `\n📅 Đi làm: ${lam} ngày\n🧹 5S chưa đạt: ${vp5s} lần\n🏖️ Nghỉ phép / vắng: ${nghi} ngày`;
 }
 
 // ── GỬI MỘT NGƯỜI ─────────────────────────────────────────────
