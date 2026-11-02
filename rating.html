@@ -870,11 +870,11 @@ function editDailyNote(el){
 function handleScoreChange(el) {
     el.style.color = scoreColor(el.value);
     el.dataset.changed = "1";
-    nhacLyDo(el);
 }
 
 // Gõ điểm thấp mà chưa có lý do thì hỏi luôn. Bỏ qua cũng được, nhưng lúc
-// bấm Lưu sẽ bị chặn.
+// bấm Lưu sẽ bị chặn. Gọi ở onchange (gõ xong, rời ô / Enter) chứ không ở
+// oninput, kẻo gõ "10" mới tới số "1" đã bị hỏi lý do.
 let _dangHoi = false;
 function nhacLyDo(el){
     if(_dangHoi) return;
@@ -1053,7 +1053,7 @@ function renderScoring(){
              <input type="number" min="0" max="12" step="0.1" title="${inpTitle}" data-note="${nVal}"
                     data-empid="${e.id}" data-date="${dk}" data-empname="${e.name}" data-rating-id="${ratingId}"
                     class="sc-input" placeholder="-" value="${sVal}" ${lockWarn?'disabled':''}
-                    ondblclick="editDailyNote(this)" oninput="handleScoreChange(this)"
+                    ondblclick="editDailyNote(this)" oninput="handleScoreChange(this)" onchange="nhacLyDo(this)"
                     onfocus="this.select()"
                     style="width:38px;text-align:center;border:none;border-bottom:${inpBorder};background:none;font-size:.88rem;font-weight:700;color:${sVal?scoreColor(sVal):'#aaa'};outline:none">
              ${sVal && ratingId ? `<button type="button" onclick="deleteSingleDay('${ratingId}','${e.name}','${dk}')" style="padding:0;width:16px;height:16px;background:#ff5252;color:#fff;border:none;border-radius:2px;cursor:pointer;font-size:.6rem;line-height:1;display:none" class="del-btn" title="Xóa điểm ngày này">×</button>` : ''}
