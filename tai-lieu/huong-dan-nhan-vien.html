@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Hướng dẫn nhân viên – Lịch ca, Xếp loại, Xin nghỉ</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 210mm; }
+  body {
+    font-family: 'Segoe UI', 'Segoe UI Emoji', Arial, sans-serif;
+    color: #1f2933; background: #fff;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .trang { width: 210mm; height: 297mm; padding: 8mm 11mm 6mm; display: flex; flex-direction: column; gap: 2.8mm;
+           page-break-after: always; overflow: hidden; }
+  .trang:last-child { page-break-after: auto; }
+  .trang > * { flex-shrink: 0; }
+
+  .dau { background: linear-gradient(135deg, #1a237e, #4a148c); color: #fff; border-radius: 5mm;
+         padding: 3mm 6mm; display: flex; align-items: center; gap: 4.5mm; }
+  .dau .bieu { font-size: 11mm; line-height: 1; }
+  .dau h1 { font-size: 7.2mm; font-weight: 800; line-height: 1.15; }
+  .dau p { font-size: 4mm; opacity: .92; margin-top: 1mm; }
+  .dau.nho { padding: 3mm 6mm; }
+  .dau.nho h1 { font-size: 6mm; }
+
+  .muc { border: .5mm solid #c5cae9; border-radius: 4mm; overflow: hidden; }
+  .muc > .tieu { background: #1a237e; color: #fff; font-weight: 800; font-size: 5mm; padding: 2mm 4.5mm;
+                 display: flex; align-items: center; gap: 2.5mm; }
+  .muc > .tieu .so { display: inline-flex; align-items: center; justify-content: center; width: 7mm; height: 7mm;
+                     border-radius: 50%; background: #fff; color: #1a237e; font-size: 4.2mm; }
+  .muc.xanh > .tieu { background: #00695c; }  .muc.xanh { border-color: #80cbc4; }
+  .muc.xanh > .tieu .so { color: #00695c; }
+  .muc.cam > .tieu { background: #e65100; }  .muc.cam { border-color: #ffcc80; }
+  .muc.cam > .tieu .so { color: #e65100; }
+  .muc.tim > .tieu { background: #6a1b9a; }  .muc.tim { border-color: #ce93d8; }
+  .muc.tim > .tieu .so { color: #6a1b9a; }
+  .than { padding: 2.4mm 4mm; display: grid; gap: 2.4mm; }
+  .hai { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; }
+
+  .khoi h3 { font-size: 4.2mm; font-weight: 800; margin-bottom: 1mm; }
+  .khoi p, .khoi li { font-size: 3.6mm; line-height: 1.36; }
+  .khoi ol, .khoi ul { padding-left: 5mm; }
+  .khoi li { margin-bottom: .3mm; }
+  .web h3 { color: #0d47a1; }
+  .bot h3 { color: #1b5e20; }
+  .the { background: #f7f8fe; border-radius: 3mm; padding: 2mm 3.2mm; }
+  .the.bot { background: #f1f8e9; }
+
+  .phim { display: inline-block; background: #1a237e; color: #fff; border-radius: 1.5mm; padding: 0 2mm;
+          font-weight: 800; font-size: 3.9mm; }
+  .phim.xanh { background: #2e7d32; }
+  .nut { display: inline-block; border: .35mm solid #1a237e; color: #1a237e; border-radius: 1.5mm; padding: 0 1.8mm;
+         font-weight: 700; font-size: 3.6mm; background: #fff; }
+  .chat { background: #fff; border: .35mm dashed #a5d6a7; border-radius: 2.5mm; padding: 1.6mm 2.6mm; margin-top: 1.4mm;
+          font-size: 3.5mm; line-height: 1.4; }
+  .chat b { color: #1b5e20; }
+
+  /* bảng chọn web */
+  .web-qr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+  .wq { display: flex; align-items: center; gap: 2.5mm; background: #f7f8fe; border-radius: 3mm; padding: 1.5mm 2.5mm; }
+  .wq img { width: 17mm; height: 17mm; display: block; }
+  .wq b { display: block; font-size: 3.9mm; color: #1a237e; }
+  .wq span { font-size: 3.1mm; color: #4a5568; word-break: break-all; line-height: 1.3; }
+  .bot-dau { display: flex; align-items: center; gap: 4mm; background: #f1f8e9; border-radius: 3mm; padding: 2mm 3.5mm; }
+  .bot-dau img { width: 24mm; height: 24mm; display: block; border-radius: 2mm; }
+  .bot-dau p { font-size: 3.6mm; line-height: 1.4; }
+
+  .xl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.6mm; }
+  .xl div { border-radius: 2mm; text-align: center; padding: 1.4mm .5mm; font-size: 3.2mm; line-height: 1.25; }
+  .xl b { display: block; font-size: 5mm; }
+  .xl .ap { background: #e8f5e9; color: #1b5e20; } .xl .a { background: #e3f2fd; color: #0d47a1; }
+  .xl .b { background: #fffde7; color: #8d6e00; } .xl .c { background: #fff3e0; color: #e65100; }
+  .xl .d { background: #ffebee; color: #c62828; }
+
+  .menu { display: grid; grid-template-columns: 1fr 1fr; border: .4mm solid #a5d6a7; border-radius: 3mm; overflow: hidden; }
+  .menu div { display: flex; align-items: center; gap: 2.2mm; padding: 1.3mm 3mm; font-size: 3.7mm; border-top: .3mm solid #e8f5e9; }
+  .menu div:nth-child(-n+2) { border-top: none; }
+  .menu div:nth-child(odd) { border-right: .3mm solid #e8f5e9; }
+  .menu .n { flex: 0 0 6.4mm; height: 6.4mm; border-radius: 1.6mm; background: #e8f5e9; color: #1b5e20; font-weight: 900;
+             font-size: 4mm; display: flex; align-items: center; justify-content: center; }
+  .menu .chinh { background: #fffde7; font-weight: 700; }
+  .menu .tat { color: #9e9e9e; }
+
+  .luuy { border: .5mm solid #ef9a9a; background: #fff5f5; border-radius: 4mm; padding: 2.4mm 4.2mm; }
+  .luuy h3 { font-size: 4.5mm; font-weight: 800; color: #c62828; margin-bottom: 1.4mm; }
+  .luuy ul { list-style: none; display: grid; gap: 1.1mm; }
+  .luuy li { font-size: 3.65mm; line-height: 1.38; padding-left: 4.4mm; position: relative; }
+  .luuy li::before { content: '•'; position: absolute; left: .6mm; color: #c62828; font-weight: 900; }
+  .chan { margin-top: auto; text-align: center; font-size: 3.4mm; color: #5f6b7a; border-top: .3mm solid #e0e0e0; padding-top: 2.2mm; }
+  .chan b { color: #1a237e; }
+</style>
+</head>
+<body>
+
+<!-- ═════════════ TRANG 1 ═════════════ -->
+<section class="trang">
+  <div class="dau">
+    <div class="bieu">📅</div>
+    <div>
+      <h1>HƯỚNG DẪN NHÂN VIÊN</h1>
+      <p>Xem lịch ca · Xem điểm &amp; xếp loại · Xin nghỉ phép — trên điện thoại</p>
+    </div>
+  </div>
+
+  <!-- Bắt đầu -->
+  <div class="muc">
+    <div class="tieu"><span class="so">0</span> Bắt đầu: có 2 cách dùng, dùng cách nào cũng được</div>
+    <div class="than">
+      <div class="khoi web">
+        <h3>🌐 Cách 1 – Trang web: quét mã của <u>bộ phận mình</u> bằng camera / Zalo</h3>
+        <div class="web-qr">
+          <div class="wq"><img src="qr-web-sx.png" alt=""><div><b>Phân Xưởng 1</b><span>…workers.dev</span></div></div>
+          <div class="wq"><img src="qr-web-qc.png" alt=""><div><b>QC</b><span>…workers.dev<b style="display:inline;font-size:3.4mm">/qc/</b></span></div></div>
+          <div class="wq"><img src="qr-web-kt.png" alt=""><div><b>Kỹ Thuật CNC</b><span>…workers.dev<b style="display:inline;font-size:3.4mm">/kt/</b></span></div></div>
+        </div>
+        <p style="margin-top:1.2mm">Thanh dưới cùng web có 3 nút hay dùng: <span class="nut">👤 Ca của tôi</span> <span class="nut">📅 Lịch ca</span> <span class="nut">📝 Xin nghỉ</span></p>
+      </div>
+      <div class="khoi bot">
+        <h3>🤖 Cách 2 – Bot Zalo (nhắn tin là trả lời ngay, tự báo khi có xếp loại / lỗi 5S)</h3>
+        <div class="bot-dau">
+          <img src="qr-bot.png" alt="">
+          <p>① Mở Zalo → quét mã QR → bấm <b>Quan tâm</b> (tên: <b>Bot Tuấn Nguyễn</b>).<br>
+             ② Nhắn <b>MSNV của mình</b>, ví dụ <span class="phim xanh">2555</span><br>
+             ③ Bot hỏi <i>"Bạn là Nguyễn Văn A …?"</i> → đúng nhắn <span class="phim xanh">1</span>, sai nhắn <span class="phim xanh">2</span><br>
+             ④ Bot gửi <b>menu số</b> → nhắn số để xem. Nhắn <span class="phim xanh">0</span> để hiện lại menu.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Lịch ca -->
+  <div class="muc">
+    <div class="tieu"><span class="so">1</span> XEM LỊCH CA</div>
+    <div class="than hai">
+      <div class="khoi web the">
+        <h3>🌐 Trên web</h3>
+        <ol>
+          <li>Bấm <span class="nut">👤 Ca của tôi</span> → nhập <b>MSNV</b> → <b>Xem ca của tôi</b>.</li>
+          <li>Thấy ngay: <b>ca hôm nay</b>, <b>7 ngày tới</b>, đợt <b>nghỉ sắp tới</b>, số ngày làm trong tháng.</li>
+          <li>Muốn xem <b>cả tháng / cả kíp</b>: bấm <span class="nut">📅 Lịch ca</span>.</li>
+        </ol>
+        <p style="margin-top:1mm;font-size:3.4mm;color:#4a5568">Lần sau trang hiện sẵn MSNV đã xem gần đây, bấm vào là xem.</p>
+      </div>
+      <div class="khoi bot the bot">
+        <h3>🤖 Trên Zalo bot</h3>
+        <ul>
+          <li><span class="phim xanh">1</span> Ca ngày mai</li>
+          <li><span class="phim xanh">2</span> Lịch 7 ngày tới</li>
+          <li><span class="phim xanh">5</span> Ngày nghỉ sắp tới</li>
+        </ul>
+        <div class="chat">Hoặc gõ câu hỏi tự nhiên:<br><b>"thứ 6 tuần sau tôi làm ca gì?"</b><br><b>"tháng này tôi nghỉ những ngày nào?"</b></div>
+      </div>
+    </div>
+    <div class="than" style="padding-top:0">
+      <p style="font-size:3.5mm;line-height:1.4">Ký hiệu ca: ☀️ <b>S</b> Sáng · 🌙 <b>C</b> Chiều/Tối · 🏢 <b>HC</b> Hành chính · 🏠 <b>N</b> Nghỉ · 🎌 <b>L</b> Nghỉ lễ · 🏖️ <b>NP</b> Nghỉ phép · 🔴 <b>VM</b> Vắng mặt</p>
+    </div>
+  </div>
+
+  <!-- 3. Xin nghỉ -->
+  <div class="muc cam">
+    <div class="tieu"><span class="so">2</span> XIN NGHỈ PHÉP (làm trên web)</div>
+    <div class="than hai">
+      <div class="khoi web the" style="background:#fff8f0">
+        <h3 style="color:#e65100">📝 Các bước gửi đơn</h3>
+        <ol>
+          <li>Bấm <span class="nut">📝 Xin nghỉ</span> ở thanh dưới.</li>
+          <li>Ô <b>Tên hoặc MSNV</b>: gõ vài chữ → <b>chọn đúng tên mình</b> trong danh sách hiện ra.</li>
+          <li>Chọn <b>Từ ngày</b> và <b>Đến ngày</b> (nghỉ 1 ngày thì 2 ô cùng một ngày).</li>
+          <li>Ghi <b>lý do cụ thể</b>, ví dụ: "Về quê có việc gia đình".</li>
+          <li>Bấm <b>Gửi</b> → thấy dòng <i>"Gửi đơn xin nghỉ thành công! Chờ Quản lý duyệt."</i> là xong.</li>
+        </ol>
+      </div>
+      <div class="khoi the" style="background:#fff8f0">
+        <h3 style="color:#e65100">✅ Sau khi gửi</h3>
+        <ul>
+          <li>Đơn chờ <b>quản lý duyệt</b>.</li>
+          <li>Được duyệt: lịch các ngày đó tự đổi thành <b>🏖️ NP – Nghỉ phép</b>.</li>
+          <li>Kiểm tra: vào <span class="nut">👤 Ca của tôi</span> (mục <i>Nghỉ phép / vắng mặt tháng</i>) hoặc nhắn bot số <span class="phim xanh">7</span>.</li>
+        </ul>
+        <p style="margin-top:1mm;font-size:3.5mm;color:#c62828"><b>Xin trước</b> ngày nghỉ. Nghỉ đột xuất thì <b>báo trưởng kíp</b> trước, gửi đơn sau.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="chan">Trang 1/2 · Xem tiếp trang 2: <b>Điểm &amp; xếp loại</b>, menu bot, lưu ý</div>
+</section>
+
+<!-- ═════════════ TRANG 2 ═════════════ -->
+<section class="trang">
+
+  <div class="muc tim">
+    <div class="tieu"><span class="so">3</span> XEM ĐIỂM &amp; XẾP LOẠI</div>
+    <div class="than hai">
+      <div class="khoi web the" style="background:#faf5fc">
+        <h3 style="color:#6a1b9a">🌐 Trên web</h3>
+        <p>Bấm <span class="nut">👤 Ca của tôi</span> → nhập MSNV → xem ô <b>"Đánh giá T…"</b>: điểm trung bình tháng đang chấm và số ngày đã chấm.</p>
+        <p style="margin-top:1mm">Ô <b>"5S T…"</b> bên cạnh cho biết số lần 5S chưa đạt — số này cũng ghi trong tổng kết tháng.</p>
+      </div>
+      <div class="khoi bot the bot">
+        <h3>🤖 Trên Zalo bot</h3>
+        <ul>
+          <li><span class="phim xanh">4</span> Điểm &amp; xếp loại tháng này</li>
+          <li><span class="phim xanh">3</span> Vi phạm 5S tháng này</li>
+        </ul>
+        <div class="chat">Hoặc hỏi: <b>"điểm tháng 10 của tôi bao nhiêu?"</b></div>
+      </div>
+    </div>
+    <div class="than" style="padding-top:0">
+      <div class="xl">
+        <div class="ap"><b>A+</b>Xuất sắc</div>
+        <div class="a"><b>A</b>Giỏi</div>
+        <div class="b"><b>B</b>Khá</div>
+        <div class="c"><b>C</b>Trung bình</div>
+        <div class="d"><b>D</b>Cần cải thiện</div>
+      </div>
+      <p style="font-size:3.5mm;line-height:1.4">Điểm trong tháng là <b>tạm tính</b> (ghi "chưa duyệt") cho tới khi quản lý duyệt cuối tháng.
+         Ngày bị trừ điểm có ghi <b>lý do</b> — thắc mắc thì hỏi trưởng kíp.</p>
+    </div>
+  </div>
+
+  <div class="muc tim">
+    <div class="tieu"><span class="so">4</span> XÁC NHẬN XẾP LOẠI CUỐI THÁNG (qua Zalo bot)</div>
+    <div class="than hai">
+      <div class="khoi the" style="background:#faf5fc">
+        <h3 style="color:#6a1b9a">📋 Bot tự gửi tổng kết</h3>
+        <p>Khi quản lý duyệt xong, bot gửi <b>TỔNG KẾT THÁNG</b>: xếp loại, điểm, số ngày đi làm, số lần 5S chưa đạt, ngày nghỉ, nhận xét của quản lý.</p>
+        <p style="margin-top:1.2mm">Chưa liên kết bot? Liên kết xong bot <b>gửi bù</b> ngay.</p>
+      </div>
+      <div class="khoi the bot">
+        <h3>✍️ Trả lời bằng 1 số</h3>
+        <ul>
+          <li><span class="phim xanh">1</span> <b>Đồng ý</b></li>
+          <li><span class="phim xanh">2</span> Xem lại chi tiết</li>
+          <li><span class="phim xanh">3</span> <b>Không đồng ý / có thắc mắc</b> → ghi lý do, bot chuyển cho quản lý</li>
+        </ul>
+        <p style="margin-top:1.2mm;color:#c62828;font-size:3.6mm"><b>Hạn: hết ngày 4 của tháng sau.</b> Chưa trả lời thì bot nhắc lại.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="muc xanh">
+    <div class="tieu"><span class="so">5</span> MENU BOT ZALO – nhắn SỐ để xem</div>
+    <div class="than">
+      <div class="menu">
+        <div class="chinh"><span class="n">1</span> Ca ngày mai</div>
+        <div class="chinh"><span class="n">2</span> Lịch 7 ngày tới</div>
+        <div><span class="n">3</span> Vi phạm 5S tháng này</div>
+        <div class="chinh"><span class="n">4</span> Điểm &amp; xếp loại tháng này</div>
+        <div class="chinh"><span class="n">5</span> Ngày nghỉ sắp tới</div>
+        <div class="tat"><span class="n">6</span> Tăng ca (tạm tắt)</div>
+        <div class="chinh"><span class="n">7</span> Nghỉ phép tháng này</div>
+        <div><span class="n">8</span> Tiêu chí 5S</div>
+        <div><span class="n">0</span> Xem lại menu</div>
+        <div>💬 Hoặc gõ câu hỏi bất kỳ</div>
+      </div>
+      <p style="font-size:3.5mm;line-height:1.4">Bot cũng <b>tự nhắn</b> khi bạn có lượt 5S chưa đạt (kèm ảnh) và khi có xếp loại tháng cần xác nhận.</p>
+    </div>
+  </div>
+
+  <div class="luuy">
+    <h3>⚠️ Lưu ý</h3>
+    <ul>
+      <li>Chỉ nhập <b>MSNV của chính mình</b>. Nhập mã người khác thì bạn nhận tin của họ, còn Zalo của họ bị ngắt và nhận cảnh báo.</li>
+      <li>Nhập nhầm MSNV trên bot: nhắn <span class="phim xanh">msnv 2555</span> (thay bằng mã đúng) rồi xác nhận <span class="phim xanh">1</span>.</li>
+      <li>Bot / web <b>không duyệt đơn nghỉ</b> và không sửa điểm — mọi thay đổi do quản lý làm.</li>
+      <li>Thấy lịch, điểm hoặc tên sai → báo <b>trưởng kíp / quản lý</b> để chỉnh.</li>
+    </ul>
+  </div>
+
+  <div class="chan">Trang 2/2 · Thắc mắc liên hệ <b>trưởng kíp</b> hoặc <b>quản lý bộ phận</b></div>
+</section>
+
+</body>
+</html>
