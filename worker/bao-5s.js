@@ -10,7 +10,7 @@
 // được "giữ chỗ" trước khi gửi (insert ... on conflict do nothing) nên hai
 // lần quét chồng nhau cũng không báo trùng; gửi hỏng thì nhả ra để lần sau.
 // ═══════════════════════════════════════════════════════════════
-import { taoSb, homNayVN, dKey, DFUL, boDau, CAC_XUONG, docHet } from './du-lieu.js';
+import { taoSb, homNayVN, dKey, DFUL, boDau, CAC_XUONG, docHet, botCua, envBot } from './du-lieu.js';
 import { guiTin, guiAnh } from './zalo.js';
 import { SO_SANG_CA_NHAN } from './menu.js';
 
@@ -101,6 +101,9 @@ export async function quetBao5S(env) {
   });
   const theoTen = Object.fromEntries(doc.flatMap(([er]) => er.data || []).map(e => [boDau(e.name), String(e.id)]));
   const zaloCua = Object.fromEntries(doc.flatMap(([, lr]) => lr.data || []).map(l => [String(l.msnv), l.zalo_id]));
+  // gửi qua bot của xưởng người đó (QC có bot riêng)
+  const envCua = Object.fromEntries(doc.flatMap(([, lr], i) => (lr.data || [])
+    .map(l => [String(l.msnv), envBot(env, botCua(env, CAC_XUONG[i]))])));
 
   let bao = 0, boQua = 0;
   for (const x of can) {
@@ -116,10 +119,10 @@ export async function quetBao5S(env) {
     if (!zid) { boQua++; continue; }                         // chưa liên kết -> chờ báo bù
     const giu = await giuCho(sb, [{ s5_id: x.id, msnv, zalo_id: zid, cach: 'tuc_thi' }]);
     if (!giu.length) continue;                               // lần quét khác đã báo
-    const anh = (x.photos || []).slice(0, ANH_TOI_DA);
-    const kq = anh.length ? await guiAnh(env, zid, anh[0], noiDungBao(x)) : await guiTin(env, zid, noiDungBao(x));
+    const anh = (x.photos || []).slice(0, ANH_TOI_DA), e = envCua[msnv];
+    const kq = anh.length ? await guiAnh(e, zid, anh[0], noiDungBao(x)) : await guiTin(e, zid, noiDungBao(x));
     if (!kq.ok) { await nhaCho(sb, giu); continue; }          // gửi hỏng -> để lần sau
-    for (const p of anh.slice(1)) await guiAnh(env, zid, p, '');
+    for (const p of anh.slice(1)) await guiAnh(e, zid, p, '');
     bao++;
   }
   console.log(`[bao5s] quét ${tu} → ${den}: ${loi.length} lượt chưa đạt, báo ${bao}, bỏ qua (chưa liên kết) ${boQua}`);

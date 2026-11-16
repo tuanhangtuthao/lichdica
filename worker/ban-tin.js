@@ -9,7 +9,7 @@
 // mỗi MSNV gửi tới tài khoản Zalo đang liên kết. Chưa liên kết thì bỏ qua.
 // Ngày không ai đi làm (Chủ nhật, lễ) thì không gửi.
 // ═══════════════════════════════════════════════════════════════
-import { taoSb, homNayVN, dKey, CAC_XUONG, tenXuong } from './du-lieu.js';
+import { taoSb, homNayVN, dKey, CAC_XUONG, tenXuong, botCua, envBot } from './du-lieu.js';
 import { taoXuong } from './du-lieu-xuong.js';
 import { dsTheoKip, tenKip, thuNgay } from './menu.js';
 import { guiTin } from './zalo.js';
@@ -69,7 +69,8 @@ export async function guiBanTin(env, sb = taoSb()) {
     (x === sb.xuong ? sb : taoSb(x)).from('zalo_links').select('zalo_id,msnv').in('msnv', dsMs)));
   const loi = rs.find(r => r.error);
   if (loi) throw new Error('Đọc zalo_links lỗi: ' + loi.error.message);
-  const nhan = rs.flatMap(r => r.data || []);
+  // mỗi người nhận gửi qua bot của xưởng họ liên kết
+  const nhan = rs.flatMap((r, i) => (r.data || []).map(n => ({ ...n, env: envBot(env, botCua(env, CAC_XUONG[i])) })));
   const chuaLK = dsMs.filter(m => !nhan.some(n => n.msnv === m));
   if (chuaLK.length) console.warn('[bantin] MSNV chưa liên kết Zalo, bỏ qua:', chuaLK.join(', '));
 
@@ -78,7 +79,7 @@ export async function guiBanTin(env, sb = taoSb()) {
     const phan = chiaTin(text);
     let loi = false;
     for (const p of phan) {
-      const kq = await guiTin(env, n.zalo_id, p);
+      const kq = await guiTin(n.env, n.zalo_id, p);
       if (!kq.ok) { loi = true; break; }
     }
     if (!loi) gui++;

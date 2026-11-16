@@ -20,6 +20,7 @@ import {
   taoSb, timNV, layLienKet, luuMenu, duocHoiTiep, taoCongCu, laQuanLy, boDau,
   ghiChoXacNhan, huyChoXacNhan, xacNhanLienKet, goLienKet, NHOM,
   GIOI_HAN_NV, GIOI_HAN_QL, CAC_XUONG, tenXuong, xoaLienKetZalo, homNayVN, dKey, addD,
+  DS_BOT, TEN_BOT, botCua, envBot,
 } from './du-lieu.js';
 import { taoCongCuQuanLy } from './du-lieu-xuong.js';
 import { noiDungBanTin } from './ban-tin.js';
@@ -46,7 +47,12 @@ function lamSachEnv(env) {
     // Thư viện Claude tự thêm /v1/messages, nên bỏ /v1 nếu bên bán ghi kèm
     // (vd https://api.vilao.ai/v1 -> https://api.vilao.ai)
     ANTHROPIC_BASE_URL: sach(env.ANTHROPIC_BASE_URL).replace(/\/+$/, '').replace(/\/v1$/, '') || undefined,
-    CLAUDE_MODEL: sach(env.CLAUDE_MODEL) || undefined };
+    CLAUDE_MODEL: sach(env.CLAUDE_MODEL) || undefined,
+    // token + secret từng bot ('' = bot chính, QC = ZALO_BOT_TOKEN_QC...) cho envBot()
+    CAC_BOT: Object.fromEntries(DS_BOT.map(b => {
+      const h = b ? '_' + b : '';
+      return [b, { token: sach(env['ZALO_BOT_TOKEN' + h]), secret: sach(env['ZALO_SECRET' + h]) }];
+    })) };
 }
 
 export default {
@@ -58,8 +64,9 @@ export default {
     // Bản tin và xếp loại chạy cho từng xưởng, mỗi xưởng database riêng.
     // Xưởng khác SX: người nhận đặt bằng biến riêng <TÊN>_<XƯỞNG> (vd
     // BAN_TIN_MSNV_QC, XAC_NHAN_BAO_MSNV_QC); chưa đặt thì không gửi cho ai.
-    const envXuong = x => x === 'SX' ? e : { ...e,
-      BAN_TIN_MSNV: e['BAN_TIN_MSNV_' + x] || '', XAC_NHAN_BAO_MSNV: e['XAC_NHAN_BAO_MSNV_' + x] || '' };
+    // Gửi qua bot của xưởng đó (QC có bot riêng)
+    const envXuong = x => envBot(x === 'SX' ? e : { ...e,
+      BAN_TIN_MSNV: e['BAN_TIN_MSNV_' + x] || '', XAC_NHAN_BAO_MSNV: e['XAC_NHAN_BAO_MSNV_' + x] || '' }, botCua(e, x));
     if (controller.cron === '0 1 * * *')
       for (const x of CAC_XUONG)
         ctx.waitUntil(guiBanTin(envXuong(x), taoSb(x)).catch(err => console.error('[bantin]', x, err)));
@@ -78,7 +85,9 @@ export default {
 
     if (url.pathname === '/api/zalo' && request.method === 'POST') {
       const hdr = sach(request.headers.get('X-Bot-Api-Secret-Token'));
-      if (!biMat || hdr !== biMat) {
+      // Secret cho biết tin tới từ bot nào (bot chính hay bot QC)
+      const bot = DS_BOT.find(b => envSach.CAC_BOT[b].secret && hdr === envSach.CAC_BOT[b].secret);
+      if (bot === undefined) {
         // Ghi lý do từ chối để dò lỗi - chỉ độ dài, không bao giờ ghi giá trị
         console.warn('[zalo] từ chối POST', JSON.stringify({
           ua: request.headers.get('user-agent'), co_header: hdr.length > 0,
@@ -89,7 +98,7 @@ export default {
       }
       const update = await request.json().catch(() => null);
       // Trả lời Zalo ngay, xử lý (gọi Claude mất vài giây) chạy nền
-      ctx.waitUntil(xuLy(update, envSach).catch(e => console.error('[zalo]', e)));
+      ctx.waitUntil(xuLy(update, envBot(envSach, bot)).catch(e => console.error('[zalo]', e)));
       return Response.json({ message: 'Success' });
     }
 
@@ -116,13 +125,18 @@ export default {
                      catch { return 'ANTHROPIC_BASE_URL sai dạng'; } })()
           : 'api.anthropic.com (chính chủ)',
         model: envSach.CLAUDE_MODEL || 'claude-haiku-4-5',
+        // bot riêng theo xưởng: đã nạp đủ token + secret chưa
+        bot_rieng: Object.fromEntries(DS_BOT.filter(Boolean).map(b =>
+          [b, !!envSach.CAC_BOT[b].token && envSach.CAC_BOT[b].secret.length >= 8])),
         dia_chi_webhook: sach(env.ZALO_WEBHOOK_URL) || `${url.origin}/api/zalo`,
       });
     }
 
     if (url.pathname === '/api/zalo/cai-dat') {
       const nhap = sach(url.searchParams.get('key'));
-      if (!biMat || nhap !== biMat)
+      // key = ZALO_SECRET -> nối bot chính; = ZALO_SECRET_QC -> nối bot QC
+      const bot = DS_BOT.find(b => envSach.CAC_BOT[b].secret && nhap === envSach.CAC_BOT[b].secret);
+      if (bot === undefined)
         // Chỉ báo độ dài để dò lỗi gõ / dán, không bao giờ lộ nội dung
         return new Response(`Sai key: chuỗi trong link dài ${nhap.length} ký tự, `
           + `ZALO_SECRET đã lưu dài ${biMat.length} ký tự.`, { status: 403 });
@@ -131,7 +145,7 @@ export default {
       // chặn User-Agent Java của Zalo (lỗi 1010). Không đặt thì Zalo gửi thẳng
       // vào worker (dùng được khi worker có tên miền riêng đã tắt BIC).
       const dich = sach(env.ZALO_WEBHOOK_URL) || `${url.origin}/api/zalo`;
-      const kq = await datWebhook(envSach, dich);
+      const kq = await datWebhook(envBot(envSach, bot), dich);
       return Response.json(kq);
     }
 
@@ -206,9 +220,11 @@ async function xuLyTin(msg, zaloId, gui, env) {
     try { return { sb: s, lk: await layLienKet(s, zaloId) }; }
     catch (e) { if (x === 'SX') throw e; console.error('[zalo] bỏ qua xưởng', x, e.message); return null; }
   }))).filter(Boolean);
-  const choXN = theoXuong.find(d => d.lk && d.lk.msnv_cho);
-  const daCo = theoXuong.find(d => d.lk && d.lk.msnv);
-  let { sb, lk } = choXN || daCo || theoXuong[0];
+  // Chỉ liên kết ở các xưởng của bot đang nhận tin (QC có bot riêng)
+  const cuaBot = theoXuong.filter(d => botCua(env, d.sb.xuong) === (env.BOT || ''));
+  const choXN = cuaBot.find(d => d.lk && d.lk.msnv_cho);
+  const daCo = cuaBot.find(d => d.lk && d.lk.msnv);
+  let { sb, lk } = choXN || daCo || cuaBot[0] || theoXuong[0];
 
   const doi = tx.match(/^(?:doi )?msnv:? ?([a-z0-9]+)$/);
   const laMa = /^\d{3,6}$/.test(text);
@@ -260,6 +276,12 @@ async function xuLyTin(msg, zaloId, gui, env) {
       if (nv) { sbNV = d.sb; break; }
     }
     if (!nv) return gui(`Không tìm thấy MSNV **${ma}**. Bạn kiểm tra lại giúp mình nhé.`);
+    // MSNV thuộc xưởng dùng bot khác -> chỉ đường, không liên kết ở đây
+    const botNV = botCua(env, sbNV.xuong);
+    if (botNV !== (env.BOT || ''))
+      return gui(botNV
+        ? `MSNV **${nv.id}** (${nv.name}) thuộc **${tenXuong(sbNV.xuong)}**. ${tenXuong(sbNV.xuong)} dùng bot riêng: **${TEN_BOT[botNV]}**. Bạn mở bot đó và nhắn MSNV để bắt đầu nhé.`
+        : `MSNV **${nv.id}** không có trong danh sách ${tenXuong(env.BOT)}. Bạn dùng bot **${TEN_BOT['']}** nhé.`);
     if (daCo && daCo.sb.xuong === sbNV.xuong && String(nv.id) === String(daCo.lk.msnv))
       return gui(`Bạn đang dùng MSNV **${nv.id}** (${nv.name}) rồi. Nhắn **0** để xem menu.`);
     // đang chờ xác nhận một MSNV ở xưởng khác thì bỏ, chỉ giữ MSNV mới
@@ -269,7 +291,7 @@ async function xuLyTin(msg, zaloId, gui, env) {
   }
 
   if (!daLK)
-    return gui(`Chào ${msg.from.display_name || 'bạn'} 👋 Mình là Trợ Lý Phân Xưởng 1.\n`
+    return gui(`Chào ${msg.from.display_name || 'bạn'} 👋 Mình là Trợ Lý ${env.BOT ? tenXuong(env.BOT) : 'Phân Xưởng 1'}.\n`
       + 'Bạn nhắn **MSNV** của mình (ví dụ: 1049) để bắt đầu nhé.');
 
   ({ sb, lk } = daCo);

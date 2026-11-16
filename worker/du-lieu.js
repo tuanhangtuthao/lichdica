@@ -32,6 +32,27 @@ const XUONG = {
 export const CAC_XUONG = Object.keys(XUONG);
 export const tenXuong = ma => (XUONG[ma] || XUONG.SX).ten;
 
+// ── BOT ZALO THEO XƯỞNG ─────────────────────────────────────────
+// Bot chính hết suất người tương tác (16/11/2026, Zalo trả 422) nên QC có bot
+// riêng. Token/secret: ZALO_BOT_TOKEN_QC / ZALO_SECRET_QC. Xưởng không có ở
+// đây dùng bot chính (''). Muốn KT sang bot QC: thêm KT: 'QC'.
+// Mỗi người chỉ liên kết ở bot của xưởng mình; tin gửi cho ai thì đi qua bot
+// của xưởng người đó (mã Zalo của một người ở hai bot có thể khác nhau).
+const BOT_XUONG = { QC: 'QC' };
+export const TEN_BOT = { '': 'Bot Tuấn Nguyễn', QC: 'Bot QC Bách Tùng' };
+export const DS_BOT = ['', ...new Set(Object.values(BOT_XUONG))];
+// Bot riêng chưa nạp token thì xưởng đó vẫn dùng bot chính như trước
+export const botCua = (env, x) => {
+  const b = BOT_XUONG[x] || '';
+  return b && env.CAC_BOT && env.CAC_BOT[b] && env.CAC_BOT[b].token ? b : '';
+};
+// env gửi/nhận qua bot `bot`; đọc từ CAC_BOT (index.js lamSachEnv) nên gọi
+// lồng nhau vẫn đúng
+export function envBot(env, bot = '') {
+  const k = (env.CAC_BOT || {})[bot] || {};
+  return { ...env, BOT: bot, ZALO_BOT_TOKEN: k.token || '', ZALO_SECRET: k.secret || '' };
+}
+
 // 5S chấm chung cả nhà máy, dữ liệu nằm ở database SX (nút 5S bên web QC mở
 // trang 5S của SX). Xưởng QC đọc 5S từ đó nhưng CHỈ các lượt chấm khu QC.
 const KHU_5S = { QC: 'kv_qc', KT: 'kv_kt' };

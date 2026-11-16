@@ -17,7 +17,7 @@
 // đa NGAN_SACH người (5 phút/lần -> 72 người/giờ, thừa cho 44 nhân viên).
 // ═══════════════════════════════════════════════════════════════
 import {
-  taoSb, homNayVN, dKey, addD, tuKey, round1, caCua, NHOM, boDau, luuMenu, CAC_XUONG, docHet,
+  taoSb, homNayVN, dKey, addD, tuKey, round1, caCua, NHOM, boDau, luuMenu, CAC_XUONG, docHet, botCua, envBot,
 } from './du-lieu.js';
 import { guiTin } from './zalo.js';
 
@@ -268,12 +268,13 @@ async function nguoiNhanBao(sb, env) {
     (x === sb.xuong ? sb : taoSb(x)).from('zalo_links').select('zalo_id,msnv').in('msnv', ds)));
   const loi = rs.find(r => r.error);
   if (loi) throw new Error(loi.error.message);
-  return rs.flatMap(r => r.data || []).map(x => x.zalo_id);
+  // gửi qua bot của xưởng người nhận liên kết
+  return rs.flatMap((r, i) => (r.data || []).map(x => ({ z: x.zalo_id, env: envBot(env, botCua(env, CAC_XUONG[i])) })));
 }
 async function baoQuanLy(sb, env, text) {
   let n = 0;
-  for (const z of await nguoiNhanBao(sb, env)) {
-    try { const k = await guiTin(env, z, text); if (k.ok) n++; } catch (e) { console.error('[xeploai] báo quản lý lỗi', e.message); }
+  for (const { z, env: e } of await nguoiNhanBao(sb, env)) {
+    try { const k = await guiTin(e, z, text); if (k.ok) n++; } catch (e) { console.error('[xeploai] báo quản lý lỗi', e.message); }
   }
   return n;
 }

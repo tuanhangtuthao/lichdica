@@ -113,3 +113,12 @@ Chạy câu `select` ở cuối `sql/zalo-lien-ket.sql`.
 - **Đừng chạy `wrangler dev` ở thư mục gốc.** Thư mục gốc vừa là web tĩnh vừa là chỗ wrangler ghi file tạm `.wrangler/`, nên nó tự tải lại liên tục không dừng. Muốn chạy thử ở máy thì tạo một `wrangler.jsonc` riêng ở thư mục khác, trỏ `main` và `assets.directory` về dự án này (bản deploy thật không bị ảnh hưởng).
 - `.assetsignore` ở thư mục gốc chặn `worker/`, `node_modules/`, `package.json`, `wrangler.jsonc`... không cho lên web công khai. Thêm file bí mật nào ở gốc thì nhớ thêm vào đó.
 - Sửa lịch ca thì chỉ sửa `lich-ca.js`: web và bot Zalo cùng đổi theo.
+
+## Bot riêng cho QC (từ 16/11/2026)
+
+Bot chính hết suất người tương tác (Zalo trả lỗi 422 "You are not permitted to send messages to this chat_id"), nên QC dùng bot riêng **Bot QC Bách Tùng**.
+- Secret: `ZALO_BOT_TOKEN_QC`, `ZALO_SECRET_QC`. Chưa nạp thì QC vẫn chạy trên bot chính như cũ.
+- Hai bot dùng chung trạm chuyển tiếp; worker phân biệt bằng secret Zalo gửi kèm.
+- Nối bot QC (1 lần): `https://<tên-miền-web>/api/zalo/cai-dat?key=<ZALO_SECRET_QC>`.
+- NV QC nhắn MSNV vào bot chính → bot chỉ đường sang bot QC; người ngoài QC nhắn vào bot QC → chỉ về bot chính.
+- Tin gửi cho ai (bản tin, xếp loại, 5S) đi qua bot của xưởng người đó. Đổi xưởng nào dùng bot nào: `BOT_XUONG` trong `du-lieu.js`.
