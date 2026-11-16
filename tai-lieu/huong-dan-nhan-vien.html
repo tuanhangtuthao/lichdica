@@ -64,8 +64,12 @@
   .wq b { display: block; font-size: 3.9mm; color: #1a237e; }
   .wq span { font-size: 3.1mm; color: #4a5568; word-break: break-all; line-height: 1.3; }
   .bot-dau { display: flex; align-items: center; gap: 4mm; background: #f1f8e9; border-radius: 3mm; padding: 2mm 3.5mm; }
-  .bot-dau img { width: 24mm; height: 24mm; display: block; border-radius: 2mm; }
-  .bot-dau p { font-size: 3.6mm; line-height: 1.4; }
+  .bot-dau { gap: 2.5mm; padding: 1.6mm 3mm; }
+  .bot-dau .bq { flex: 0 0 33mm; align-self: flex-start; text-align: center; line-height: 1.15; white-space: nowrap; }
+  .bot-dau img { width: 19mm; height: 19mm; display: block; margin: 0 auto .8mm; background: #fff; padding: 1mm; border-radius: 1.5mm; }
+  .bot-dau .bq b { display: block; font-size: 3.4mm; color: #1b5e20; }
+  .bot-dau .bq span { font-size: 2.9mm; color: #4a5568; }
+  .bot-dau p { font-size: 3.45mm; line-height: 1.32; }
 
   .xl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.6mm; }
   .xl div { border-radius: 2mm; text-align: center; padding: 1.4mm .5mm; font-size: 3.2mm; line-height: 1.25; }
@@ -120,8 +124,9 @@
       <div class="khoi bot">
         <h3>🤖 Cách 2 – Bot Zalo (nhắn tin là trả lời ngay, tự báo khi có xếp loại / lỗi 5S)</h3>
         <div class="bot-dau">
-          <img src="qr-bot.png" alt="">
-          <p>① Mở Zalo → quét mã QR → bấm <b>Quan tâm</b> (tên: <b>Bot Tuấn Nguyễn</b>).<br>
+          <div class="bq"><img src="qr-bot.png" alt=""><b>Bot Tuấn Nguyễn</b><span>Phân Xưởng 1 · KT CNC</span></div>
+          <div class="bq"><img src="qr-bot-qc.png" alt=""><b>Bot QC Bách Tùng</b><span>chỉ dành cho QC</span></div>
+          <p>① Mở Zalo → quét mã QR <b>của bộ phận mình</b> → bấm <b>Quan tâm</b>.<br>
              ② Nhắn <b>MSNV của mình</b>, ví dụ <span class="phim xanh">2555</span><br>
              ③ Bot hỏi <i>"Bạn là Nguyễn Văn A …?"</i> → đúng nhắn <span class="phim xanh">1</span>, sai nhắn <span class="phim xanh">2</span><br>
              ④ Bot gửi <b>menu số</b> → nhắn số để xem. Nhắn <span class="phim xanh">0</span> để hiện lại menu.</p>
