@@ -26,7 +26,7 @@ import { taoCongCuQuanLy } from './du-lieu-xuong.js';
 import { noiDungBanTin } from './ban-tin.js';
 import { menuCaNhan, menuQuanLy, traLoiCaNhan, traLoiQuanLy, SO_SANG_CA_NHAN } from './menu.js';
 import { hoiAI, cauBaoLoi } from './tro-ly-ai.js';
-import { guiTin, guiAnh, datWebhook } from './zalo.js';
+import { guiTin, datWebhook } from './zalo.js';
 import { quetBao5S, baoBuKhiLienKet } from './bao-5s.js';
 import { guiBanTin, chiaTin } from './ban-tin.js';
 import { quetXepLoai, baoBuXepLoai, xuLyXacNhan } from './xep-loai.js';
@@ -130,30 +130,6 @@ export default {
           [b, !!envSach.CAC_BOT[b].token && envSach.CAC_BOT[b].secret.length >= 8])),
         dia_chi_webhook: sach(env.ZALO_WEBHOOK_URL) || `${url.origin}/api/zalo`,
       });
-    }
-
-    // shortcut: dùng một lần (16/11/2026) báo 5 NV QC chuyển sang bot QC rồi xoá liên kết cũ; gỡ code + secret TAM_KEY sau khi chạy
-    if (url.pathname === '/api/zalo/chuyen-qc' && sach(env.TAM_KEY).length >= 20
-        && sach(url.searchParams.get('key')) === sach(env.TAM_KEY)) {
-      const sb = taoSb('QC'), e = envBot(envSach, ''), kq = [];
-      const ds = { '192fe87f0737ee69b726': '2866', '53cf7c3db873512d0862': '2748', '12f846ebb4a75df904b6': '1317',
-                   '82d47c1dc35e2a00734f': '2740', 'c8f5ed871acaf394aadb': '2623' };
-      if (url.searchParams.get('thu')) return Response.json({ san_sang: Object.keys(ds).length });
-      for (const [z, ms] of Object.entries(ds)) {
-        const text = '📢 QC CHUYỂN SANG BOT MỚI\nTừ hôm nay nhân viên QC dùng Bot QC Bách Tùng. Lịch ca, điểm & xếp loại, báo 5S đều gửi qua bot mới.\n'
-          + 'Bạn làm giúp 2 bước:\n'
-          + `1️⃣ Quét mã QR trong ảnh (hoặc tìm "Bot QC Bách Tùng" trên Zalo) → bấm Quan tâm → nhắn ${ms} → nhắn 1 để xác nhận.\n`
-          + '2️⃣ Quay lại bot này (Bot Tuấn Nguyễn) → bấm Bỏ quan tâm để nhường chỗ cho Phân Xưởng 1.\n'
-          + 'Từ hôm nay bot này ngừng gửi tin cho bạn.';
-        const g = await guiAnh(e, z, `${url.origin}/tai-lieu/qr-bot-qc.png`, text);
-        let xoa = null;
-        if (g.ok) {   // chỉ xoá khi đã báo được, đừng bỏ rơi người chưa nhận tin
-          const d = await sb.from('zalo_links').delete().eq('zalo_id', z).eq('msnv', ms);
-          xoa = d.error ? d.error.message : true;
-        }
-        kq.push({ ms, gui: !!g.ok, loi: g.ok ? undefined : g.description, xoa });
-      }
-      return Response.json(kq);
     }
 
     if (url.pathname === '/api/zalo/cai-dat') {
