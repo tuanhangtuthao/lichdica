@@ -25,7 +25,8 @@
     {id:'huong-dan',        ten:'Tài liệu',           icon:'sach',   mt:null, dt:null, phu:'Video · hình · PDF'},
     {id:'dashboard',        ten:'Dashboard quản đốc', icon:'bieudo', mt:null, dt:null},
     {id:'zalobot-monitor',  ten:'Theo dõi Bot Zalo',  ngan:'Bot Zalo', icon:'bot', mt:null, dt:null, phu:'Hoạt động · Liên kết · 5S'},
-  ];
+    {id:'kpi-qc',           ten:'Tiêu chí KPI QC',    icon:'sao',    mt:null, dt:null, phu:'Cách chấm điểm hằng ngày', chi:'QC'},
+  ].filter(m => !m.chi || (window.CAU_HINH && window.CAU_HINH.ma === m.chi));   // chi: mục chỉ hiện ở xưởng đó
 
   const ICON = {
     bot:    '<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 15h.01M16 15h.01"/>',

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<!-- Chọn xưởng + database theo đường dẫn. Nạp đầu tiên. Xem cau-hinh.js -->
+<script src="cau-hinh.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1F4E79">
+<title>Tiêu chí KPI hằng ngày - QC</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   TIÊU CHÍ KPI HẰNG NGÀY - NHÂN VIÊN QC (trang tĩnh, chỉ để đọc)
+   Nội dung theo "Thông báo áp dụng KPI hằng ngày - Nhân viên QC" (PDF).
+   Đổi tiêu chí: sửa thẳng các bảng bên dưới.
+   ═══════════════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+.dau{position:sticky;top:0;z-index:5;background:#1F4E79;color:#fff}
+.dau-trong{max-width:960px;margin:0 auto;min-height:60px;padding:8px 16px;display:flex;align-items:center;gap:12px}
+.dau-xuong{font-size:12px;font-weight:500;color:#C9D8E8}
+.dau-ten{font-size:17px;font-weight:700}
+.khung{max-width:960px;margin:0 auto;padding:14px 12px calc(var(--gd-nav-duoi,68px) + 24px);display:grid;gap:12px}
+.the{background:#fff;border:1px solid var(--gd-vien,#E1E5E0);border-radius:12px;padding:14px}
+h2{font-size:16px;font-weight:800;color:#163A5C;margin-bottom:10px}
+p,li{font-size:14.5px;line-height:1.5}
+.mo-dau{background:#E6EEF6;border-color:#C5D6E8}
+.mo-dau p{font-size:15px}
+.mo-dau b{color:#163A5C}
+
+.ba{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.ba div{border-radius:10px;padding:10px 8px;text-align:center}
+.ba strong{display:block;font-size:22px;font-weight:800;line-height:1.1}
+.ba span{display:block;font-size:12px;font-weight:700;margin:3px 0}
+.ba small{display:block;font-size:12px;line-height:1.35;color:#3d4955}
+.ba .ok{background:#fff} .ba .ok strong{color:#1F4E79}
+.ba .tru{background:#FBE9E7} .ba .tru strong,.ba .tru span{color:#B3261E}
+.ba .cong{background:#E8F5E9} .ba .cong strong,.ba .cong span{color:#1E6B3A}
+
+.cong-thuc{font-size:16px;font-weight:800;text-align:center;background:#F4F5F3;border-radius:10px;padding:10px;margin-bottom:6px}
+.xl{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.xl div{border-radius:10px;text-align:center;padding:8px 2px;font-size:12.5px;line-height:1.3}
+.xl b{display:block;font-size:20px}
+.xl .ap{background:#e8f5e9;color:#1b5e20} .xl .a{background:#e3f2fd;color:#0d47a1}
+.xl .b{background:#fffde7;color:#8d6e00} .xl .c{background:#fff3e0;color:#e65100} .xl .d{background:#ffebee;color:#c62828}
+
+.nho4{list-style:none;display:grid;gap:10px}
+.nho4 li{display:flex;gap:10px}
+.nho4 .so{flex:0 0 26px;height:26px;border-radius:50%;background:#1F4E79;color:#fff;font-weight:800;font-size:14px;
+          display:flex;align-items:center;justify-content:center}
+.nho4 b{display:block}
+
+/* bảng mã: trên điện thoại mỗi mã là một thẻ */
+.ma-ds{display:grid;gap:8px}
+.ma{border:1px solid var(--gd-vien,#E1E5E0);border-left-width:5px;border-radius:10px;padding:10px 12px;
+    display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:start}
+.ma .ma-so{font-weight:800;font-size:14px;color:#163A5C}
+.ma .nd{font-size:14.5px;line-height:1.45}
+.ma .diem{font-weight:800;font-size:17px;white-space:nowrap}
+.ma .phu{grid-column:2 / 4;font-size:12.5px;color:#5A6876;line-height:1.4}
+.ma .phu em{font-style:normal;color:#8C1D18;font-weight:600}
+.ma.tru{border-left-color:#e57373} .ma.tru .diem{color:#B3261E}
+.ma.nang{border-left-color:#B3261E;background:#FFF7F6}
+.ma.cong{border-left-color:#66bb6a} .ma.cong .diem{color:#1E6B3A}
+.nhom-ma{font-size:13px;font-weight:700;color:#5A6876;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.3px}
+.nhom-ma:first-of-type{margin-top:0}
+.ghi{font-size:13px;color:#5A6876;margin-top:10px;line-height:1.5}
+@media (max-width:420px){ .xl b{font-size:17px} .xl div{font-size:11.5px} .ba strong{font-size:19px} }
+</style>
+<link rel="stylesheet" href="giao-dien.css">
+<script src="giao-dien.js"></script>
+</head>
+<body>
+
+<header class="dau">
+  <div class="dau-trong" data-gd-nav>
+    <div>
+      <div class="dau-xuong">QC</div>
+      <div class="dau-ten">Tiêu chí KPI hằng ngày</div>
+    </div>
+  </div>
+</header>
+
+<main class="khung">
+
+  <section class="the mo-dau">
+    <p>Mỗi ngày làm việc, mọi nhân viên <b>bắt đầu với 9 điểm – tròn vai</b>.
+       Quản lý chỉ ghi nhận khi có <b>vi phạm</b> hoặc <b>thành tích đặc biệt</b>.
+       Mục tiêu: chấm nhanh, rõ ràng, công bằng và có bằng chứng.</p>
+    <div class="ba">
+      <div class="ok"><strong>9</strong><span>MỌI VIỆC OK</span><small>Làm đúng, đủ công việc được giao</small></div>
+      <div class="tru"><strong>−</strong><span>CÓ VI PHẠM</span><small>Chọn mã lỗi phù hợp nhất, kèm bằng chứng</small></div>
+      <div class="cong"><strong>+</strong><span>CÓ ĐÓNG GÓP</span><small>Chủ động phòng ngừa hoặc cải tiến được xác nhận</small></div>
+    </div>
+  </section>
+
+  <section class="the">
+    <h2>Cách tính điểm</h2>
+    <div class="cong-thuc">Điểm ngày = 9 + điểm trừ + điểm cộng</div>
+    <p style="text-align:center;font-size:13.5px;color:#5A6876">Thấp nhất 0 điểm · cao nhất 11 điểm</p>
+    <div class="xl">
+      <div class="ap"><b>A+</b>11 điểm</div>
+      <div class="a"><b>A</b>từ 10,05</div>
+      <div class="b"><b>B</b>từ 8,5<br><small>tròn vai 9</small></div>
+      <div class="c"><b>C</b>từ 7</div>
+      <div class="d"><b>D</b>dưới 7</div>
+    </div>
+  </section>
+
+  <section class="the">
+    <h2>4 điều cần nhớ</h2>
+    <ol class="nho4">
+      <li><span class="so">1</span><p><b>QC không được đo sai</b>Đo sai phát hiện nội bộ bị trừ theo mức độ. Đo sai làm quyết định OK/NG sai, lọt khách hàng hoặc gian dối hồ sơ: <b style="display:inline;color:#B3261E">trừ 9 điểm</b>.</p></li>
+      <li><span class="so">2</span><p><b>Có bằng chứng mới trừ</b>NCR, phiếu kiểm, check sheet, ảnh, ERP, biên bản hoặc dữ liệu chấm công.</p></li>
+      <li><span class="so">3</span><p><b>Nghỉ phép đúng quy định không bị trừ</b>Nghỉ phép, nghỉ ốm, nghỉ chế độ được duyệt đúng quy định không phải là lỗi.</p></li>
+      <li><span class="so">4</span><p><b>Không chấm trùng một sự vụ</b>Mỗi sự vụ chỉ dùng một mã vi phạm có mức độ cao nhất; không trừ điểm cảm tính.</p></li>
+    </ol>
+  </section>
+
+  <section class="the">
+    <h2>A. Mã vi phạm – điểm trừ</h2>
+    <div class="ma-ds">
+      <div class="nhom-ma">Chuyên cần</div>
+      <div class="ma tru"><span class="ma-so">CC02</span><span class="nd">Đi trễ / về sớm quá 10 phút không báo; đăng ký nghỉ phép muộn / thiếu thủ tục</span><span class="diem">−1</span>
+        <span class="phu">Bằng chứng: máy chấm công / đơn từ</span></div>
+      <div class="ma tru"><span class="ma-so">CC03</span><span class="nd">Tự ý rời vị trí hoặc nghỉ phép không báo trước mà không chứng minh được lý do</span><span class="diem">−2</span>
+        <span class="phu">Bằng chứng: máy chấm công / biên bản · <em>quá 2 lần/tháng: xếp loại C</em></span></div>
+      <div class="ma tru nang"><span class="ma-so">CC04</span><span class="nd">Nghỉ không phép nghiêm trọng, tái phạm hoặc gian dối chấm công</span><span class="diem">−9</span>
+        <span class="phu">Bằng chứng: biên bản / dữ liệu chấm công · <em>điểm ngày về 0</em></span></div>
+
+      <div class="nhom-ma">Quy trình</div>
+      <div class="ma tru"><span class="ma-so">QT01</span><span class="nd">Nhắc nhở 5S, thiếu thông tin check sheet hoặc bàn giao thiếu nhưng sửa trong ngày</span><span class="diem">−1</span>
+        <span class="phu">Bằng chứng: ảnh / check sheet / xác nhận</span></div>
+      <div class="ma tru"><span class="ma-so">QT02</span><span class="nd">Hồ sơ sai/thiếu, chậm nhập liệu hoặc báo cáo chậm nhưng chưa ảnh hưởng truy xuất / chất lượng</span><span class="diem">−1</span>
+        <span class="phu">Bằng chứng: check sheet / ERP</span></div>
+
+      <div class="nhom-ma">Chất lượng</div>
+      <div class="ma tru"><span class="ma-so">QC01</span><span class="nd">Thiếu tần suất đo / FAI / nội dung kiểm tra nhưng phát hiện, bổ sung trước khi hàng chuyển đi</span><span class="diem">−1</span>
+        <span class="phu">Bằng chứng: check sheet / FAI</span></div>
+      <div class="ma tru"><span class="ma-so">QC02</span><span class="nd">Đo hoặc ghi nhận sai, phát hiện trước quyết định OK/NG; hoặc bỏ FAI / tần suất đã phát hiện nội bộ</span><span class="diem">−2</span>
+        <span class="phu">Bằng chứng: phiếu kiểm sửa / FAI / NCR · <em>QC không được đo sai: tối thiểu trừ 2 điểm</em></span></div>
+      <div class="ma tru nang"><span class="ma-so">QC03</span><span class="nd">Phản ứng NG chậm; cách ly / nhãn NG sai; lọt NG nội bộ do QC bỏ sót kiểm tra</span><span class="diem">−4</span>
+        <span class="phu">Bằng chứng: NCR / phiếu NG / nhật ký ca · <em>điểm ngày còn 5: loại D</em></span></div>
+      <div class="ma tru nang"><span class="ma-so">QC04</span><span class="nd">Đo sai làm quyết định OK/NG sai; bỏ kiểm bắt buộc; NG đến khách hàng do QC; gian dối hồ sơ</span><span class="diem">−9</span>
+        <span class="phu">Bằng chứng: NCR / khiếu nại KH / biên bản · <em>−2: lỗi nhẹ nhân nhượng · −5: lỗi có thể sửa được · −9: lỗi huỷ hoặc tới KH · lặp lại 2 lần/tháng: loại C</em></span></div>
+    </div>
+  </section>
+
+  <section class="the">
+    <h2>B. Mã thành tích – điểm cộng</h2>
+    <div class="ma-ds">
+      <div class="ma cong"><span class="ma-so">P01</span><span class="nd">Hỗ trợ đo kiểm / lọc hàng nguyên nhân của bộ phận khác</span><span class="diem">+0,5</span>
+        <span class="phu">Bằng chứng: trưởng ca giao việc, ghi nhận kết quả · OQC / đo mẫu được tính</span></div>
+      <div class="ma cong"><span class="ma-so">P02</span><span class="nd">Chủ động phát hiện rủi ro và ngăn lỗi trước khi phát sinh; hỗ trợ xử lý tốt, có xác nhận</span><span class="diem">+1</span>
+        <span class="phu">Bằng chứng: NCR / ghi nhận quản lý · đủ điều kiện A nếu các mục khác tốt</span></div>
+      <div class="ma cong"><span class="ma-so">P03</span><span class="nd">Kaizen / cải tiến được áp dụng, có hiệu quả rõ ràng và được xác nhận</span><span class="diem">+1</span>
+        <span class="phu">Bằng chứng: mã Kaizen / xác nhận hiệu quả · +1: cải tiến hằng ngày · +2: cải tiến có hiệu quả, thay đổi phương pháp</span></div>
+    </div>
+    <p class="ghi">Xem điểm của mình: <a href="ca-cua-toi.html">Ca của tôi</a> → ô <b>Đánh giá</b>, hoặc nhắn số <b>4</b> cho Bot QC Bách Tùng.</p>
+  </section>
+
+</main>
+</body>
+</html>

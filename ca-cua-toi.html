@@ -498,6 +498,7 @@ function veTrang(e, D){
           <div class="nho">Đánh giá T${thangSo}</div>
           <div class="so-lon">${diem !== null ? soGon(diem) : '—'}</div>
           <div class="so-phu">${hang ? 'Hạng ' + esc(hang) + (duyet.approved ? ' · đã duyệt' : '') : nDiem + ' ngày đã chấm'}</div>
+          ${CAU_HINH.ma === 'QC' ? '<a href="kpi-qc.html" class="so-phu" style="display:inline-block;margin-top:4px;font-weight:700;color:var(--xanh)">Xem tiêu chí chấm →</a>' : ''}
         </div>
         <div class="the">
           <div class="nho">5S T${thangSo}</div>
