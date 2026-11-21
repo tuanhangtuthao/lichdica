@@ -249,6 +249,7 @@ td:hover .del-btn{display:inline-block!important}
   <div class="tab"        data-tab="scoring"  onclick="showTab('scoring')">Chấm điểm</div>
   <div class="tab"        data-tab="approval" onclick="showTab('approval')">Duyệt đánh giá</div>
   <div class="tab"        data-tab="config"   onclick="showTab('config')">Cài đặt hạng</div>
+  <div class="tab chi-qc" data-tab="kpi"      onclick="showTab('kpi')">Tiêu chí KPI</div>
 </div>
 
 <!-- PAGE 1: KẾT QUẢ -->
@@ -339,6 +340,13 @@ td:hover .del-btn{display:inline-block!important}
   </div>
 </div>
 
+<!-- PAGE 5: TIÊU CHÍ KPI (chỉ QC, ai cũng xem được) - nhúng trang kpi-qc.html,
+     ở lại trang này nên đang chấm dở không mất điểm chưa lưu -->
+<div class="page" id="page-kpi">
+  <iframe id="kpiFrame" title="Tiêu chí KPI hằng ngày" style="display:block;width:100%;border:0;min-height:70vh"
+          onload="try{this.style.height=this.contentDocument.documentElement.scrollHeight+'px'}catch(e){}"></iframe>
+</div>
+
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bot-nav">
   <button class="bnav active" onclick="showTab('results')">
@@ -353,7 +361,14 @@ td:hover .del-btn{display:inline-block!important}
   <button class="bnav" onclick="showTab('config')">
     <span class="bicon">⚙️</span><span class="blabel">Cài Đặt</span>
   </button>
+  <button class="bnav chi-qc" onclick="showTab('kpi')">
+    <span class="bicon">📋</span><span class="blabel">Tiêu chí</span>
+  </button>
 </nav>
+<script>
+  // Tab Tiêu chí KPI chỉ có ở QC
+  if (CAU_HINH.ma !== 'QC') document.querySelectorAll('.chi-qc').forEach(el => el.remove());
+</script>
 
 <!-- PASSWORD MODAL -->
 <div class="pw-overlay" id="pwOverlay">
@@ -424,7 +439,7 @@ let GRADE_CFG = [
 let activeTab = 'results';
 let scoreKip  = 0; // 0=all
 let apprKip = 0;
-const TABS = ['results','scoring','approval','config'];
+const TABS = ['results','scoring','approval','config','kpi'];
 const GRP_LABEL = {1:'Kíp 1',2:'Kíp 2',3:'Kíp 3',4:'HC / Ca Xoay'};
 const DFUL = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
 const DN   = ['CN','T2','T3','T4','T5','T6','T7'];
@@ -1707,7 +1722,7 @@ function resetConfig(){
 
 // ── NAVIGATION ─────────────────────────────
 function showTab(tab){
-  if(tab !== 'results' && !unlocked){ openPw(tab); return; }
+  if(tab !== 'results' && tab !== 'kpi' && !unlocked){ openPw(tab); return; }
   _doShowTab(tab);
 }
 function _doShowTab(tab){
@@ -1720,6 +1735,8 @@ function _doShowTab(tab){
   if(tab==='scoring') renderScoring();
   if(tab==='approval') renderApproval();
   if(tab==='config')  renderConfig();
+  const kf = document.getElementById('kpiFrame');
+  if(tab==='kpi' && !kf.src) kf.src = 'kpi-qc.html';
 }
 
 // ── INIT ───────────────────────────────────
